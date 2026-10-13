@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 date: 2026-10-13
 decision-makers: Nathan Zender
 ---
@@ -28,6 +28,17 @@ Deterministic rules miss semantic risk: auth logic moved into an unwatched file,
 ## Decision Outcome
 
 Chosen option: "Single-pass structured assessment through a provider-agnostic adapter", because it is the smallest design that meets the escalate-only contract and is fully recordable. Specialist passes (option 3) can be added later behind the same interface.
+
+Provider, model, endpoint, and data-handling mode are configuration only. The project ships no default provider or model. The AI is disabled until an organization configures a provider in its policy, so no source code leaves the organization's boundary without an explicit opt-in.
+
+Initial provider adapters:
+
+- Anthropic API
+- Amazon Bedrock
+- Google Vertex AI
+- Any OpenAI-compatible endpoint, which covers self-hosted model servers and other vendors
+
+Every adapter must support the structured-output contract below. Output is always validated against the schema regardless of provider features.
 
 ### Responsibilities
 
@@ -126,5 +137,5 @@ Any output that fails schema validation is an AI error (`evaluation: degraded`, 
 
 ## More Information
 
-- Open: default provider and model, decided at implementation time and pinned in config.
+- Provider and model are configuration only. The project ships no default.
 - Candidate integration for GitHub-hosted runs: `anthropics/claude-code-action`, or a direct API call with structured output.
