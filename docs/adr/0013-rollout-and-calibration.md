@@ -1,0 +1,71 @@
+---
+status: proposed
+date: 2026-10-13
+decision-makers: Nathan Zender
+---
+
+# Rollout and calibration: backtest, shadow, advise, enforce
+
+## Context and Problem Statement
+
+Rule lists, weights, and thresholds start as judgment calls. Turned on as a blocking gate on day one, a miscalibrated tool will either flood reviewers (who then rubber-stamp) or miss what it exists to catch. Auditors also expect a control to be designed, tested, and then operated, with evidence of each step. How is the tool introduced and tuned?
+
+## Decision Drivers
+
+- False positives erode trust and push reviewers toward rubber-stamping, which auditors flag.
+- Calibration needs data: historical PRs, incidents, reverts.
+- Each phase should produce evidence that the control was tested before it was relied on.
+- Tuning is a policy change and goes through review. The tool never tunes itself.
+
+## Considered Options
+
+1. Enforce immediately
+2. Phased rollout with measured exit criteria per phase
+
+## Decision Outcome
+
+Chosen option: "Phased rollout with measured exit criteria", because it produces calibrated thresholds and design-effectiveness evidence before the tool can block anyone.
+
+### Phases
+
+| Phase | Behavior | Exit criteria (initial proposal) |
+|---|---|---|
+| 0. Backtest | Run `simulate` over the last 6–12 months of merged PRs, including PRs linked to incidents and reverts. | Every incident-linked PR in the sample would have been medium or higher, or has a written explanation. Trigger volume per week is within agreed reviewer capacity. |
+| 1. Shadow | Runs on every PR. The check reports neutral and nothing is posted to the PR. Evidence records are written. | Four weeks of data. Trigger false-positive rate below an agreed target, measured by sampling. No evaluation errors left unexplained. |
+| 2. Advisory | Posts the verdict, labels, and reviewer requests. The check is visible but not required. Reviewers react to findings (useful, not useful, unsure). | Reviewer "not useful" rate below an agreed target. AI escalation precision measured. |
+| 3. Enforcing | Required check pinned to the App (ADR 0005). Separation-of-duties rules enforced. Break-glass live. | Ongoing. Reviewed monthly. |
+| 4. Standard-change approval (optional) | Only if ADR 0004 option B or C is adopted, one change class at a time. | Per class: escape rate below an agreed threshold over a defined period, plus GRC sign-off. |
+
+Ruleset "evaluate" mode is used where available to stage the forge-side settings alongside phases 1 and 2.
+
+### Metrics
+
+- Trigger hit rate and sampled false-positive rate, per rule ID
+- Tier distribution, and time-to-merge per tier
+- AI escalation rate and precision
+- Escape rate: incidents or reverts linked to PRs, by tier at merge time
+- Rubber-stamp signals (ADR 0009)
+- Break-glass and waiver use
+- Cost and latency per PR
+
+### Feedback loop
+
+- A weekly digest of metrics and reviewer reactions goes to the policy owners.
+- Accepted changes become ordinary PRs against the central policy, with `simulate` impact output attached (ADR 0010).
+- Prompts, weights, and rules are never changed automatically.
+
+### Consequences
+
+- Good, because enforcement starts with calibrated thresholds and documented design testing.
+- Good, because shadow and advisory phases produce the evidence auditors expect for a new control.
+- Bad, because the time from first code to enforcement is weeks, not days.
+- Bad, because the backtest needs incident and revert data linked to PRs, which may not exist in usable form.
+
+### Confirmation
+
+Each phase transition is a recorded decision (PR or ADR update) with its metrics attached.
+
+## More Information
+
+- Rewind's lessons include modeling effectiveness on historical data before building, and keeping humans in charge of the feedback loop: <https://rewind.com/blog/ai-approve-pull-requests-safely/>
+- A related view, that blocking policy should come only after a finding proves useful and low-noise in a given repo: <https://dev.to/sjh9714/llm-reviewers-are-useful-but-some-pr-checks-should-stay-deterministic-4k1e>
