@@ -82,8 +82,13 @@ Proposed: write each record to a WORM object store and sign it as an in-toto att
 ### 3. Separation-of-duties rules
 
 - An approval counts only if the approver is not the PR author, not the author of any commit in the PR, and not the initiator of an agent-authored PR.
-- Initiator resolution, in order: forge-native agent metadata (for example Copilot assignment), then a commit trailer `Agent-Initiator: <login>` on agent commits, then a policy mapping of bot accounts to owning teams.
-- An agent-authored PR whose initiator cannot be resolved requires two independent human approvals.
+- A PR is agent-authored when its author, or any of its commit authors, is a bot account or an account listed as an agent in policy. When an agent pushes under a human's own account, GitHub already treats that human as the author and blocks them from approving, so no extra rule is needed.
+- The initiator is resolved only from verified sources, in this order:
+  1. forge-native agent metadata, for example the user who assigned Copilot
+  2. the actor of the event that started the agent, when the agent runs from a workflow triggered by a comment, label, or assignment
+  3. a policy mapping of a bot account to the one human who operates it
+- A commit trailer such as `Agent-Initiator: <login>` is written by the agent, so it is an untrusted claim. It can exclude the named person from approving, but it never counts as resolving the initiator. Otherwise an agent could name someone else and let its real initiator approve.
+- An agent-authored PR whose initiator is not resolved from a verified source requires two independent human approvals.
 - Approvals count only for the current head SHA (ADR 0005).
 - The approver's membership in a required team is checked and recorded at approval time.
 - Bot accounts never count as approvers. The only planned exception is the tool's own App identity, for change classes enabled under ADR 0004 option B.
@@ -129,7 +134,7 @@ Proposed as stated above, as a best-effort design without GRC input. Before the 
 - Good, because the agent-initiator approval gap is closed by the tool, not left to the forge.
 - Good, because exceptions exist, are bounded, and are visible.
 - Bad, because a WORM store and signing add infrastructure, and that infrastructure is in audit scope.
-- Bad, because initiator resolution depends on agent platforms exposing metadata or adding trailers. The fallback (two approvals) costs reviewer time.
+- Bad, because initiator resolution depends on agent platforms exposing verifiable metadata. The fallback (two approvals) costs reviewer time.
 
 ### Confirmation
 
@@ -140,7 +145,7 @@ Proposed as stated above, as a best-effort design without GRC input. Before the 
 ## More Information
 
 - Open: retention period, set with GRC.
-- Open: which agent platforms expose initiator metadata, and whether to require the `Agent-Initiator` trailer through a commit-msg hook.
+- Open: which agent platforms expose verifiable initiator metadata. Resolvers are added per platform, starting with the platforms in use.
 - GitHub Actions retention limits: <https://docs.github.com/en/organizations/managing-organization-settings/configuring-the-retention-period-for-github-actions-artifacts-and-logs-in-your-organization>
 - Kosli: <https://docs.kosli.com/understand_kosli/what_is_kosli>
 - What PR evidence does and does not prove: <https://oneuptime.com/blog/post/2026-08-04-github-pull-requests-change-management-evidence/view>
