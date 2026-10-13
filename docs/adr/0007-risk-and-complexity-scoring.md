@@ -38,7 +38,8 @@ Chosen option: "Transparent additive points model", because it is explainable li
 | Criticality floors | Policy-defined path classes: DB migrations, IaC, IAM, payments, public API schemas | A floor sets a minimum tier instead of adding points. |
 | Test signal | Non-test source lines changed with no test change | Adds points; never subtracts them. |
 | History (optional) | File churn over the last N days, count of prior bug-fix commits touching the file (hotspots) | Needs git history access. Off by default until performance is measured. |
-| Initiator experience (optional) | Prior merged changes by the initiator in the touched paths | Undefined for agents. Agents are scored with the initiator's experience when known, otherwise zero. |
+
+Author and initiator experience (the EXP metrics in Kamei et al.) are deliberately excluded. They are undefined for agent authors. The initiator's experience is a weak proxy for the quality of an agent's change, and the factor would penalize new contributors.
 
 ### Combination
 
