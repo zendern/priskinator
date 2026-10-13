@@ -17,7 +17,9 @@ SOC 2 and ISO 27001 auditors test change management by sampling changes from the
 - Evidence must outlive the audit window and be tamper-evident.
 - Exceptions (waivers, emergencies) must exist, or people will route around the tool. Every exception must be visible.
 
-## Control mapping (proposed; validate with GRC and the auditor)
+## Control mapping (best-effort assumption; not validated)
+
+No GRC function or auditor has reviewed this yet (as of 2026-10-13). The mapping and evidence design below are our best reading of SOC 2 and ISO 27001 practice. Every decision is built so a field can be added or retention extended later without re-architecting.
 
 | Framework reference | What pr-riskinator contributes |
 |---|---|
@@ -119,7 +121,7 @@ A report command produces, for a date range:
 
 ## Decision Outcome
 
-Proposed as stated above. The control mapping must be reviewed by GRC before the tool is relied on in an audit period.
+Proposed as stated above, as a best-effort design without GRC input. Before the tool is relied on in an audit period, GRC or the auditor must review the control mapping, the evidence fields, and retention. Until then, evidence records are versioned (`schema` field) so the format can change without losing earlier records.
 
 ### Consequences
 

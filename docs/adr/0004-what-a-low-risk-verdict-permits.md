@@ -67,6 +67,7 @@ Because B is the goal, the design must assume from the start that adversaries wi
 - **Shadow eligibility.** Every evaluation computes `bot_eligible` and the matching change class using the full option B rules, and records both in the evidence (ADR 0009). Nothing acts on it under option A.
 - **Measure before enabling.** For each class, compare shadow-eligible PRs with what human reviewers actually did: requested changes, review comments, reverts, and incidents linked to the PR. That comparison is the escape-rate evidence a class needs before B is enabled for it.
 - **Eligibility logic is tested now.** The option B eligibility rules and their tests ship with option A, so enabling a class is a configuration change backed by already-tested code, not new code.
+- **GRC is a hard gate for B.** No GRC function is engaged yet (as of 2026-10-13), so the compliance design in ADR 0009 is a best-effort assumption. Option A does not depend on GRC sign-off. No change class can be enabled under B until GRC has approved the standard-change procedure.
 - **Blocking prerequisite for B.** Confirm that an approval from the tool's GitHub App counts toward ruleset required approvals before any class is enabled. If it does not, B needs a different mechanism, decided in a new ADR.
 
 ### Consequences of each option

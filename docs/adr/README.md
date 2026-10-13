@@ -26,7 +26,8 @@ Decisions for pr-riskinator, recorded per [ADR 0001](0001-record-architecture-de
 - **0012**: implementation language. Recommended: Go if content rules shell out to ast-grep or Semgrep; Rust if they run in-process.
 - **0014**: App tenancy and runtime. Proposed: self-hosted per org, long-running container.
 - **0008**: default AI provider and model, and data-handling option.
-- **0009**: evidence retention period (with GRC), and initiator-metadata strategy for agent platforms.
+- **0009**: evidence retention period, and initiator-metadata strategy for agent platforms.
+- **0007**: whether to keep the optional initiator-experience factor.
 
 ## Items to verify against current GitHub behavior
 
@@ -36,4 +37,8 @@ Decisions for pr-riskinator, recorded per [ADR 0001](0001-record-architecture-de
 
 ## Compliance scope
 
-SOC 2 and ISO 27001. The control mapping in [0009](0009-compliance-evidence-and-segregation-of-duties.md) is a proposal and must be validated with GRC before the tool is relied on in an audit period.
+SOC 2 and ISO 27001. No GRC function or auditor is engaged yet. The control mapping in [0009](0009-compliance-evidence-and-segregation-of-duties.md) is a best-effort assumption and must be validated before the tool is relied on in an audit period. GRC sign-off is a hard gate for enabling option B of [0004](0004-what-a-low-risk-verdict-permits.md).
+
+## Known data gaps
+
+No incident data linked to PRs and no numeric targets yet. [0013](0013-rollout-and-calibration.md) uses proxy labels for the backtest and sets targets from shadow-phase data.
