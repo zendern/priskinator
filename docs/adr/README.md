@@ -13,21 +13,18 @@ Decisions for pr-riskinator, recorded per [ADR 0001](0001-record-architecture-de
 | [0005](0005-trust-boundary-and-enforcement.md) | Trust boundary and enforcement | proposed |
 | [0006](0006-mandatory-human-review-triggers.md) | Mandatory human-review triggers: path plus content rules | proposed |
 | [0007](0007-risk-and-complexity-scoring.md) | Risk and complexity scoring: transparent additive points | proposed |
-| [0008](0008-ai-assessment-layer.md) | AI assessment layer: optional, provider-agnostic, escalate-only | proposed |
+| [0008](0008-ai-assessment-layer.md) | AI assessment layer: optional, provider-agnostic, escalate-only, fully configurable | accepted |
 | [0009](0009-compliance-evidence-and-segregation-of-duties.md) | Compliance evidence, segregation of duties, waivers, break-glass | proposed |
 | [0010](0010-policy-configuration-and-inheritance.md) | Policy configuration: layered, tighten-only, tested | proposed |
 | [0011](0011-platform-and-distribution.md) | Platform and distribution: forge-agnostic core, GitHub first | proposed |
-| [0012](0012-implementation-language.md) | Implementation language for the core | proposed, **open** |
+| [0012](0012-implementation-language.md) | Implementation language: Go, content rules through ast-grep | accepted |
 | [0013](0013-rollout-and-calibration.md) | Rollout and calibration | proposed |
-| [0014](0014-github-app-hosting-and-tenancy.md) | GitHub App hosting and tenancy | proposed |
+| [0014](0014-github-app-hosting-and-tenancy.md) | GitHub App hosting and tenancy: self-hosted per org, long-running container | accepted |
 
 ## Open decisions
 
-- **0012**: implementation language. Recommended: Go if content rules shell out to ast-grep or Semgrep; Rust if they run in-process.
-- **0014**: App tenancy and runtime. Proposed: self-hosted per org, long-running container.
-- **0008**: default AI provider and model, and data-handling option.
-- **0009**: evidence retention period, and initiator-metadata strategy for agent platforms.
-- **0007**: whether to keep the optional initiator-experience factor.
+- **0009**: evidence retention period, and which agent platforms need verified initiator resolvers first.
+- **License** for open-source distribution (no ADR yet).
 
 ## Items to verify against current GitHub behavior
 
