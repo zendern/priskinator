@@ -47,7 +47,7 @@ evaluation: ok | degraded | error
 ### Combination rules
 
 1. The deterministic engine computes `risk_det` from scoring (ADR 0007) and applies risk floors from any triggers that fired (ADR 0006).
-2. If the AI is enabled and returns a valid result, `risk_final = max(risk_det, risk_ai)`. Otherwise `risk_final = risk_det`.
+2. If the AI is enabled and returns a valid result, `risk_final = max(risk_det, risk_ai)`. If the AI is enabled but does not return a valid result, the `ai-unavailable` trigger fires and `risk_final = risk_det`. If the AI is disabled by policy, `risk_final = risk_det` and no trigger fires.
 3. Any mandatory trigger sets `human_review: required`, regardless of risk.
 4. The AI can add triggers of its own (for example "PR description does not match the diff"), which also require human review. It can never remove a trigger or lower a tier.
 
@@ -58,8 +58,26 @@ evaluation: ok | degraded | error
 | Deterministic engine error, invalid diff, missing base policy | `evaluation: error`, `risk: high`, `human_review: required` |
 | Repo policy invalid | Evaluate with org baseline and built-in defaults, add a `config-invalid` trigger, `human_review: required` (ADR 0010) |
 | Diff above size cap | `oversize` trigger, `human_review: required`, AI skipped |
-| AI timeout, error, or invalid output | `evaluation: degraded`, deterministic verdict stands, recorded in evidence. A degraded evaluation always sets `bot_eligible: false` (ADR 0004). |
+| AI enabled but timed out, errored, returned invalid output, or was skipped (for example over its token cap) | `evaluation: degraded`, `ai-unavailable` trigger, `human_review: required`, `bot_eligible: false`. Recorded in evidence. A successful re-run clears the trigger. |
 | Forge API error while posting the result | The check stays pending or fails; it never reports success. |
+
+### Re-running an evaluation
+
+Transient failures (AI outage, forge API error) need a way to re-run without pushing a new commit. Re-runs must not become a way to re-roll the AI until it stops escalating.
+
+Ways to trigger a re-run:
+
+- The "Re-run" control on the App's check run (GitHub sends `check_run` with action `rerequested` to the App)
+- A "Retry AI assessment" button on the check run (`requested_action`), shown only when the evaluation is degraded
+- A PR comment `/riskinator rerun` from a user with write access
+
+Semantics:
+
+- The deterministic part is always recomputed. It is reproducible, so it gives the same result for the same inputs.
+- AI runs that failed are executed again. Failures are never cached.
+- Successful AI results are cached by input hash (ADR 0008). A re-run with unchanged inputs returns the cached result and does not call the model.
+- **AI escalations are sticky per head SHA.** For a given head SHA, the verdict uses the highest AI risk and the union of AI triggers across every successful AI run. A later run can add escalations but never remove one. A new push (new head SHA) starts fresh.
+- Re-runs are rate-limited per PR, and every re-run is recorded in the evidence with who triggered it.
 
 ### Pipeline
 
@@ -90,6 +108,7 @@ flowchart LR
 - Property test: for any AI output, `risk_final >= risk_det` and the trigger set is a superset of the deterministic trigger set.
 - Golden-fixture tests: fixed diffs produce fixed deterministic verdicts across releases.
 - Fault-injection tests for every row in the failure table.
+- Re-run tests: a failed AI run followed by a successful re-run clears `ai-unavailable`; a successful run followed by a re-run with unchanged inputs does not call the model; for one head SHA, a re-run that returns lower AI risk does not lower the verdict.
 
 ## Pros and Cons of the Options
 

@@ -84,9 +84,9 @@ Any output that fails schema validation is an AI error (`evaluation: degraded`, 
 
 ### Limits
 
-- Token cap per PR. Above the cap, the AI is skipped and the skip is recorded.
+- Token cap per PR. Above the cap, the AI is skipped, the skip is recorded, and it counts as an AI failure.
 - Per-PR cost cap and timeout.
-- On any failure, the deterministic verdict stands (ADR 0003).
+- On any failure, the `ai-unavailable` trigger fires and human review is required. A re-run can clear it (ADR 0003). Failed runs are never cached.
 
 ### Consequences
 
@@ -94,6 +94,7 @@ Any output that fails schema validation is an AI error (`evaluation: degraded`, 
 - Good, because every AI decision is recorded and can be replayed from cache.
 - Bad, because AI false positives add reviewer load. Escalation precision is a tracked metric (ADR 0013).
 - Bad, because enabling it brings a vendor into audit scope.
+- Bad, because a provider outage turns every affected PR into a human-review PR until a re-run succeeds.
 
 ### Confirmation
 
