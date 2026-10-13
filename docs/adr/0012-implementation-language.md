@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 date: 2026-10-13
 decision-makers: Nathan Zender
 ---
@@ -10,7 +10,7 @@ decision-makers: Nathan Zender
 
 The core (ADR 0011) is a security control that runs on every PR. It parses diffs, matches paths, runs content rules over syntax trees, computes complexity, calls forge and LLM APIs, and must be shipped as a signed, pinned artifact. Which language should it be written in?
 
-This decision is open. This ADR compares the candidates and states a recommendation and the question that decides it.
+This ADR compares the candidates and records the choice.
 
 ## Decision Drivers
 
@@ -46,9 +46,9 @@ This decision is open. This ADR compares the candidates and states a recommendat
 
 ## Decision Outcome
 
-Not decided. Recommendation: Go, unless content analysis must embed tree-sitter and ast-grep as libraries, in which case Rust.
+Chosen option: "Go". Content rules run through a pinned ast-grep binary (a single MIT-licensed binary built on tree-sitter), shipped with the tool in the container image and the CLI release bundles. The core therefore needs no in-process tree-sitter and no cgo. If a future rule needs syntax trees in-process, the official Go tree-sitter bindings (cgo) are the fallback, decided in a new ADR. The GitHub App is built on palantir/go-githubapp (ADR 0014).
 
-The deciding question: will content rules (ADR 0006, groups G7 and G9) run in-process on syntax trees, or will the tool shell out to pinned ast-grep or Semgrep binaries?
+The deciding question was: will content rules (ADR 0006, groups G7 and G9) run in-process on syntax trees, or will the tool shell out to pinned ast-grep or Semgrep binaries?
 
 - Shell out: Go wins on simplicity, distribution, contributor pool, and a small dependency tree. cgo for tree-sitter is needed only for suppression detection that ignores string literals, and that can also be delegated to ast-grep.
 - In-process: Rust wins, because tree-sitter and ast-grep are native Rust and the analysis core becomes one statically linked binary with no subprocess boundary.
@@ -64,7 +64,7 @@ Python is the fastest to prototype, because lizard, radon, PyDriller, and Semgre
 
 ### Confirmation
 
-Once decided: a spike implementing G9 suppression detection for two languages and path matching with renames, measured for binary size, cold-start time, and dependency count.
+A spike implementing G9 suppression detection for two languages through ast-grep, plus path matching with renames, measured for binary size, cold-start time, and dependency count. Dependency versions are checked for the latest release when added.
 
 ## More Information
 
