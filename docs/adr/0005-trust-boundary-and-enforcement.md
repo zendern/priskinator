@@ -64,13 +64,15 @@ The tool depends on forge settings it cannot enforce by itself. A scheduled job 
 
 Decisions 1, 2, 3 and 5: proposed as stated.
 
-Decision 4: recommended target is option d (dedicated GitHub App, check pinned to the App). Option c is an acceptable alternative for organizations on GitHub Enterprise Cloud. Option b is acceptable only as a short bootstrap phase with a recorded risk acceptance. Option a is rejected.
+Decision 4: chosen option d, a dedicated GitHub App with the required check pinned to the App. GitHub is the first target, and option c needs GitHub Enterprise Cloud, which cannot be assumed. The App evaluates PRs in every rollout phase from shadow onward, so there is one enforcement path to build, not an Action that is later replaced. Options a and b are rejected for PR evaluation. Hosting and tenancy for the App are decided in ADR 0014.
+
+Enforcement still relies on GitHub branch protection or rulesets requiring the App's check. On private repositories those features need a paid GitHub plan.
 
 ### Consequences
 
 - Good, because no file in the PR can alter policy, analysis, or the posted result.
 - Good, because a verdict cannot be carried over to a later push.
-- Bad, because option d means operating a service (or job) and protecting an App private key. That service is in audit scope.
+- Bad, because option d means operating a service and protecting an App private key. The private key is the root of trust for enforcement: anyone holding it can post a passing check. The service and the key are in audit scope.
 - Bad, because the tool cannot use the repo's own linters or tests as signals. Those remain separate CI checks.
 
 ### Confirmation
@@ -82,7 +84,7 @@ Decision 4: recommended target is option d (dedicated GitHub App, check pinned t
 
 ## More Information
 
-- Open: where option d's evaluation runs (a hosted service receiving webhooks, or a job in a protected repo that authenticates as the App).
+- Where the App runs and who operates it: ADR 0014.
 - Open: confirm whether check runs posted by different workflows under the GitHub Actions app can satisfy a required check by name.
 - GitHub ruleset required workflows: <https://github.blog/changelog/2023-10-11-requiring-workflows-with-repository-rules-is-generally-available/>
 - Expected-source pinning for required checks: <https://docs.github.com/en/enterprise-server@3.16/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/troubleshooting-required-status-checks>
