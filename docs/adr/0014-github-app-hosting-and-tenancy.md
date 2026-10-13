@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 date: 2026-10-13
 decision-makers: Nathan Zender
 ---
@@ -33,7 +33,16 @@ ADR 0005 chose a dedicated GitHub App as the enforcement identity. The App must 
 
 ## Decision Outcome
 
-Proposed: tenancy option 1 (self-hosted per organization), runtime option a (long-running container service), with the core kept stateless so that option b can be added later without redesign.
+Chosen: tenancy option 1 (self-hosted per organization) and runtime option a (long-running container service). The core is kept stateless so option b can be added later without redesign.
+
+The tool is planned for use by other organizations, not only its author. Each organization runs its own instance. The project ships:
+
+- a GitHub App manifest, so an org can register its own App in a few clicks
+- a signed container image
+- reference deployment templates
+- an install and operations guide, including key rotation and break-glass during an outage
+
+A hosted multi-tenant offering is not ruled out. The stateless core keeps it possible, but it would need its own ADR covering custody of every customer's App key and the project's place in each customer's vendor-risk scope.
 
 Rationale:
 
