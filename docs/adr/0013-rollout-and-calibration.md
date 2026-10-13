@@ -34,7 +34,7 @@ Chosen option: "Phased rollout with measured exit criteria", because it produces
 | 1. Shadow | Runs on every PR. The check reports neutral and nothing is posted to the PR. Evidence records are written. | Four weeks of data. Trigger false-positive rate below an agreed target, measured by sampling. No evaluation errors left unexplained. |
 | 2. Advisory | Posts the verdict, labels, and reviewer requests. The check is visible but not required. Reviewers react to findings (useful, not useful, unsure). | Reviewer "not useful" rate below an agreed target. AI escalation precision measured. |
 | 3. Enforcing | Required check pinned to the App (ADR 0005). Separation-of-duties rules enforced. Break-glass live. | Ongoing. Reviewed monthly. |
-| 4. Standard-change approval (optional) | Only if ADR 0004 option B or C is adopted, one change class at a time. | Per class: escape rate below an agreed threshold over a defined period, plus GRC sign-off. |
+| 4. Standard-change approval | Target end state per ADR 0004. Enabled one change class at a time. Shadow eligibility (`bot_eligible`) has been recorded since phase 1. | Per class: shadow-eligible PRs show an escape rate below an agreed threshold over a defined period, GitHub App approvals confirmed to satisfy required approvals, and GRC sign-off. |
 
 Ruleset "evaluate" mode is used where available to stage the forge-side settings alongside phases 1 and 2.
 
@@ -42,6 +42,7 @@ Ruleset "evaluate" mode is used where available to stage the forge-side settings
 
 - Trigger hit rate and sampled false-positive rate, per rule ID
 - Tier distribution, and time-to-merge per tier
+- Per change class: share of PRs that are shadow-eligible, and how human reviewers treated them (changes requested, comments, reverts)
 - AI escalation rate and precision
 - Escape rate: incidents or reverts linked to PRs, by tier at merge time
 - Rubber-stamp signals (ADR 0009)

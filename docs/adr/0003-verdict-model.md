@@ -32,7 +32,9 @@ Chosen option: "Deterministic floor; final verdict is the maximum", because it k
 
 ```yaml
 risk: low | medium | high            # ordinal
-human_review: required | optional    # "optional" only exists if ADR 0004 option B is adopted
+human_review: required | optional    # "optional" only for change classes enabled under ADR 0004 option B
+bot_eligible: true | false           # always computed and recorded; acted on only for enabled classes (ADR 0004)
+change_class: string | null          # standard-change class matched, if any (ADR 0004)
 triggers: [rule IDs]                 # mandatory-review rules that fired (ADR 0006)
 required_reviewers: [team slugs]     # routing derived from triggers and risk
 reasons:                             # every factor that contributed, with evidence
@@ -56,7 +58,7 @@ evaluation: ok | degraded | error
 | Deterministic engine error, invalid diff, missing base policy | `evaluation: error`, `risk: high`, `human_review: required` |
 | Repo policy invalid | Evaluate with org baseline and built-in defaults, add a `config-invalid` trigger, `human_review: required` (ADR 0010) |
 | Diff above size cap | `oversize` trigger, `human_review: required`, AI skipped |
-| AI timeout, error, or invalid output | `evaluation: degraded`, deterministic verdict stands, recorded in evidence. If ADR 0004 option B is adopted, a degraded evaluation is never eligible for bot approval. |
+| AI timeout, error, or invalid output | `evaluation: degraded`, deterministic verdict stands, recorded in evidence. A degraded evaluation always sets `bot_eligible: false` (ADR 0004). |
 | Forge API error while posting the result | The check stays pending or fails; it never reports success. |
 
 ### Pipeline

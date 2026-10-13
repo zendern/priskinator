@@ -50,7 +50,7 @@ Evaluation record (written on every evaluation):
   "inputs": {"diff_sha256": "…"},
   "deterministic": {"risk": "medium", "points": 37, "factors": [], "triggers": []},
   "ai": {"enabled": true, "status": "ok", "model": "…", "prompt_sha256": "…", "output_sha256": "…", "risk": "high"},
-  "verdict": {"risk": "high", "human_review": "required", "required_reviewers": ["security"]},
+  "verdict": {"risk": "high", "human_review": "required", "required_reviewers": ["security"], "bot_eligible": false, "change_class": null},
   "waivers_applied": [],
   "evaluated_at": "2026-10-13T00:00:00Z"
 }
@@ -84,7 +84,7 @@ Proposed: write each record to a WORM object store and sign it as an in-toto att
 - An agent-authored PR whose initiator cannot be resolved requires two independent human approvals.
 - Approvals count only for the current head SHA (ADR 0005).
 - The approver's membership in a required team is checked and recorded at approval time.
-- Bot accounts never count as approvers unless ADR 0004 option B is adopted, and then only the tool's own App identity counts.
+- Bot accounts never count as approvers. The only planned exception is the tool's own App identity, for change classes enabled under ADR 0004 option B.
 
 ### 4. Rubber-stamp detection
 

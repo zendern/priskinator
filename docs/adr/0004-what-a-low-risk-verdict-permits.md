@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 date: 2026-10-13
 decision-makers: Nathan Zender
 ---
@@ -10,7 +10,7 @@ decision-makers: Nathan Zender
 
 ADR 0003 defines a risk tier and a `human_review` flag. The tier is only useful if it changes what happens next. The most consequential choice in the project is whether a low-risk PR can merge without any human approval. If it can, the tool becomes the gatekeeper, and the goal of any adversarial author becomes "get scored low". If it cannot, the tool routes and documents human attention but never replaces it.
 
-This decision is deliberately left open. This ADR records the options and tradeoffs so the decision can be made with GRC and, ideally, the external auditor.
+This ADR records the options, the tradeoffs, and the chosen phased path.
 
 ## Decision Drivers
 
@@ -56,7 +56,18 @@ Start with A. Collect evidence in shadow and advisory modes (ADR 0013). Enable B
 
 ## Decision Outcome
 
-Not decided. Recommended direction: option C. It delivers the gaming detection, routing, and evidence value of the tool immediately, without making the tool's low verdict an attack target until there is data to justify it.
+Chosen option: "C. Phased", with option A in force now and option B as the target end state. Option A delivers the gaming detection, routing, and evidence value of the tool immediately, and no low verdict replaces a human until there is data to justify it.
+
+B is enabled one change class at a time, never as a blanket setting. Each class must meet the preconditions listed under option B and the exit criteria in ADR 0013, phase 4.
+
+### Design implications while option A is in force
+
+Because B is the goal, the design must assume from the start that adversaries will push PRs toward a low verdict:
+
+- **Shadow eligibility.** Every evaluation computes `bot_eligible` and the matching change class using the full option B rules, and records both in the evidence (ADR 0009). Nothing acts on it under option A.
+- **Measure before enabling.** For each class, compare shadow-eligible PRs with what human reviewers actually did: requested changes, review comments, reverts, and incidents linked to the PR. That comparison is the escape-rate evidence a class needs before B is enabled for it.
+- **Eligibility logic is tested now.** The option B eligibility rules and their tests ship with option A, so enabling a class is a configuration change backed by already-tested code, not new code.
+- **Blocking prerequisite for B.** Confirm that an approval from the tool's GitHub App counts toward ruleset required approvals before any class is enabled. If it does not, B needs a different mechanism, decided in a new ADR.
 
 ### Consequences of each option
 
@@ -66,7 +77,10 @@ Not decided. Recommended direction: option C. It delivers the gaming detection, 
 
 ### Confirmation
 
-Whichever option is chosen, golden-fixture tests assert the approval requirements for each verdict. If B is adopted, a test asserts that no PR with any trigger, a degraded evaluation, or a missing evidence record is ever bot-approved.
+- Golden-fixture tests assert the option A approval requirements for each verdict.
+- Tests assert that `bot_eligible` is false for any PR with a trigger, a degraded evaluation, a missing evidence record, or no matching change class.
+- Under option A, a test asserts that the tool never submits an approving review, whatever `bot_eligible` says.
+- Enabling B for a class is recorded as a PR against the central policy, with the class's shadow-eligibility metrics and GRC sign-off attached.
 
 ## More Information
 
