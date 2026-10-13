@@ -39,6 +39,7 @@ This decision is open. This ADR compares the candidates and states a recommendat
 | Structural search | Shell out to ast-grep or Semgrep | Can embed ast-grep as a library | Semgrep is Python-native | Shell out |
 | Complexity metrics | Implement on tree-sitter, or shell out to lizard | Implement on tree-sitter | lizard and radon are native | Implement, or shell out |
 | Forge API | go-github | octocrab | PyGithub | Octokit (first-class) |
+| GitHub App framework (ADR 0014) | palantir/go-githubapp, used by policy-bot | octocrab app auth; no established framework | gidgethub (lower level) | Probot |
 | LLM SDK | Official Anthropic Go SDK | HTTP API or community crate | Official SDK | Official SDK |
 | Precedent in this tool category | policy-bot, actionlint, gitleaks, scc, OSV-Scanner | zizmor, ast-grep, difftastic | Semgrep CLI, lizard | Danger JS, most JS Actions |
 | Iteration speed | High | Lower | Highest | High |

@@ -19,11 +19,12 @@ Decisions for pr-riskinator, recorded per [ADR 0001](0001-record-architecture-de
 | [0011](0011-platform-and-distribution.md) | Platform and distribution: forge-agnostic core, GitHub first | proposed |
 | [0012](0012-implementation-language.md) | Implementation language for the core | proposed, **open** |
 | [0013](0013-rollout-and-calibration.md) | Rollout and calibration | proposed |
+| [0014](0014-github-app-hosting-and-tenancy.md) | GitHub App hosting and tenancy | proposed |
 
 ## Open decisions
 
 - **0012**: implementation language. Recommended: Go if content rules shell out to ast-grep or Semgrep; Rust if they run in-process.
-- **0005**: where the GitHub App's evaluation runs (hosted service or a job in a protected repo).
+- **0014**: App tenancy and runtime. Proposed: self-hosted per org, long-running container.
 - **0008**: default AI provider and model, and data-handling option.
 - **0009**: evidence retention period (with GRC), and initiator-metadata strategy for agent platforms.
 
