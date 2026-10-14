@@ -59,4 +59,9 @@ Chosen option: "A forge-agnostic core with thin adapters", because the determini
 
 ## More Information
 
-- Plan dependencies to confirm: ruleset required workflows need GitHub Enterprise Cloud. Confirm plan availability of the ruleset required-reviewer rule.
+- Plan dependencies (checked 2026-10-13):
+  - Rulesets cover public repositories on all plans, and private repositories on Pro, Team, and Enterprise Cloud.
+  - Ruleset required workflows need Enterprise Cloud.
+  - The ruleset required-reviewer rule is not available on user-owned repositories, because they have no teams. It needs an organization.
+  - None of these block the App. They only limit the native defense-in-depth layer (ADR 0006) and the enforcing phase (ADR 0013).
+  - Source: <https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets>

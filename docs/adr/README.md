@@ -31,11 +31,12 @@ None.
 
 - **0015**: a verified responsible user for PRs opened by bot accounts. v1 relies on forge rules and flags bot-authored PRs in the evidence.
 
-## Items to verify against current GitHub behavior
+## GitHub behavior checks (2026-10-13)
 
-- Whether a GitHub App's approval review counts toward ruleset required approvals and required-reviewer rules (0004). Blocks enabling option B for any change class.
-- Whether check runs from different workflows under the GitHub Actions app can satisfy a required check by name (0005).
-- Plan availability of the ruleset required-reviewer rule (0011).
+- **Resolved:**
+  - Required checks pinned to a dedicated App cannot be satisfied by any other source. Checks pinned to the GitHub Actions app cannot tell workflows apart. This confirms the App choice in [0005](0005-trust-boundary-and-enforcement.md). The App needs `statuses: write` to be an expected source ([0014](0014-github-app-hosting-and-tenancy.md)).
+  - The ruleset required-reviewer rule needs an organization, because user-owned repositories have no teams. Rulesets on private repositories need Pro, Team, or Enterprise Cloud ([0011](0011-platform-and-distribution.md)).
+- **Still open:** whether a GitHub App's approving review counts toward required approvals. It is undocumented, and community reports conflict. A test-org spike is required before enabling option B; see [0004](0004-what-a-low-risk-verdict-permits.md) for both outcomes.
 
 ## Compliance scope
 
