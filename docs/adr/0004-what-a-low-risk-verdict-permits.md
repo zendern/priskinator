@@ -60,6 +60,13 @@ Chosen option: "C. Phased", with option A in force now and option B as the targe
 
 B is enabled one change class at a time, never as a blanket setting. Each class must meet the preconditions listed under option B and the exit criteria in ADR 0013, phase 4.
 
+### How the approval requirements are enforced
+
+Native forge settings cannot vary the number of approvals with a PR's risk. The App's required check therefore carries the approval requirements, the same model policy-bot uses:
+
+- The check stays pending until the approvals the verdict requires are present on the current head SHA, from eligible approvers (ADR 0009). It then reports success.
+- The native "required approving reviews" setting stays at 1 or more while option A is in force, as a forge-enforced floor beneath the tool's tiered requirements.
+
 ### Design implications while option A is in force
 
 Because B is the goal, the design must assume from the start that adversaries will push PRs toward a low verdict:
@@ -68,7 +75,9 @@ Because B is the goal, the design must assume from the start that adversaries wi
 - **Measure before enabling.** For each class, compare shadow-eligible PRs with what human reviewers actually did: requested changes, review comments, reverts, and incidents linked to the PR. That comparison is the escape-rate evidence a class needs before B is enabled for it.
 - **Eligibility logic is tested now.** The option B eligibility rules and their tests ship with option A, so enabling a class is a configuration change backed by already-tested code, not new code.
 - **GRC is a hard gate for B.** No GRC function is engaged yet (as of 2026-10-13), so the compliance design in ADR 0009 is a best-effort assumption. Option A does not depend on GRC sign-off. No change class can be enabled under B until GRC has approved the standard-change procedure.
-- **Blocking prerequisite for B.** Confirm that an approval from the tool's GitHub App counts toward ruleset required approvals before any class is enabled. If it does not, B needs a different mechanism, decided in a new ADR.
+- **Blocking prerequisite for B.** GitHub does not document whether an approving review from a GitHub App counts toward required approving reviews. Community reports say `github-actions[bot]` approvals do not count and dedicated App approvals do, but they conflict and none is official (checked 2026-10-13). Before any class is enabled, a spike on a test organization must settle it:
+  - If App approvals count: the App submits an approving review on eligible PRs, and the native floor stays at 1.
+  - If they do not: the native floor drops to 0 on repositories with an enabled class, and the App's check becomes the only approval gate. That moves approval enforcement entirely into the tool, so it needs its own ADR and GRC review.
 
 ### Consequences of each option
 
@@ -85,6 +94,8 @@ Because B is the goal, the design must assume from the start that adversaries wi
 
 ## More Information
 
-- Open question for B: confirm that an approval review submitted by a GitHub App counts toward a ruleset's required approvals, and whether it can satisfy a required-reviewer rule for a team.
+- GitHub docs describe required approvals only as coming from "people with write permissions" and team members: <https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches>
+- Community report on bot approvals not counting: <https://github.com/orgs/community/discussions/181487>
+- An App approval cannot satisfy a ruleset required-reviewer rule, which counts only members of the named teams.
 - Auditor red flag noted in practitioner write-ups: large AI-generated diffs approved within minutes with no comments are treated as evidence the review control is not operating. ADR 0009 covers detecting this.
 - Practitioner discussion of SOC 2 and AI approvers: <https://ysecurity.io/blog/agentic-sdlc-code-review-soc-2/>, <https://heygrc.com/blog/soc-2-never-said-a-human-approves-your-prs>
