@@ -36,7 +36,8 @@ None.
 - **Resolved:**
   - Required checks pinned to a dedicated App cannot be satisfied by any other source. Checks pinned to the GitHub Actions app cannot tell workflows apart. This confirms the App choice in [0005](0005-trust-boundary-and-enforcement.md). The App needs `statuses: write` to be an expected source ([0014](0014-github-app-hosting-and-tenancy.md)).
   - The ruleset required-reviewer rule needs an organization, because user-owned repositories have no teams. Rulesets on private repositories need Pro, Team, or Enterprise Cloud ([0011](0011-platform-and-distribution.md)).
-- **Still open:** whether a GitHub App's approving review counts toward required approvals. It is undocumented, and community reports conflict. A test-org spike is required before enabling option B; see [0004](0004-what-a-low-risk-verdict-permits.md) for both outcomes.
+- **Resolved by spike S1:** a GitHub App's approving review does count toward required approvals, in rulesets and in classic protection, and a new push dismisses it ([report](../spikes/s1-app-approval-counts.md)). The behavior is undocumented, so option B in [0004](0004-what-a-low-risk-verdict-permits.md) also requires a scheduled canary with automatic fallback.
+- **Still open:** whether an App installation with only `contents: read` still counts.
 
 ## Compliance scope
 
