@@ -43,7 +43,7 @@ licenses: $(GO_LICENSES)
 	$(GO_LICENSES) check ./... --allowed_licenses=$(ALLOWED_LICENSES)
 
 zizmor:
-	zizmor .github/workflows
+	zizmor --offline .github/workflows
 
 check: fmt-check lint test
 
