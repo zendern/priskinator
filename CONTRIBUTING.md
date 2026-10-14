@@ -6,7 +6,7 @@
 - **Tests first.** Write the test or golden fixture (`internal/fixture`) before the implementation.
 - **Signed, conventional commits.** Every commit is signed and follows [Conventional Commits](https://www.conventionalcommits.org/) (`feat(policy): add layering`). The `commit-msg` hook checks the format.
 - **Small, atomic commits.** One logical change per commit.
-- **Pinned dependencies.** Check for the latest release before adding or bumping a dependency. Pin GitHub Actions by full commit SHA.
+- **Pinned dependencies.** Check for the latest release before adding or bumping a dependency. Pin GitHub Actions by full commit SHA, and pin runner images to a specific version (`ubuntu-24.04`), never `ubuntu-latest`.
 
 ## Setup
 
