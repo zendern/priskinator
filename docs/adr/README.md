@@ -21,10 +21,11 @@ Decisions for pr-riskinator, recorded per [ADR 0001](0001-record-architecture-de
 | [0013](0013-rollout-and-calibration.md) | Rollout and calibration | accepted |
 | [0014](0014-github-app-hosting-and-tenancy.md) | GitHub App hosting and tenancy: self-hosted per org, long-running container | accepted |
 | [0015](0015-responsible-user-for-automated-prs.md) | Responsible user for automated PRs: forge rules in v1, close the gap in v2 | accepted (v1), v2 deferred |
+| [0016](0016-license.md) | License: Apache-2.0 | accepted |
 
 ## Open decisions
 
-- **License** for open-source distribution (no ADR yet).
+None.
 
 ## Deferred to v2
 
