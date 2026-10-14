@@ -1,0 +1,27 @@
+name: workflow change requires human review
+description: Editing a CI workflow fires G1 and routes to the platform team.
+change:
+  files:
+    - path: .github/workflows/ci.yml
+      status: modified
+      hunks:
+        - added:
+            - "      continue-on-error: true"
+          removed: []
+    - path: scripts/run-tests.sh
+      old_path: scripts/test.sh
+      status: renamed
+      old_mode: "100644"
+      new_mode: "100755"
+pr:
+  title: Fix flaky CI
+  author:
+    login: some-agent[bot]
+    type: bot
+  labels: [ci]
+expect:
+  risk: high
+  human_review: required
+  triggers: [G1.ci-workflows]
+  triggers_absent: [G7.security-paths]
+  reviewers: [platform]
