@@ -64,7 +64,9 @@ The tool depends on forge settings it cannot enforce by itself. A scheduled job 
 
 Decisions 1, 2, 3 and 5: accepted as stated.
 
-Decision 4: chosen option d, a dedicated GitHub App with the required check pinned to the App. GitHub is the first target, and option c needs GitHub Enterprise Cloud, which cannot be assumed. The App evaluates PRs in every rollout phase from shadow onward, so there is one enforcement path to build, not an Action that is later replaced. Options a and b are rejected for PR evaluation. Hosting and tenancy for the App are decided in ADR 0014.
+Decision 4 is **superseded by ADR 0017**, which runs the gate in GitHub Actions through a pinned reusable workflow, with tokens for the organization's own App issued by an OIDC token broker. The required check stays pinned to the App. The original decision is kept below for history.
+
+Original decision 4: chosen option d, a dedicated GitHub App with the required check pinned to the App. GitHub is the first target, and option c needs GitHub Enterprise Cloud, which cannot be assumed. The App evaluates PRs in every rollout phase from shadow onward, so there is one enforcement path to build, not an Action that is later replaced. Options a and b are rejected for PR evaluation. Hosting and tenancy for the App are decided in ADR 0014.
 
 Enforcement still relies on GitHub branch protection or rulesets requiring the App's check. On private repositories those features need a paid GitHub plan.
 

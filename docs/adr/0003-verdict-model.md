@@ -67,9 +67,10 @@ Transient failures (AI outage, forge API error) need a way to re-run without pus
 
 Ways to trigger a re-run:
 
-- The "Re-run" control on the App's check run (GitHub sends `check_run` with action `rerequested` to the App)
-- A "Retry AI assessment" button on the check run (`requested_action`), shown only when the evaluation is degraded
-- A PR comment `/riskinator rerun` from a user with write access
+- "Re-run jobs" on the gate's Actions run
+- A PR comment `/riskinator rerun` from a user with write access, handled through `issue_comment` (ADR 0017)
+
+Check-run buttons ("Re-run" on the check, `requested_action`) send webhooks to the App. They only work with the App-server fallback, because the Actions design (ADR 0017) has no webhook receiver.
 
 Semantics:
 

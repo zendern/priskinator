@@ -78,7 +78,7 @@ The merged SHA gives deployment tooling a key to link the production artifact ba
 | Signed in-toto attestation (Sigstore or GitHub artifact attestations) | Yes, verifiable | Depends on store | Recommended in addition, for verifiability. |
 | Kosli or a similar evidence vault | Yes | Vendor-managed | Supported through a sink adapter. |
 
-Chosen: write each record to a WORM object store and sign it as an in-toto attestation. Evidence sinks are a pluggable interface. Retention is configurable per evidence sink. The default is 13 months, covering a 12-month SOC 2 Type II window plus reporting lag. The default is a placeholder until GRC sets a value. If an evidence write fails, the check does not pass (ADR 0003).
+Chosen: write each record to a WORM object store and sign it as an in-toto attestation. Signing uses GitHub artifact attestations (`actions/attest`) from the gate's Actions job (ADR 0017). The gate reaches the object store through OIDC federation to the cloud provider, so no stored cloud credentials are needed. Evidence sinks are a pluggable interface. Retention is configurable per evidence sink. The default is 13 months, covering a 12-month SOC 2 Type II window plus reporting lag. The default is a placeholder until GRC sets a value. If an evidence write fails, the check does not pass (ADR 0003).
 
 ### 3. Separation-of-duties rules
 

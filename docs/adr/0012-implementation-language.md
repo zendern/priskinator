@@ -46,7 +46,7 @@ This ADR compares the candidates and records the choice.
 
 ## Decision Outcome
 
-Chosen option: "Go". Content rules run through a pinned ast-grep binary (a single MIT-licensed binary built on tree-sitter), shipped with the tool in the container image and the CLI release bundles. The core therefore needs no in-process tree-sitter and no cgo. If a future rule needs syntax trees in-process, the official Go tree-sitter bindings (cgo) are the fallback, decided in a new ADR. The GitHub App is built on palantir/go-githubapp (ADR 0014).
+Chosen option: "Go". Content rules run through a pinned ast-grep binary (a single MIT-licensed binary built on tree-sitter), shipped with the tool in the container image and the CLI release bundles. The core therefore needs no in-process tree-sitter and no cgo. If a future rule needs syntax trees in-process, the official Go tree-sitter bindings (cgo) are the fallback, decided in a new ADR. The token broker, octo-sts, is also written in Go (ADR 0017). palantir/go-githubapp remains the framework for the App-server fallback.
 
 The deciding question was: will content rules (ADR 0006, groups G7 and G9) run in-process on syntax trees, or will the tool shell out to pinned ast-grep or Semgrep binaries?
 

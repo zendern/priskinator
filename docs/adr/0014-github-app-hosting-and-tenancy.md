@@ -1,10 +1,12 @@
 ---
-status: accepted
+status: superseded by 0017
 date: 2026-10-13
 decision-makers: Nathan Zender
 ---
 
 # GitHub App hosting and tenancy
+
+> Superseded by ADR 0017. The gate now runs in GitHub Actions, and each organization hosts only an OIDC token broker with its own GitHub App. Self-hosting per organization (tenancy option 1) carries over to the broker. The long-running App server described below remains the documented fallback.
 
 ## Context and Problem Statement
 
