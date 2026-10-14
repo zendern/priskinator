@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 date: 2026-10-13
 decision-makers: Nathan Zender
 ---
@@ -62,7 +62,7 @@ The tool depends on forge settings it cannot enforce by itself. A scheduled job 
 
 ## Decision Outcome
 
-Decisions 1, 2, 3 and 5: proposed as stated.
+Decisions 1, 2, 3 and 5: accepted as stated.
 
 Decision 4: chosen option d, a dedicated GitHub App with the required check pinned to the App. GitHub is the first target, and option c needs GitHub Enterprise Cloud, which cannot be assumed. The App evaluates PRs in every rollout phase from shadow onward, so there is one enforcement path to build, not an Action that is later replaced. Options a and b are rejected for PR evaluation. Hosting and tenancy for the App are decided in ADR 0014.
 

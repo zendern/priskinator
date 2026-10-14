@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 date: 2026-10-13
 decision-makers: Nathan Zender
 ---
@@ -128,7 +128,7 @@ A report command produces, for a date range:
 
 ## Decision Outcome
 
-Proposed as stated above, as a best-effort design without GRC input. Before the tool is relied on in an audit period, GRC or the auditor must review the control mapping, the evidence fields, and retention. Until then, evidence records are versioned (`schema` field) so the format can change without losing earlier records.
+Accepted as stated above, as a best-effort design without GRC input. Before the tool is relied on in an audit period, GRC or the auditor must review the control mapping, the evidence fields, and retention. Until then, evidence records are versioned (`schema` field) so the format can change without losing earlier records.
 
 ### Consequences
 

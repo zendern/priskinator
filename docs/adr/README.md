@@ -6,19 +6,19 @@ Decisions for pr-riskinator, recorded per [ADR 0001](0001-record-architecture-de
 
 | ADR | Title | Status |
 |---|---|---|
-| [0001](0001-record-architecture-decisions.md) | Record architecture decisions as MADR files | proposed |
-| [0002](0002-scope-and-threat-model.md) | Scope and threat model | proposed |
-| [0003](0003-verdict-model.md) | Verdict model: deterministic floor, AI may only escalate, fail closed | proposed |
+| [0001](0001-record-architecture-decisions.md) | Record architecture decisions as MADR files | accepted |
+| [0002](0002-scope-and-threat-model.md) | Scope and threat model | accepted |
+| [0003](0003-verdict-model.md) | Verdict model: deterministic floor, AI may only escalate, fail closed | accepted |
 | [0004](0004-what-a-low-risk-verdict-permits.md) | What a low-risk verdict permits: human approval now, standard-change bot approval per class as the goal | accepted |
-| [0005](0005-trust-boundary-and-enforcement.md) | Trust boundary and enforcement | proposed |
-| [0006](0006-mandatory-human-review-triggers.md) | Mandatory human-review triggers: path plus content rules | proposed |
-| [0007](0007-risk-and-complexity-scoring.md) | Risk and complexity scoring: transparent additive points | proposed |
+| [0005](0005-trust-boundary-and-enforcement.md) | Trust boundary and enforcement | accepted |
+| [0006](0006-mandatory-human-review-triggers.md) | Mandatory human-review triggers: path plus content rules | accepted |
+| [0007](0007-risk-and-complexity-scoring.md) | Risk and complexity scoring: transparent additive points | accepted |
 | [0008](0008-ai-assessment-layer.md) | AI assessment layer: optional, provider-agnostic, escalate-only, fully configurable | accepted |
-| [0009](0009-compliance-evidence-and-segregation-of-duties.md) | Compliance evidence, segregation of duties, waivers, break-glass | proposed |
-| [0010](0010-policy-configuration-and-inheritance.md) | Policy configuration: layered, tighten-only, tested | proposed |
-| [0011](0011-platform-and-distribution.md) | Platform and distribution: forge-agnostic core, GitHub first | proposed |
+| [0009](0009-compliance-evidence-and-segregation-of-duties.md) | Compliance evidence, segregation of duties, waivers, break-glass | accepted |
+| [0010](0010-policy-configuration-and-inheritance.md) | Policy configuration: layered, tighten-only, tested | accepted |
+| [0011](0011-platform-and-distribution.md) | Platform and distribution: forge-agnostic core, GitHub first | accepted |
 | [0012](0012-implementation-language.md) | Implementation language: Go, content rules through ast-grep | accepted |
-| [0013](0013-rollout-and-calibration.md) | Rollout and calibration | proposed |
+| [0013](0013-rollout-and-calibration.md) | Rollout and calibration | accepted |
 | [0014](0014-github-app-hosting-and-tenancy.md) | GitHub App hosting and tenancy: self-hosted per org, long-running container | accepted |
 | [0015](0015-responsible-user-for-automated-prs.md) | Responsible user for automated PRs: forge rules in v1, close the gap in v2 | accepted (v1), v2 deferred |
 
