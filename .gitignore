@@ -1,0 +1,10 @@
+# Build output and pinned tools
+/bin/
+/dist/
+
+# Test artifacts
+*.out
+coverage.*
+
+# Local git worktrees
+.worktrees/
