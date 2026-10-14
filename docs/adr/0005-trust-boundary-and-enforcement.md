@@ -45,7 +45,7 @@ Approvals on an older head SHA do not count toward the tool's requirements, even
 | Option | PR can alter it? | Spoofable by a PR workflow? | Plan / ops cost |
 |---|---|---|---|
 | a. Repo workflow on `pull_request` | Yes | Yes | None. Rejected. |
-| b. Repo workflow on `pull_request_target` | No (runs base version) | Possibly: any workflow can post a check run under the GitHub Actions app with the same name (to verify) | None. Risky: runs with write token and secrets next to untrusted input. |
+| b. Repo workflow on `pull_request_target` | No (runs base version) | Yes, in practice: a PR can add a workflow on `pull_request` whose job has the same name, and it reports under the same GitHub Actions app. GitHub calls duplicate job names "ambiguous" and does not document which result wins. | None. Risky: runs with write token and secrets next to untrusted input. |
 | c. Org ruleset "require workflows to pass" from a protected central repo | No | The rule requires the workflow itself, not a check name | GitHub Enterprise Cloud only |
 | d. Dedicated GitHub App with its own identity; required status check pinned to that App as expected source | No | No: PR workflows cannot post as the App | Requires hosting the App (service or job) and managing its private key |
 
@@ -85,7 +85,8 @@ Enforcement still relies on GitHub branch protection or rulesets requiring the A
 ## More Information
 
 - Where the App runs and who operates it: ADR 0014.
-- Open: confirm whether check runs posted by different workflows under the GitHub Actions app can satisfy a required check by name.
+- Verified 2026-10-13 from GitHub docs: "Any person or integration with write permissions to a repository can set the state of any status check", and when a required check has an expected source app, "If the status is set by any other person or integration, merging won't be allowed." Pinning to a dedicated App blocks spoofing. Pinning to the GitHub Actions app does not distinguish between workflows. <https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches>
+- A ruleset's expected source app must be installed with the `statuses: write` permission (ADR 0014).
 - GitHub ruleset required workflows: <https://github.blog/changelog/2023-10-11-requiring-workflows-with-repository-rules-is-generally-available/>
 - Expected-source pinning for required checks: <https://docs.github.com/en/enterprise-server@3.16/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/troubleshooting-required-status-checks>
 - Copilot coding agent precedent: workflows on its PRs do not run until a human approves them: <https://github.blog/changelog/2026-03-13-optionally-skip-approval-for-copilot-coding-agent-actions-workflows/>

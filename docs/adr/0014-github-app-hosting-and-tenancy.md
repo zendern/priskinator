@@ -56,7 +56,7 @@ Rationale:
 - **Ordering:** coalesce events per PR. Evaluate only the latest head SHA and discard results computed for superseded SHAs before posting.
 - **Git access:** fetch base and head objects with a short-lived installation token, using a partial or shallow fetch. Never check out into a path where anything executes (ADR 0005).
 - **Key handling:** store the App private key in a cloud secret manager or KMS, never in an environment file or image. Rotate on a schedule and on any suspected exposure. Audit every access.
-- **Least privilege:** request only the GitHub permissions needed: checks write, pull requests read and write (reviewer requests, labels, comments), contents read, metadata read, members read (team membership for separation-of-duties checks), and administration read (settings drift).
+- **Least privilege:** request only the GitHub permissions needed: checks write, statuses write (required for the App to be selectable as a ruleset's expected status source), pull requests read and write (reviewer requests, labels, comments), contents read, metadata read, members read (team membership for separation-of-duties checks), and administration read (settings drift).
 - **Scheduled jobs:** settings drift (ADR 0005), re-evaluation after a policy merge (ADR 0005), waiver expiry and break-glass reports (ADR 0009).
 - **Observability:** structured logs carry the evaluation and evidence record IDs. Treat evaluation errors as alerts, because they mean every affected PR is blocked (ADR 0003).
 - **Availability:** if the App is down, required checks stay pending and merges block. This is fail-closed by design. Break-glass (ADR 0009) is the documented way through an outage.
