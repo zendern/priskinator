@@ -51,7 +51,7 @@ GitHub Actions was originally rejected because a PR can rewrite a `pull_request`
 | B2. App key in a repo or org secret | Trivial | Org secrets reach same-repo `pull_request` runs. Org-wide exposure. | Rejected |
 | B3. App key in an environment secret, default branch only | GitHub checks the run's ref before releasing the secret | A key copy sits in every repo, and every repo admin can extract it | Extra layer only |
 | **B4. OIDC to a self-hosted octo-sts** | No stored secret in repos. Scoped, short-lived tokens per repo. Policy based on claims. | We run and secure the broker. A trust-policy file per repo. | **Chosen** |
-| B5. OIDC to Chainguard's public octo-sts | Nothing to host | A third party becomes the root of trust, under a shared App identity | Rejected |
+| B5. OIDC to Chainguard's public octo-sts | Nothing to host | A third party becomes the root of trust, under a shared App identity | Supported as the quick-start provider (see Token providers) |
 | B6. OIDC to Vault's GitHub secrets engine | Same model as B4. Reuses Vault. | Needs Vault | Alternative for Vault shops |
 | B7. OIDC to a cloud key service that signs the App JWT | The key can't be exported | The JWT carries App-wide power for about 10 minutes | Only behind a broker |
 | B8. OIDC to a cloud secret manager that returns the key | Simple | The key lands in runner memory | Rejected |
@@ -77,14 +77,14 @@ GitHub Actions was originally rejected because a PR can rewrite a `pull_request`
 
 ## Decision Outcome
 
-Chosen: **A8 + B4 + C3 + D1.** The gate runs in GitHub Actions on `pull_request_target` for every PR. It calls our action through a reusable workflow pinned by SHA. It gets short-lived, repository-scoped tokens from a self-hosted octo-sts that uses the organization's own GitHub App, and posts the required check as that App.
+Chosen: **A8 + B4 + C3 + D1.** The gate runs in GitHub Actions on `pull_request_target` for every PR. It calls our action through a reusable workflow pinned by SHA. It gets short-lived, repository-scoped tokens from a configurable OIDC token broker (see Token providers) and posts the required check as the broker's App.
 
 ### Components
 
 - **Action** (`zendern/priskinator@<sha>`): runs the Go core against the PR, read as data. It is the product.
 - **Reusable workflow** (`zendern/priskinator/.github/workflows/gate.yml@<sha>`): one job, one step that uses the action. This is the recommended entry point and the trust anchor.
 - **Caller workflow** in each repository: a few lines that invoke the reusable workflow on the triggers below.
-- **octo-sts broker**, self-hosted per organization with the organization's own GitHub App (the tenancy model of ADR 0014 is kept). The App's private key lives only in the broker's key store.
+- **Token provider**: an octo-sts broker, either Chainguard's public instance or one self-hosted per organization with the organization's own GitHub App (the tenancy model of ADR 0014 is kept). The App's private key lives only in the broker's key store.
 - **Trust policy** in each repository at `.github/chainguard/riskinator.sts.yaml`.
 
 ### Triggers
@@ -97,6 +97,21 @@ Chosen: **A8 + B4 + C3 + D1.** The gate runs in GitHub Actions on `pull_request_
 | Policy merged | `push` to the default branch, re-evaluating open PRs | Default branch |
 | Settings drift, waiver expiry, reports | `schedule` in the organization's central policy repository, covering every repository (ADR 0009, decision 8) | Default branch |
 | Org-baseline policy changed | Picked up on each PR's next event. Immediate re-evaluation across repositories is deferred. | n/a |
+
+### Token providers
+
+The credential source is configuration, set in the caller workflow on the default branch or in base-branch policy. It is never controlled by the PR.
+
+| Provider | Status | Notes |
+|---|---|---|
+| Chainguard's public octo-sts (`octo-sts.dev`) | Supported. Default for quick start and the S4 spike. | Nothing to host and no key to handle. Chainguard's App holds installation permissions on the covered repositories, and checks post under the shared `octo-sts` App identity. Not recommended where SOC 2 or ISO 27001 evidence depends on the gate, because it adds a third party with write access (ADR 0008 and ADR 0009 vendor treatment). |
+| Self-hosted octo-sts with the org's own App | Supported. Recommended for compliance-bound organizations. | A small stateless service, for example on serverless. The key stays in the org's key store. |
+| Vault GitHub secrets engine | Deferred | For organizations already running Vault |
+| Cloud key service signing the App JWT, behind a broker | Deferred | The key never leaves the key service |
+| App key in an environment secret, App installed on exactly one repository | Deferred | Only safe because the key's reach is one repository |
+| Job token only; App key in repo or org secrets; one org-wide App key in each repo's environment | **Not offered** | The check could be faked, or the org-wide key would be exposed |
+
+When the check posts under a shared App identity (the public instance), any trust policy in the same repository that grants `checks: write` could post a fake gate check. Covered repositories must therefore have no other trust policy granting `checks` or `statuses` write. The G2 trigger (ADR 0006) flags new trust-policy files, and the drift job (ADR 0009) checks for such policies.
 
 ### Trust policy (required claims)
 
@@ -154,7 +169,7 @@ On a free private repository, the core still produces a check that can't be fake
 
 - Good, because no long-lived secret exists in any repository, and the org-wide key never sits next to untrusted parsing.
 - Good, because a compromised gate job can fake at most one repository's check, for about an hour.
-- Good, because adopters host only a small stateless broker, with no webhook ingress, queue, or scheduler.
+- Good, because adopters host nothing with the public broker, or only a small stateless broker when self-hosting. There is no webhook ingress, queue, or scheduler.
 - Good, because evidence reaches a write-once store through OIDC federation, with no stored cloud credentials (ADR 0009). Signed attestations are deferred to v2, and `actions/attest` only covers public repositories and Enterprise Cloud.
 - Bad, because it costs Actions minutes and adds runner start-up delay.
 - Bad, because every repository needs a caller workflow and a trust-policy file. An installer will open a PR to add them, and both files join the G1 and G2 triggers (ADR 0006).
@@ -166,7 +181,7 @@ On a free private repository, the core still produces a check that can't be fake
 
 Spike S4 in the test organization `toro-fast-CHI`, before M3 implementation starts:
 
-1. Self-hosted octo-sts with a test App and the trust policy above.
+1. Chainguard's public octo-sts installed on the test organization, with the trust policy above. Self-hosting is verified separately when that provider is built.
 2. A job added by an attacker in a same-repository PR requests a token and is denied.
 3. A plain `pull_request` run requests a token and is denied.
 4. A fork PR (from a second account) through the `pull_request_target` caller gets a token, and the check posts as the App.
