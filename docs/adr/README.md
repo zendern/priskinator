@@ -20,11 +20,16 @@ Decisions for pr-riskinator, recorded per [ADR 0001](0001-record-architecture-de
 | [0012](0012-implementation-language.md) | Implementation language: Go, content rules through ast-grep | accepted |
 | [0013](0013-rollout-and-calibration.md) | Rollout and calibration | proposed |
 | [0014](0014-github-app-hosting-and-tenancy.md) | GitHub App hosting and tenancy: self-hosted per org, long-running container | accepted |
+| [0015](0015-responsible-user-for-automated-prs.md) | Responsible user for automated PRs: forge rules in v1, close the gap in v2 | accepted (v1), v2 deferred |
 
 ## Open decisions
 
-- **0009**: evidence retention period, and which agent platforms need verified initiator resolvers first.
+- **0009**: evidence retention period.
 - **License** for open-source distribution (no ADR yet).
+
+## Deferred to v2
+
+- **0015**: a verified responsible user for PRs opened by bot accounts. v1 relies on forge rules and flags bot-authored PRs in the evidence.
 
 ## Items to verify against current GitHub behavior
 

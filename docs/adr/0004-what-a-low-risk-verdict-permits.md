@@ -28,7 +28,7 @@ The tier controls how much review is required, not whether review happens.
 
 | Verdict | Required approvals (example defaults) |
 |---|---|
-| low | 1 approver with write access, independent of author and initiator |
+| low | 1 approver with write access, other than the author (ADR 0009; responsible user for automated PRs in ADR 0015) |
 | medium | 1 code owner for the touched paths |
 | high | 2 approvers, at least one code owner |
 | any mandatory trigger | Approval from the team mapped to each trigger (ADR 0006), in addition to the above |

@@ -33,7 +33,7 @@ Chosen option: "Phased rollout with measured exit criteria", because it produces
 | 0. Backtest | Run `simulate` over the last 6–12 months of merged PRs. With no incident data, use proxy labels (see "Data we do not have yet"). | Proxy-labeled risky PRs are mostly medium or higher, and each exception has a written explanation. Weekly trigger volume is recorded as the first estimate of reviewer load. |
 | 1. Shadow | Runs on every PR. The check reports neutral and nothing is posted to the PR. Evidence records are written. | Four weeks of data. Trigger false-positive rate below an agreed target, measured by sampling. No evaluation errors left unexplained. |
 | 2. Advisory | Posts the verdict, labels, and reviewer requests. The check is visible but not required. Reviewers react to findings (useful, not useful, unsure). | Reviewer "not useful" rate below an agreed target. AI escalation precision measured. |
-| 3. Enforcing | Required check pinned to the App (ADR 0005). Separation-of-duties rules enforced. Break-glass live. | Ongoing. Reviewed monthly. |
+| 3. Enforcing | Required check pinned to the App (ADR 0005). Forge approver-independence settings verified (ADR 0009). Break-glass live. | Ongoing. Reviewed monthly. |
 | 4. Standard-change approval | Target end state per ADR 0004. Enabled one change class at a time. Shadow eligibility (`bot_eligible`) has been recorded since phase 1. | Per class: shadow-eligible PRs show an escape rate below an agreed threshold over a defined period, GitHub App approvals confirmed to satisfy required approvals, and GRC sign-off. |
 
 Ruleset "evaluate" mode is used where available to stage the forge-side settings alongside phases 1 and 2.

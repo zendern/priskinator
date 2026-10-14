@@ -60,7 +60,8 @@ Evaluation record (written on every evaluation):
 
 Merge record (written when the PR merges):
 
-- The approvals that counted: approver, time, approved head SHA, team membership at the time, and the independence check result
+- PR author, every commit author, author type (`user` or `bot`), and responsible-user status (ADR 0015)
+- The approvals that counted: approver, time, approved head SHA, and team membership at the time
 - Merged SHA and merge method
 - The final evaluation record ID
 - Break-glass or waiver use
@@ -81,14 +82,15 @@ Proposed: write each record to a WORM object store and sign it as an in-toto att
 
 ### 3. Separation-of-duties rules
 
-- An approval counts only if the approver is not the PR author, not the author of any commit in the PR, and not the initiator of an agent-authored PR.
-- A PR is agent-authored when its author, or any of its commit authors, is a bot account or an account listed as an agent in policy. When an agent pushes under a human's own account, GitHub already treats that human as the author and blocks them from approving, so no extra rule is needed.
-- The initiator is resolved only from verified sources, in this order:
-  1. forge-native agent metadata, for example the user who assigned Copilot
-  2. the actor of the event that started the agent, when the agent runs from a workflow triggered by a comment, label, or assignment
-  3. a policy mapping of a bot account to the one human who operates it
-- A commit trailer such as `Agent-Initiator: <login>` is written by the agent, so it is an untrusted claim. It can exclude the named person from approving, but it never counts as resolving the initiator. Otherwise an agent could name someone else and let its real initiator approve.
-- An agent-authored PR whose initiator is not resolved from a verified source requires two independent human approvals.
+v1 assumes every PR is tied to a human user and relies on the forge's own rules for approver independence:
+
+- GitHub and GitLab prevent the PR author from approving their own PR. When an agent works on a person's behalf under that person's account, that person is the author, so this covers the common case.
+- The forge setting "require approval of the most recent reviewable push" prevents the last pusher from approving. The settings-drift job (ADR 0005) verifies it is on.
+- The tool records the PR author, every commit author, and every approver in the evidence, so independence can be checked after the fact even where the tool does not enforce it.
+- PRs authored by a bot account are flagged in the evidence (`author_type: bot`, `responsible_user: unverified`). v1 adds no extra approval requirement for them. This is a known, documented gap, see ADR 0015.
+
+Rules the tool enforces in v1:
+
 - Approvals count only for the current head SHA (ADR 0005).
 - The approver's membership in a required team is checked and recorded at approval time.
 - Bot accounts never count as approvers. The only planned exception is the tool's own App identity, for change classes enabled under ADR 0004 option B.
@@ -131,21 +133,22 @@ Proposed as stated above, as a best-effort design without GRC input. Before the 
 ### Consequences
 
 - Good, because each sampled change can be answered with one verifiable record.
-- Good, because the agent-initiator approval gap is closed by the tool, not left to the forge.
 - Good, because exceptions exist, are bounded, and are visible.
+- Good, because v1 relies on forge-native approver independence, which auditors already understand, and records enough to check it afterwards.
 - Bad, because a WORM store and signing add infrastructure, and that infrastructure is in audit scope.
-- Bad, because initiator resolution depends on agent platforms exposing verifiable metadata. The fallback (two approvals) costs reviewer time.
+- Bad, because in v1 the person who started a bot-authored PR can approve it. The gap is flagged on every such PR and closed in v2 (ADR 0015).
 
 ### Confirmation
 
-- Tests that every SoD rule rejects the forbidden approver combinations.
+- Tests that approvals on a superseded head SHA, approvals from bot accounts, and approvals from users outside a required team do not count.
+- Tests that bot-authored PRs are flagged `responsible_user: unverified` in the evidence.
 - A test that a failed evidence write blocks the check.
 - A quarterly dry-run audit: sample 25 merged PRs and answer the standard CC8.1 questions using only the evidence store.
 
 ## More Information
 
 - Open: retention period, set with GRC.
-- Open: which agent platforms expose verifiable initiator metadata. Resolvers are added per platform, starting with the platforms in use.
+- Deferred to v2: a verified responsible user for automated PRs (ADR 0015).
 - GitHub Actions retention limits: <https://docs.github.com/en/organizations/managing-organization-settings/configuring-the-retention-period-for-github-actions-artifacts-and-logs-in-your-organization>
 - Kosli: <https://docs.kosli.com/understand_kosli/what_is_kosli>
 - What PR evidence does and does not prove: <https://oneuptime.com/blog/post/2026-08-04-github-pull-requests-change-management-evidence/view>
