@@ -78,7 +78,7 @@ The merged SHA gives deployment tooling a key to link the production artifact ba
 | Signed in-toto attestation (Sigstore or GitHub artifact attestations) | Yes, verifiable | Depends on store | Recommended in addition, for verifiability. |
 | Kosli or a similar evidence vault | Yes | Vendor-managed | Supported through a sink adapter. |
 
-Proposed: write each record to a WORM object store and sign it as an in-toto attestation. Evidence sinks are a pluggable interface. Retention is configurable and set with GRC so it covers the full audit period plus the reporting lag. If an evidence write fails, the check does not pass (ADR 0003).
+Chosen: write each record to a WORM object store and sign it as an in-toto attestation. Evidence sinks are a pluggable interface. Retention is configurable per evidence sink. The default is 13 months, covering a 12-month SOC 2 Type II window plus reporting lag. The default is a placeholder until GRC sets a value. If an evidence write fails, the check does not pass (ADR 0003).
 
 ### 3. Separation-of-duties rules
 
@@ -147,7 +147,7 @@ Proposed as stated above, as a best-effort design without GRC input. Before the 
 
 ## More Information
 
-- Open: retention period, set with GRC.
+- Retention defaults to 13 months and is configurable. Revisit the default with GRC.
 - Deferred to v2: a verified responsible user for automated PRs (ADR 0015).
 - GitHub Actions retention limits: <https://docs.github.com/en/organizations/managing-organization-settings/configuring-the-retention-period-for-github-actions-artifacts-and-logs-in-your-organization>
 - Kosli: <https://docs.kosli.com/understand_kosli/what_is_kosli>

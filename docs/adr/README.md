@@ -24,7 +24,6 @@ Decisions for pr-riskinator, recorded per [ADR 0001](0001-record-architecture-de
 
 ## Open decisions
 
-- **0009**: evidence retention period.
 - **License** for open-source distribution (no ADR yet).
 
 ## Deferred to v2
