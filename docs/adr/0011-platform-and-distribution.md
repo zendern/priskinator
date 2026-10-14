@@ -35,7 +35,7 @@ Chosen option: "A forge-agnostic core with thin adapters", because the determini
 | Analyzers | Path matcher, content rules (tree-sitter, optionally ast-grep or Semgrep), complexity, secret scan. Pinned versions. |
 | Forge adapters | GitHub first. Fetch PR data and approvals, post check runs, request reviewers, read labels and timeline. GitLab later: external status checks, approval rules, MR approval policies. |
 | AI providers | Adapter per provider (ADR 0008). |
-| Evidence sinks | WORM object store, attestation signer, Kosli (ADR 0009). |
+| Evidence sinks | S3-compatible write-once object store, Kosli (ADR 0009). Attestation signing is deferred to v2. |
 | Delivery | CLI: local use, policy development, and backtesting (`explain`, `test`, `simulate`). Action: runs the gate on PRs. Reusable workflow wrapping the action: the recommended entry point and trust anchor for PR evaluation, from shadow through enforcing (ADR 0017). The same action also runs `riskinator test` and `simulate` in the central policy repo's CI. Container image: the action's runtime, pinned by digest. Per-org infrastructure: a self-hosted octo-sts broker with the org's own GitHub App (ADR 0017). |
 
 ### Supply chain of the tool itself

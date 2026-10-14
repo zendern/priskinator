@@ -95,7 +95,8 @@ Chosen: **A8 + B4 + C3 + D1.** The gate runs in GitHub Actions on `pull_request_
 | Review submitted or dismissed | `pull_request_review` (no privileges) triggers `workflow_run`. The privileged run looks the PR up by head SHA, because `workflow_run.pull_requests` is empty for fork PRs. | Default branch |
 | Re-run or manual evaluation | Actions "Re-run jobs", or `/riskinator rerun` and `/riskinator evaluate` through `issue_comment`, after checking that the commenter has write access | Default branch |
 | Policy merged | `push` to the default branch, re-evaluating open PRs | Default branch |
-| Settings drift, waiver expiry, reports | `schedule` | Default branch |
+| Settings drift, waiver expiry, reports | `schedule` in the organization's central policy repository, covering every repository (ADR 0009, decision 8) | Default branch |
+| Org-baseline policy changed | Picked up on each PR's next event. Immediate re-evaluation across repositories is deferred. | n/a |
 
 ### Trust policy (required claims)
 
@@ -154,7 +155,7 @@ On a free private repository, the core still produces a check that can't be fake
 - Good, because no long-lived secret exists in any repository, and the org-wide key never sits next to untrusted parsing.
 - Good, because a compromised gate job can fake at most one repository's check, for about an hour.
 - Good, because adopters host only a small stateless broker, with no webhook ingress, queue, or scheduler.
-- Good, because signed evidence comes from `actions/attest`, which resolves spike S3.
+- Good, because evidence reaches a write-once store through OIDC federation, with no stored cloud credentials (ADR 0009). Signed attestations are deferred to v2, and `actions/attest` only covers public repositories and Enterprise Cloud.
 - Bad, because it costs Actions minutes and adds runner start-up delay.
 - Bad, because every repository needs a caller workflow and a trust-policy file. An installer will open a PR to add them, and both files join the G1 and G2 triggers (ADR 0006).
 - Bad, because review events need a `workflow_run` relay with a head-SHA lookup for forks.

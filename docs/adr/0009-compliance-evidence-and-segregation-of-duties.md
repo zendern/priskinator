@@ -75,10 +75,19 @@ The merged SHA gives deployment tooling a key to link the production artifact ba
 | PR comments and check runs only | No | Tied to the forge | Editable. Not sufficient alone. |
 | Actions artifacts | No | Up to 400 days, deletable | Not sufficient alone. |
 | Object store in write-once (WORM) mode, for example S3 Object Lock in compliance mode | Yes | Set by GRC | Recommended primary store. |
-| Signed in-toto attestation (Sigstore or GitHub artifact attestations) | Yes, verifiable | Depends on store | Recommended in addition, for verifiability. |
+| Signed in-toto attestation (Sigstore or GitHub artifact attestations) | Yes, verifiable offline | Depends on store | Deferred to v2 (see below). |
 | Kosli or a similar evidence vault | Yes | Vendor-managed | Supported through a sink adapter. |
 
-Chosen: write each record to a WORM object store and sign it as an in-toto attestation. Signing uses GitHub artifact attestations (`actions/attest`) from the gate's Actions job (ADR 0017). The gate reaches the object store through OIDC federation to the cloud provider, so no stored cloud credentials are needed. Evidence sinks are a pluggable interface. Retention is configurable per evidence sink. The default is 13 months, covering a 12-month SOC 2 Type II window plus reporting lag. The default is a placeholder until GRC sets a value. If an evidence write fails, the check does not pass (ADR 0003).
+Chosen for v1: write each record to an S3-compatible object store in write-once mode (object lock in compliance mode). Provenance comes from access control and the store's audit log, not from a signature:
+
+- The gate reaches the store through OIDC federation to the cloud provider. No stored cloud credentials exist.
+- The store's role trusts only the gate's identity (repository owner, default branch, pinned workflow), and it may only put objects under that repository's prefix. It has no delete or overwrite permission.
+- The store's access log records which identity wrote each object.
+- MinIO, which supports object locking, is used for local development and end-to-end tests, so v1 is cloud-agnostic.
+
+Signed attestations are deferred to v2. When added, they use GitHub artifact attestations (`actions/attest`) where available, meaning public repositories on any plan and private or internal repositories on Enterprise Cloud. Elsewhere they use cosign with a cloud key-service key. Signing with Sigstore's public instance is not used for private repositories, because the public transparency log would expose the repository's name and workflow identity.
+
+Evidence sinks are a pluggable interface. Retention is configurable per evidence sink. The default is 13 months, covering a 12-month SOC 2 Type II window plus reporting lag. The default is a placeholder until GRC sets a value. If an evidence write fails, the check does not pass (ADR 0003).
 
 ### 3. Separation-of-duties rules
 
@@ -125,6 +134,13 @@ A report command produces, for a date range:
 
 - Every merge to every protected branch, with verdict, approvals, waivers, and break-glass use
 - A completeness check comparing merges in the forge's audit log or push events against evaluation records, so direct pushes or bypasses show up as gaps instead of disappearing
+- A dead-man's-switch check: any covered repository without a settings-drift record in the last N days is flagged, so a disabled or dropped scheduled run becomes visible
+
+### 8. Settings-drift checking
+
+- One central scheduled workflow in the organization's policy repository checks every covered repository. It uses a broker token with `administration: read`, granted by a trust policy in that repository. Repository admins cannot disable it for their own repository.
+- It runs at an off-peak minute (for example `:17`). GitHub delays scheduled runs under load and may drop some, especially at the top of the hour.
+- GitHub disables scheduled workflows in public repositories after 60 days without activity. The dead-man's-switch check in the auditor report catches this, along with dropped or disabled runs.
 
 ## Decision Outcome
 

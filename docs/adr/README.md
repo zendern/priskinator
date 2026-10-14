@@ -38,7 +38,7 @@ None.
 |---|---|---|
 | S1 | Does a GitHub App's approval count toward required approvals? | Done: yes ([report](../spikes/s1-app-approval-counts.md)) |
 | S2 | How to measure complexity change: ast-grep decision points, or lizard? | Open |
-| S3 | How to sign attestations | Resolved by [0017](0017-actions-gate-with-oidc-token-broker.md): `actions/attest` in the gate job |
+| S3 | How to sign evidence attestations | Deferred to v2. v1 relies on write-once storage, a gate-only write identity, and the store's audit log ([0009](0009-compliance-evidence-and-segregation-of-duties.md)) |
 | S4 | Actions gate with octo-sts: attacker jobs and `pull_request` runs denied, fork PRs and the review relay work | Next. Confirms [0017](0017-actions-gate-with-oidc-token-broker.md) |
 
 ## GitHub behavior checks (2026-10-13)
