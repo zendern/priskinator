@@ -1,0 +1,297 @@
+# Built-in defaults, shipped with the tool (ADR 0010, layer 1).
+#
+# The G1-G10 baseline comes from ADR 0006. Rules without paths are content or
+# change-shape rules evaluated in code; policy sets their reviewers and risk.
+# Reviewer slugs are placeholders that an org baseline replaces with its own
+# teams. Scoring numbers are conservative starting points until the backtest
+# (ADR 0013) calibrates them.
+version: 1
+
+match:
+  case_sensitive: false
+
+limits:
+  max_file_bytes: 1048576
+  max_changed_files: 300
+  max_changed_lines: 5000
+
+triggers:
+  # G1: CI/CD pipeline definitions (T1, T2)
+  G1.ci-workflows:
+    description: CI/CD pipeline definitions
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - "**/action.yml"
+      - "**/action.yaml"
+      - ".gitlab-ci.yml"
+      - ".gitlab/**"
+      - "**/Jenkinsfile"
+      - ".circleci/**"
+      - "azure-pipelines.yml"
+      - ".azure-pipelines/**"
+      - ".buildkite/**"
+      - "bitbucket-pipelines.yml"
+    reviewers: [platform]
+    risk: high
+
+  # G2: gate and governance files (T1)
+  G2.gate-governance:
+    description: priskinator policy and prompts, trust policies, ownership and repository settings
+    paths:
+      - ".priskinator/**"
+      - ".github/chainguard/**"
+      - "CODEOWNERS"
+      - ".github/CODEOWNERS"
+      - "docs/CODEOWNERS"
+      - ".gitlab/CODEOWNERS"
+      - "**/.gitattributes"
+      - ".gitmodules"
+      - ".github/dependabot.yml"
+      - ".github/dependabot.yaml"
+      - "**/renovate.json"
+      - "**/renovate.json5"
+      - ".github/renovate.json*"
+      - "**/.renovaterc*"
+      - ".github/settings.yml"
+    reviewers: [platform]
+    risk: high
+
+  # G3: lint, format, and type-check configuration (T2). pyproject.toml and
+  # setup.cfg match as whole files until section-aware matching exists.
+  G3.lint-config:
+    description: Lint, format, and type-check configuration
+    paths:
+      - "**/.eslintrc*"
+      - "**/eslint.config.*"
+      - "**/.eslintignore"
+      - "**/.prettierrc*"
+      - "**/prettier.config.*"
+      - "**/biome.json*"
+      - "**/ruff.toml"
+      - "**/.ruff.toml"
+      - "**/.flake8"
+      - "**/.pylintrc"
+      - "**/pylintrc"
+      - "**/mypy.ini"
+      - "**/.mypy.ini"
+      - "**/pyrightconfig.json"
+      - "**/.golangci.y*ml"
+      - "**/.golangci.toml"
+      - "**/.golangci.json"
+      - "**/.rubocop.yml"
+      - "**/tsconfig*.json"
+      - "**/.stylelintrc*"
+      - "**/clippy.toml"
+      - "**/.clippy.toml"
+      - "**/rustfmt.toml"
+      - "**/.rustfmt.toml"
+      - "**/.editorconfig"
+      - "**/pyproject.toml"
+      - "**/setup.cfg"
+    reviewers: [platform]
+    risk: medium
+
+  # G4: hook managers and commit gates (T2)
+  G4.hook-managers:
+    description: Hook managers and commit gates
+    paths:
+      - "**/.pre-commit-config.yaml"
+      - "**/.pre-commit-config.yml"
+      - "**/lefthook.yml"
+      - "**/lefthook.yaml"
+      - "**/.lefthook.yml"
+      - "**/.lefthook.yaml"
+      - "**/lefthook-local.yml"
+      - "**/lefthook-local.yaml"
+      - ".lefthook/**"
+      - ".husky/**"
+      - "**/.lintstagedrc*"
+      - "**/lint-staged.config.*"
+      - ".githooks/**"
+      - "**/commitlint.config.*"
+      - "**/.commitlintrc*"
+    reviewers: [platform]
+    risk: medium
+
+  # G5: test harness and thresholds (T2, T4). pyproject.toml and package.json
+  # sections are matched once section-aware matching exists.
+  G5.test-harness:
+    description: Test harness and coverage thresholds
+    paths:
+      - "**/pytest.ini"
+      - "**/tox.ini"
+      - "**/noxfile.py"
+      - "**/conftest.py"
+      - "**/jest.config.*"
+      - "**/vitest.config.*"
+      - "**/vitest.workspace.*"
+      - "**/karma.conf.*"
+      - "**/.mocharc*"
+      - "**/playwright.config.*"
+      - "**/codecov.yml"
+      - "**/.codecov.yml"
+      - "**/.coveragerc"
+      - "**/.nycrc*"
+    reviewers: [platform]
+    risk: medium
+
+  # G6: build and task scripts that CI invokes (T2). package.json matches as a
+  # whole file until key-aware matching exists.
+  G6.build-scripts:
+    description: Build and task scripts that CI invokes
+    paths:
+      - "**/Makefile"
+      - "**/GNUmakefile"
+      - "**/*.mk"
+      - "**/justfile"
+      - "**/.justfile"
+      - "**/Taskfile.y*ml"
+      - "**/Taskfile.dist.y*ml"
+      - "**/mise.toml"
+      - "**/.mise.toml"
+      - "**/package.json"
+      - "scripts/ci/**"
+    reviewers: [platform]
+    risk: medium
+
+  # G7: security-sensitive code (T5)
+  G7.security-paths:
+    description: Security-sensitive paths
+    paths:
+      - "**/auth/**"
+      - "**/authn/**"
+      - "**/authz/**"
+      - "**/security/**"
+      - "**/crypto/**"
+      - "**/session*/**"
+      - "**/middleware/*auth*"
+    reviewers: [security]
+    risk: high
+  G7.security-content:
+    description: Security-sensitive logic changes found by content rules
+    reviewers: [security]
+    risk: high
+
+  # G8: supply chain (T6)
+  G8.new-dependency:
+    description: New direct dependency in a manifest
+    reviewers: [security]
+    risk: high
+  G8.registry-config:
+    description: Package registry or index configuration
+    paths:
+      - "**/.npmrc"
+      - "**/.yarnrc"
+      - "**/.yarnrc.yml"
+      - "**/pip.conf"
+      - "**/pip.ini"
+      - "**/uv.toml"
+      - "**/.cargo/config"
+      - "**/.cargo/config.toml"
+    reviewers: [security]
+    risk: high
+  G8.install-hooks:
+    description: Package install hooks (preinstall, install, postinstall, prepare)
+    reviewers: [security]
+    risk: high
+  G8.base-image:
+    description: Container base image change
+    reviewers: [security]
+    risk: high
+
+  # G9: gaming signals in added lines (T3, T4)
+  G9.suppressions:
+    description: Lint, type-check, or coverage suppression added
+    reviewers: [platform]
+    risk: medium
+  G9.test-skips:
+    description: Test skipped or marked expected to fail
+    reviewers: [platform]
+    risk: medium
+  G9.ci-escape-hatches:
+    description: CI escape hatch added (continue-on-error, || true, --no-verify, ...)
+    reviewers: [platform]
+    risk: medium
+  G9.test-deletion:
+    description: Test file deleted or assertions removed
+    reviewers: [platform]
+    risk: medium
+  G9.snapshot-only:
+    description: Snapshot or golden files changed without a source change
+    reviewers: [platform]
+    risk: medium
+
+  # G10: hidden-change vectors (T7)
+  G10.submodule:
+    description: Submodule pointer change
+    reviewers: [platform]
+    risk: medium
+  G10.symlink:
+    description: Symlink added or changed
+    reviewers: [platform]
+    risk: medium
+  G10.executable-mode:
+    description: File mode changed to executable
+    reviewers: [platform]
+    risk: medium
+  G10.binary:
+    description: Binary file added or changed
+    reviewers: [platform]
+    risk: medium
+  G10.lfs:
+    description: Git LFS pointer added or changed
+    reviewers: [platform]
+    risk: medium
+  G10.oversize-file:
+    description: File above limits.max_file_bytes
+    reviewers: [platform]
+    risk: medium
+  G10.watched-path-moved:
+    description: Rename or deletion out of a path watched by G1-G8
+    reviewers: [platform]
+    risk: high
+
+scoring:
+  thresholds:
+    medium: 20
+    high: 50
+  factors:
+    size:
+      - {up_to: 50, points: 0}
+      - {up_to: 200, points: 5}
+      - {up_to: 500, points: 15}
+      - {up_to: 1000, points: 25}
+      - {points: 40}
+    files:
+      - {up_to: 10, points: 0}
+      - {up_to: 30, points: 5}
+      - {up_to: 100, points: 15}
+      - {points: 25}
+    diffusion:
+      - {up_to: 2, points: 0}
+      - {up_to: 5, points: 5}
+      - {up_to: 10, points: 15}
+      - {points: 25}
+    complexity_delta:
+      - {up_to: 5, points: 0}
+      - {up_to: 15, points: 10}
+      - {points: 25}
+    test_signal:
+      - {up_to: 20, points: 0}
+      - {up_to: 100, points: 5}
+      - {points: 15}
+  floors: []
+  exclude_paths:
+    - "**/vendor/**"
+    - "**/node_modules/**"
+    - "**/go.sum"
+    - "**/package-lock.json"
+    - "**/pnpm-lock.yaml"
+    - "**/yarn.lock"
+    - "**/poetry.lock"
+    - "**/uv.lock"
+    - "**/Cargo.lock"
+
+ai:
+  enabled: false

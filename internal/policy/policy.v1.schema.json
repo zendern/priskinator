@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/zendern/priskinator/schemas/policy/v1.json",
+  "title": "priskinator policy, version 1",
+  "description": "One policy layer: built-in defaults, an org baseline, or a repo policy (ADR 0010). Unknown keys are errors.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version"],
+  "properties": {
+    "version": {
+      "description": "Schema version of this file.",
+      "const": 1
+    },
+    "extends": {
+      "description": "The layer this one builds on. Repo policy always extends the org baseline; the key exists for clarity only.",
+      "enum": ["org"]
+    },
+    "match": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "case_sensitive": {
+          "description": "Match paths case-sensitively. Off by default, because macOS and Windows checkouts are case-insensitive (ADR 0006).",
+          "type": "boolean"
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_file_bytes": {
+          "description": "Files larger than this fire G10.oversize-file.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_changed_files": {
+          "description": "Diffs touching more files than this skip scoring and fire oversize (ADR 0003).",
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_changed_lines": {
+          "description": "Diffs with more added plus removed lines than this skip scoring and fire oversize (ADR 0003).",
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "triggers": {
+      "description": "Mandatory human-review rules by stable ID (ADR 0006). G1-G10 are baseline rules; new rules use the org. or repo. namespace.",
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(G([1-9]|10)|org|repo)\\.[a-z0-9]+(-[a-z0-9]+)*$"
+      },
+      "additionalProperties": { "$ref": "#/$defs/trigger" }
+    },
+    "scoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "thresholds": {
+          "description": "Total points at which the score tier becomes medium and high (ADR 0007).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["medium", "high"],
+          "properties": {
+            "medium": { "type": "integer", "minimum": 1 },
+            "high": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "factors": {
+          "description": "Points bands per factor. Each band covers raw values up to and including up_to; the last band has no up_to.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "size": { "$ref": "#/$defs/bands", "description": "Lines added plus removed, excluding generated and vendored files." },
+            "files": { "$ref": "#/$defs/bands", "description": "Files changed, excluding generated and vendored files." },
+            "diffusion": { "$ref": "#/$defs/bands", "description": "Top-level directories touched." },
+            "complexity_delta": { "$ref": "#/$defs/bands", "description": "Sum of per-function cyclomatic complexity increases." },
+            "test_signal": { "$ref": "#/$defs/bands", "description": "Non-test lines changed when no test file changed." }
+          }
+        },
+        "floors": {
+          "description": "Criticality floors: a minimum risk for changes to these paths.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/floor" }
+        },
+        "exclude_paths": {
+          "description": "Paths left out of size and diffusion, in addition to linguist-generated and linguist-vendored files.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/glob" }
+        }
+      }
+    },
+    "ai": {
+      "description": "Optional AI assessment (ADR 0008). Disabled unless enabled here.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "required": {
+          "description": "Set in the org baseline to stop repos from disabling the AI.",
+          "type": "boolean"
+        },
+        "provider": { "enum": ["anthropic", "bedrock", "vertex", "openai-compatible"] },
+        "model": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "endpoint": { "type": "string", "pattern": "^https://[^\\s]+$" },
+        "max_input_tokens": { "type": "integer", "minimum": 1 },
+        "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 3600 }
+      }
+    }
+  },
+  "$defs": {
+    "risk": { "enum": ["low", "medium", "high"] },
+    "glob": {
+      "description": "doublestar glob over repository-relative paths with forward slashes.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "team": {
+      "description": "Reviewer team slug, optionally org/team.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)?$"
+    },
+    "trigger": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string", "maxLength": 500 },
+        "enabled": { "type": "boolean" },
+        "paths": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/glob" } },
+        "add_paths": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/glob" } },
+        "reviewers": { "type": "array", "items": { "$ref": "#/$defs/team" } },
+        "risk": { "$ref": "#/$defs/risk", "description": "Risk floor applied when the rule fires." }
+      }
+    },
+    "floor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paths", "risk"],
+      "properties": {
+        "description": { "type": "string", "maxLength": 500 },
+        "paths": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/glob" } },
+        "risk": { "$ref": "#/$defs/risk" }
+      }
+    },
+    "bands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["points"],
+        "properties": {
+          "up_to": { "type": "integer", "minimum": 0 },
+          "points": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  }
+}
