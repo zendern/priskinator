@@ -384,6 +384,46 @@ func TestLFSPointer(t *testing.T) {
 	}
 }
 
+// Binary and LFS describe either side, so a file that stops being binary or
+// an LFS pointer keeps the flag.
+func TestOldSideBinaryAndLFS(t *testing.T) {
+	r := newRepo(t)
+	r.write("assets/logo.png", "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR")
+	r.write("model.bin", "version https://git-lfs.github.com/spec/v1\noid sha256:4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393\nsize 12345\n")
+	base := r.commit("base")
+	r.write("assets/logo.png", "now text\n")
+	r.write("model.bin", "now text\n")
+	head := r.commit("head")
+
+	cs := r.evaluate(base, head)
+	if len(cs.Files) != 2 {
+		t.Fatalf("files = %+v", cs.Files)
+	}
+	if f := cs.Files[0]; !f.Binary || f.LFS {
+		t.Errorf("%s binary/lfs = %v/%v, want true/false", f.Path, f.Binary, f.LFS)
+	}
+	if f := cs.Files[1]; !f.LFS || f.Binary {
+		t.Errorf("%s binary/lfs = %v/%v, want false/true", f.Path, f.Binary, f.LFS)
+	}
+}
+
+// Git diffs nothing larger than core.bigFileThreshold and calls it binary.
+// Such a file stays binary even though its content is text, because there
+// are no lines to score.
+func TestGitBinaryVerdictOnTextContent(t *testing.T) {
+	r := newRepo(t)
+	r.git("config", "core.bigFileThreshold", "10")
+	r.write("big.txt", "plain text, longer than the threshold\n")
+	base := r.commit("base")
+	r.write("big.txt", "other text, longer than the threshold\n")
+	head := r.commit("head")
+
+	f := onlyFile(t, r.evaluate(base, head))
+	if !f.Binary || len(f.Hunks) != 0 {
+		t.Errorf("file = %+v, want binary with no hunks", f)
+	}
+}
+
 func TestUnusualPaths(t *testing.T) {
 	r := newRepo(t)
 	base := r.commit("base")

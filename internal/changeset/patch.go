@@ -66,8 +66,9 @@ type block struct {
 
 func splitBlocks(patch []byte) ([]block, error) {
 	lines := strings.Split(string(patch), "\n")
-	if n := len(lines); n > 0 && lines[n-1] == "" {
-		lines = lines[:n-1]
+	// strings.Split always returns at least one line.
+	if last := len(lines) - 1; lines[last] == "" {
+		lines = lines[:last]
 	}
 	var blocks []block
 	for i := 0; i < len(lines); {
@@ -133,11 +134,11 @@ func parseHunkHeader(s string) (Hunk, error) {
 	if !ok {
 		return Hunk{}, fmt.Errorf("bad hunk header %q", s)
 	}
-	end := strings.Index(rest, " @@")
-	if end < 0 {
+	ranges, _, ok := strings.Cut(rest, " @@")
+	if !ok {
 		return Hunk{}, fmt.Errorf("bad hunk header %q", s)
 	}
-	oldR, newR, ok := strings.Cut(rest[:end], " +")
+	oldR, newR, ok := strings.Cut(ranges, " +")
 	if !ok {
 		return Hunk{}, fmt.Errorf("bad hunk header %q", s)
 	}
@@ -176,18 +177,16 @@ func parseRange(s string) (start, count int, err error) {
 	return start, count, nil
 }
 
+// needsQuote reports whether git quotes a path holding r. Bytes of a
+// multi-byte character are all 0x80 or above, so checking runes matches
+// git's byte-wise check.
+func needsQuote(r rune) bool { return r == '"' || r == '\\' || r < 0x20 || r == 0x7f }
+
 // quotePath quotes a path the way git does in patch headers with
 // core.quotePath=false: C-style quoting only when the path contains a double
 // quote, a backslash, or a control character.
 func quotePath(p string) string {
-	needs := false
-	for i := 0; i < len(p); i++ {
-		if c := p[i]; c == '"' || c == '\\' || c < 0x20 || c == 0x7f {
-			needs = true
-			break
-		}
-	}
-	if !needs {
+	if !strings.ContainsFunc(p, needsQuote) {
 		return p
 	}
 	var b bytes.Buffer

@@ -3,6 +3,7 @@ package policy
 import (
 	"encoding/json"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -214,5 +215,130 @@ func TestSchemaProblemsAtOnePathKeepTheirOrder(t *testing.T) {
 	want := "invalid policy: /: missing property 'version'; /: additional properties 'a' not allowed"
 	if err == nil || err.Error() != want {
 		t.Errorf("err = %v\nwant  %s", err, want)
+	}
+}
+
+func TestParseNamesTheBadRuleID(t *testing.T) {
+	_, err := Parse([]byte("version: 1\ntriggers:\n  bad: {paths: [a]}\n"))
+	want := `invalid policy: /triggers: invalid propertyName 'bad': 'bad' does not match pattern '^(G([1-9]|10)|org|repo)\\.[a-z0-9]+(-[a-z0-9]+)*$'`
+	if err == nil || err.Error() != want {
+		t.Errorf("err = %v\nwant  %s", err, want)
+	}
+}
+
+// Restating what the baseline already says, or relaxing a setting the
+// baseline leaves loose, is not a weakening.
+func TestMergeRestatingTheBaselineIsNotAWeakening(t *testing.T) {
+	tests := []struct {
+		name, org, repo string
+		check           func(t *testing.T, got *Policy)
+	}{
+		{
+			name: "case-sensitive over a case-sensitive baseline",
+			org:  "version: 1\nmatch: {case_sensitive: true}\n",
+			repo: "version: 1\nmatch: {case_sensitive: true}\n",
+			check: func(t *testing.T, got *Policy) {
+				if !isTrue(got.Match.CaseSensitive) {
+					t.Error("matching is no longer case-sensitive")
+				}
+			},
+		},
+		{
+			name: "case-insensitive over the default",
+			org:  "version: 1\n",
+			repo: "version: 1\nmatch: {case_sensitive: false}\n",
+			check: func(t *testing.T, got *Policy) {
+				if c := got.Match.CaseSensitive; c == nil || *c {
+					t.Errorf("case_sensitive = %v, want false", c)
+				}
+			},
+		},
+		{
+			name: "enable an enabled rule",
+			org:  "version: 1\n",
+			repo: "version: 1\ntriggers:\n  G1.ci-workflows: {enabled: true}\n",
+			check: func(t *testing.T, got *Policy) {
+				if !trigger(t, got, "G1.ci-workflows").IsEnabled() {
+					t.Error("rule is disabled")
+				}
+			},
+		},
+		{
+			name: "disable a rule the org disabled",
+			org:  "version: 1\ntriggers:\n  G1.ci-workflows: {enabled: false}\n",
+			repo: "version: 1\ntriggers:\n  G1.ci-workflows: {enabled: false}\n",
+			check: func(t *testing.T, got *Policy) {
+				if trigger(t, got, "G1.ci-workflows").IsEnabled() {
+					t.Error("rule is enabled")
+				}
+			},
+		},
+		{
+			name: "not require an optional AI",
+			org:  "version: 1\nai: {enabled: true}\n",
+			repo: "version: 1\nai: {required: false}\n",
+			check: func(t *testing.T, got *Policy) {
+				if got.AI.IsRequired() {
+					t.Error("AI is required")
+				}
+			},
+		},
+		{
+			name: "enable a required AI",
+			org:  "version: 1\nai: {enabled: true, required: true}\n",
+			repo: "version: 1\nai: {enabled: true}\n",
+			check: func(t *testing.T, got *Policy) {
+				if !got.AI.IsEnabled() || !got.AI.IsRequired() {
+					t.Errorf("ai = %+v", got.AI)
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ws := Merge(Overlay(Defaults(), mustParse(t, tt.org)), mustParse(t, tt.repo))
+			if len(ws) != 0 {
+				t.Errorf("weakenings = %+v, want none", ws)
+			}
+			tt.check(t, got)
+		})
+	}
+}
+
+func TestMergeKeepsGoingAfterARuleOrFactor(t *testing.T) {
+	got, ws := Merge(Defaults(), mustParse(t, "version: 1\n"+
+		"triggers:\n  repo.a: {paths: [a/**]}\n  repo.b: {paths: [b/**]}\n"+
+		"scoring:\n  factors:\n    size: [{points: 0}]\n    files: [{points: 99}]\n"))
+	if len(ws) != 1 || ws[0].Path != "/scoring/factors/size" {
+		t.Errorf("weakenings = %+v, want only the size bands", ws)
+	}
+	for _, id := range []string{"repo.a", "repo.b"} {
+		trigger(t, got, id)
+	}
+	if f := got.Scoring.Factors.Files; len(f) != 1 || f[0].Points != 99 {
+		t.Errorf("files bands = %+v, want the repo's", f)
+	}
+}
+
+func TestFloorsWithTheSameRiskAreDistinct(t *testing.T) {
+	base := mustParse(t, "version: 1\nscoring:\n  floors:\n    - {paths: [db/**], risk: high}\n")
+	got := Overlay(base, mustParse(t, "version: 1\nscoring:\n  floors:\n    - {paths: [api/**], risk: high}\n"))
+	if fl := got.Scoring.Floors; len(fl) != 2 || fl[1].Paths[0] != "api/**" {
+		t.Errorf("floors = %+v, want db/** and api/**", fl)
+	}
+}
+
+func TestCheckReportsEveryRuleAndGlob(t *testing.T) {
+	got := check(&Policy{Triggers: map[string]*Trigger{
+		"G1.ci-workflows": nil,
+		"G2.secrets":      {Paths: []string{`a\b`, "/c"}},
+	}})
+	var paths []string
+	for _, p := range got {
+		paths = append(paths, p.Path)
+	}
+	want := []string{"/triggers/G1.ci-workflows", "/triggers/G2.secrets/paths/0", "/triggers/G2.secrets/paths/1"}
+	if !slices.Equal(paths, want) {
+		t.Errorf("problem paths = %q, want %q", paths, want)
 	}
 }

@@ -1,5 +1,5 @@
 # Mutation testing with gremlins (https://gremlins.dev), run by `task mutate`
-# (whole module) and `task mutate-diff` (lines changed since a base). Both fail
+# (whole module) and `task mutate-diff` (packages changed since a base). Both fail
 # when a threshold is missed.
 unleash:
   # Efficacy: killed / (killed + lived). Mutant coverage: mutants some test
@@ -16,3 +16,19 @@ unleash:
   # which hides results: at 10, a run on internal/policy alone timed out 52 of
   # 168 mutants; at 30 none time out.
   timeout-coefficient: 30
+# The default set leaves out &&/||, break/continue, compound assignments,
+# bitwise operators, and self-assignments. Go's statement coverage can't see
+# those either, so every mutator is on.
+mutants:
+  invert-assignments:
+    enabled: true
+  invert-bitwise:
+    enabled: true
+  invert-bwassign:
+    enabled: true
+  invert-logical:
+    enabled: true
+  invert-loopctrl:
+    enabled: true
+  remove-self-assignments:
+    enabled: true

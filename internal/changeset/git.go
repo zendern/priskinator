@@ -190,8 +190,9 @@ func (g *gitRunner) verifyCommit(ctx context.Context, rev string) error {
 // parseRaw reads `diff-tree --raw -z` output.
 func parseRaw(raw []byte) ([]File, error) {
 	fields := bytes.Split(raw, []byte{0})
-	if n := len(fields); n > 0 && len(fields[n-1]) == 0 {
-		fields = fields[:n-1]
+	// bytes.Split always returns at least one field.
+	if last := len(fields) - 1; len(fields[last]) == 0 {
+		fields = fields[:last]
 	}
 	var files []File
 	for i := 0; i < len(fields); {
@@ -272,12 +273,13 @@ func (g *gitRunner) inspectBlobs(ctx context.Context, files []File) error {
 	}
 	for i := range files {
 		f := &files[i]
-		if b, ok := blobs[f.OldOID]; ok && f.OldMode != ModeSubmodule {
+		// Submodule commits were never requested, so they are not in blobs.
+		if b, ok := blobs[f.OldOID]; ok {
 			f.OldSize = b.size
 			f.Binary = f.Binary || isBinary(b.head)
 			f.LFS = f.LFS || isLFSPointer(b)
 		}
-		if b, ok := blobs[f.NewOID]; ok && f.NewMode != ModeSubmodule {
+		if b, ok := blobs[f.NewOID]; ok {
 			f.NewSize = b.size
 			f.Binary = f.Binary || isBinary(b.head)
 			f.LFS = f.LFS || isLFSPointer(b)

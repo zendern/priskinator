@@ -77,6 +77,23 @@ func rawEntry(meta string, paths ...string) string {
 	return meta + "\x00" + strings.Join(paths, "\x00") + "\x00"
 }
 
+func TestModeChanged(t *testing.T) {
+	tests := []struct {
+		old, new string
+		want     bool
+	}{
+		{ModeRegular, ModeExecutable, true},
+		{ModeRegular, ModeRegular, false},
+		{"", ModeRegular, false},
+		{ModeRegular, "", false},
+	}
+	for _, tt := range tests {
+		if got := (File{OldMode: tt.old, NewMode: tt.new}).ModeChanged(); got != tt.want {
+			t.Errorf("ModeChanged(%q, %q) = %v, want %v", tt.old, tt.new, got, tt.want)
+		}
+	}
+}
+
 func TestParseRaw(t *testing.T) {
 	raw := rawEntry(":100644 100755 "+oidA+" "+oidB+" M", "run.sh") +
 		rawEntry(":000000 100644 "+oidZ+" "+oidB+" A", "new.go") +
