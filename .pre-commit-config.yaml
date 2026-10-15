@@ -21,9 +21,10 @@ repos:
       - id: mixed-line-ending
         args: [--fix=lf]
 
-  # Conventional Commits check on the commit message.
+  # Conventional Commits check on the commit message. Remote hooks are frozen to
+  # a commit SHA with the tag in a comment (`prek autoupdate --freeze`).
   - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v4.4.0
+    rev: 91ab4bf57e58b32adf1a122681f6ebe164d081c8 # frozen: v4.4.0
     hooks:
       - id: conventional-pre-commit
         stages: [commit-msg]
