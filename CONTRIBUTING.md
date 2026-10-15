@@ -24,6 +24,10 @@
 
 The other Go tools (golangci-lint, gofumpt, govulncheck, go-licenses) install into `./bin` on first use, at the versions pinned in `Taskfile.yml`, built with the `go.mod` toolchain.
 
+## Quality gates
+
+- **Import boundaries** are depguard rules in `.golangci.yml`, so `task lint` enforces them (`task imports` runs only them). The evaluation core (`changeset`, `content`, `policy`, `scoring`, `triggers`, `verdict`) has no network imports and does not import `forge`, `ai`, or `evidence` (ADR 0011). Only `changeset` and `content` may import `os/exec` (ADR 0005); tests may too. A new boundary is a new rule there, with the ADR it comes from in its `desc`.
+
 ## Pull requests
 
 - Use the PR template and link the issue.

@@ -13,6 +13,7 @@ task test       # go test with the race detector
 task lint       # golangci-lint
 task fmt        # gofumpt
 task check      # fmt-check, lint, test
+task imports    # import boundary rules only (also part of lint)
 task vuln       # govulncheck
 task licenses   # dependency license check
 task build      # ./bin/riskinator
