@@ -75,8 +75,9 @@ tasks:
       - |
         found=0
         for dir in $(git diff --name-only "{{.BASE}}...HEAD" -- '*.go' | xargs -r -n1 dirname | sort -u); do
-          # Skip deleted packages and directories with only tests.
-          [ -n "$(find "$dir" -maxdepth 1 -name '*.go' ! -name '*_test.go' -print -quit 2>/dev/null)" ] || continue
+          # Skip deleted packages, test-only directories, and files excluded
+          # from every build (such as the ruleguard rules in tools/lint).
+          [ "$(go list -f '{{"{{"}}len .GoFiles{{"}}"}}' "./$dir" 2>/dev/null || echo 0)" != 0 ] || continue
           found=1
           echo "==> mutating ./$dir"
           scripts/gremlins.sh "{{.BIN}}/gremlins" "./$dir"
