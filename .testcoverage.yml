@@ -1,0 +1,19 @@
+# Coverage gate for `task cover` (https://github.com/vladopajic/go-test-coverage).
+# Thresholds sit a few points under what the code had when they were set
+# (2026-10-15: total 88%, lowest package 84%, lowest file 80%), so a change that
+# adds untested code fails instead of slowly lowering the average. Raise them as
+# coverage grows; lowering one needs a reason in the PR.
+profile: coverage.out
+
+threshold:
+  file: 75
+  package: 80
+  total: 85
+
+# Per-path overrides, for example a thin main that only wires flags:
+# override:
+#   - path: ^cmd/priskinator$
+#     threshold: 60
+
+exclude:
+  paths: []

@@ -55,8 +55,8 @@ repos:
         pass_filenames: false
         priority: 10
       - id: go-test
-        name: go test
-        entry: task test
+        name: go test with coverage thresholds
+        entry: task cover
         language: system
         types: [go]
         pass_filenames: false
