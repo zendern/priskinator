@@ -16,6 +16,7 @@ make check      # fmt-check, lint, test
 make vuln       # govulncheck
 make licenses   # dependency license check
 make build      # ./bin/riskinator
+make ci-local   # every CI job, plus a provenance record in .local-ci/
 ```
 
 Layout:

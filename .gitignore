@@ -8,3 +8,6 @@ coverage.*
 
 # Local git worktrees
 .worktrees/
+
+# Local CI runs and provenance (scripts/local-ci.sh)
+.local-ci/

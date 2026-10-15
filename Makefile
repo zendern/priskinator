@@ -9,6 +9,7 @@ GOLANGCI_LINT_VERSION := v2.14.0
 GOFUMPT_VERSION := v0.12.0
 GOVULNCHECK_VERSION := v1.9.0
 GO_LICENSES_VERSION := v2.0.1
+ZIZMOR_VERSION := 1.31.0
 
 # Build tools with the toolchain go.mod targets. `go install pkg@version` otherwise
 # picks the tool's own minimum Go, and tools built with an older Go refuse to
@@ -23,7 +24,7 @@ GOFUMPT := $(BIN)/gofumpt
 GOVULNCHECK := $(BIN)/govulncheck
 GO_LICENSES := $(BIN)/go-licenses
 
-.PHONY: all build test lint fmt fmt-check vuln licenses zizmor check tools clean
+.PHONY: all build test lint fmt fmt-check vuln licenses zizmor check ci-local tools clean
 
 all: check
 
@@ -52,6 +53,10 @@ zizmor:
 	zizmor --offline .github/workflows
 
 check: fmt-check lint test
+
+# Run every CI job locally and write a provenance record (scripts/local-ci.sh).
+ci-local:
+	scripts/local-ci.sh
 
 tools: $(GOLANGCI_LINT) $(GOFUMPT) $(GOVULNCHECK) $(GO_LICENSES)
 

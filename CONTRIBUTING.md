@@ -15,12 +15,13 @@
    - pre-commit: `gofumpt`, `golangci-lint`, and `zizmor` on changed workflows
    - commit-msg: Conventional Commits check
    - pre-push: `make test`
-3. Run `make check` before opening a PR.
+3. Run `make check` while you work.
 
 Pinned tools install into `./bin` on first use. See the Makefile for versions.
 
 ## Pull requests
 
 - Use the PR template and link the issue.
+- Run `make ci-local` on the final commit and paste `.local-ci/<commit>/summary.md` into the PR. It runs every CI job locally and records which commit, tools, and results it saw, so reviewers have proof the checks ran even when hosted CI does not. Install [zizmor](https://docs.zizmor.sh) at the version pinned in the Makefile. Re-run it after every push.
 - Stacked PRs are fine: base the PR on the branch it builds on.
 - Changes under `.github/`, policy files, or `docs/adr/` require review from a code owner.
