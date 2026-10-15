@@ -21,6 +21,13 @@ repos:
       - id: mixed-line-ending
         args: [--fix=lf]
 
+  # Conventional Commits check on the commit message.
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+
   # Same commands CI runs, through the Taskfile, so tool versions stay pinned in
   # one place. Hooks with the same priority run in parallel.
   - repo: local
@@ -46,11 +53,6 @@ repos:
         files: ^\.github/workflows/.*\.ya?ml$
         pass_filenames: false
         priority: 10
-      - id: conventional-commit
-        name: conventional commit message
-        entry: scripts/check-commit-msg.sh
-        language: system
-        stages: [commit-msg]
       - id: go-test
         name: go test
         entry: task test

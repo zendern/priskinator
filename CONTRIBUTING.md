@@ -4,7 +4,7 @@
 
 - **Decisions first.** Design decisions are recorded as ADRs in [`docs/adr/`](docs/adr/README.md). A change that alters a decision adds or supersedes an ADR in the same PR.
 - **Tests first.** Write the test or golden fixture (`internal/fixture`) before the implementation.
-- **Signed, conventional commits.** Every commit is signed and follows [Conventional Commits](https://www.conventionalcommits.org/) (`feat(policy): add layering`). The `commit-msg` hook checks the format.
+- **Signed, conventional commits.** Every commit is signed and follows [Conventional Commits](https://www.conventionalcommits.org/) (`feat(policy): add layering`). The `commit-msg` hook ([conventional-pre-commit](https://github.com/compilerla/conventional-pre-commit)) checks the format.
 - **Small, atomic commits.** One logical change per commit.
 - **Pinned dependencies.** Check for the latest release before adding or bumping a dependency. Pin GitHub Actions by full commit SHA, and pin runner images to a specific version (`ubuntu-24.04`), never `ubuntu-latest`.
 
