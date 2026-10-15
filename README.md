@@ -1,6 +1,6 @@
 # priskinator
 
-priskinator (`riskinator`) runs in CI against pull requests. It decides, deterministically, when a human must review a change: changes to CI, linters, hooks, tests, auth, or the gate itself always require review, and everything else is tiered by a transparent risk score. An optional AI pass can raise the risk level but never lower it. Every decision is recorded as evidence for SOC 2 and ISO 27001.
+priskinator runs in CI against pull requests. It decides, deterministically, when a human must review a change: changes to CI, linters, hooks, tests, auth, or the gate itself always require review, and everything else is tiered by a transparent risk score. An optional AI pass can raise the risk level but never lower it. Every decision is recorded as evidence for SOC 2 and ISO 27001.
 
 Design decisions live in [`docs/adr/`](docs/adr/README.md).
 
@@ -18,7 +18,7 @@ task imports    # import boundary rules only (also part of lint)
 task mutate     # mutation testing with gremlins (slow; mutate-diff BASE=<ref> for changed lines)
 task vuln       # govulncheck
 task licenses   # dependency license check
-task build      # ./bin/riskinator
+task build      # ./bin/priskinator
 task ci-local   # every CI job, plus a provenance record in .local-ci/
 ```
 
@@ -26,7 +26,7 @@ Layout:
 
 | Path | Purpose |
 |---|---|
-| `cmd/riskinator` | CLI entry point |
+| `cmd/priskinator` | CLI entry point |
 | `internal/changeset` | Change set from git, read as data |
 | `internal/policy` | Policy schema, validation, layering |
 | `internal/triggers` | Mandatory human-review rules (G1-G10) |

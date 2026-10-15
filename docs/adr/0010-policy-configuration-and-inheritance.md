@@ -30,8 +30,8 @@ Chosen option: "Layered, tighten-only", because it gives a central baseline and 
 ### Layers
 
 1. **Built-in defaults**, shipped and versioned with the tool. Contains the G1–G10 baseline from ADR 0006 and conservative scoring thresholds.
-2. **Org baseline**, in a protected central repository (for example `<org>/riskinator-policy`), read at a pinned ref.
-3. **Repo policy**, at `.riskinator/policy.yaml`, read from the PR's base SHA.
+2. **Org baseline**, in a protected central repository (for example `<org>/priskinator-policy`), read at a pinned ref.
+3. **Repo policy**, at `.priskinator/policy.yaml`, read from the PR's base SHA.
 
 ### Merge semantics
 
@@ -71,9 +71,9 @@ ai:
 
 ### Testing and impact analysis
 
-- `riskinator test` runs policy fixtures in `.riskinator/tests/`. Each fixture describes a synthetic change (file list, diff hunks, PR metadata) and the expected verdict. The central policy repo's CI runs all fixtures.
-- `riskinator explain --pr <n>` prints the effective merged policy and every rule that fired, with evidence.
-- `riskinator simulate --policy <file> --since 90d` replays recent PRs against a proposed policy and reports which verdicts would change. Its output is attached to the policy PR as impact analysis.
+- `priskinator test` runs policy fixtures in `.priskinator/tests/`. Each fixture describes a synthetic change (file list, diff hunks, PR metadata) and the expected verdict. The central policy repo's CI runs all fixtures.
+- `priskinator explain --pr <n>` prints the effective merged policy and every rule that fired, with evidence.
+- `priskinator simulate --policy <file> --since 90d` replays recent PRs against a proposed policy and reports which verdicts would change. Its output is attached to the policy PR as impact analysis.
 
 ### Consequences
 

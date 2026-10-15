@@ -8,7 +8,7 @@ decision-makers: Nathan Zender
 
 ## Context and Problem Statement
 
-pr-riskinator combines deterministic rules with an optional AI assessment. The two sources can disagree, and the AI is neither reproducible nor robust to prompt injection. Auditors need the control to behave the same way every time it sees the same input. How do we combine the two signals into one verdict, and what happens when part of the evaluation fails?
+priskinator combines deterministic rules with an optional AI assessment. The two sources can disagree, and the AI is neither reproducible nor robust to prompt injection. Auditors need the control to behave the same way every time it sees the same input. How do we combine the two signals into one verdict, and what happens when part of the evaluation fails?
 
 ## Decision Drivers
 
@@ -68,7 +68,7 @@ Transient failures (AI outage, forge API error) need a way to re-run without pus
 Ways to trigger a re-run:
 
 - "Re-run jobs" on the gate's Actions run
-- A PR comment `/riskinator rerun` from a user with write access, handled through `issue_comment` (ADR 0017)
+- A PR comment `/priskinator rerun` from a user with write access, handled through `issue_comment` (ADR 0017)
 
 Check-run buttons ("Re-run" on the check, `requested_action`) send webhooks to the App. They only work with the App-server fallback, because the Actions design (ADR 0017) has no webhook receiver.
 

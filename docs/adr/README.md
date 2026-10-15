@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-Decisions for pr-riskinator, recorded per [ADR 0001](0001-record-architecture-decisions.md). New records start from [template.md](template.md).
+Decisions for priskinator, recorded per [ADR 0001](0001-record-architecture-decisions.md). New records start from [template.md](template.md).
 
 ## Index
 
