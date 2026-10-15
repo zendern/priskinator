@@ -1,0 +1,13 @@
+risk: low
+human review: required
+evaluation: ok
+triggers: none
+required reviewers: none
+
+score: 0 points, low tier, low risk after floors
+  size             +0 (2, band 0-50)  2 added and 0 removed lines in 1 file; 1 excluded
+  files            +0 (1, band 0-10)  1 file changed; 1 excluded
+  diffusion        +0 (1, band 0-2)  1 directory; change entropy 0.00
+  complexity_delta -  not measured: complexity analysis is not available yet
+  test_signal      +0 (0, band 0-20)  no source lines changed
+  excluded: gen/api.go

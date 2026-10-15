@@ -1,0 +1,60 @@
+{
+  "risk": "low",
+  "human_review": "required",
+  "bot_eligible": false,
+  "triggers": [],
+  "required_reviewers": [],
+  "reasons": [],
+  "evaluation": "ok",
+  "score": {
+    "points": 0,
+    "tier": "low",
+    "risk": "low",
+    "factors": [
+      {
+        "name": "size",
+        "measured": true,
+        "value": 2,
+        "points": 0,
+        "band": "0-50",
+        "detail": "2 added and 0 removed lines in 1 file; 1 excluded"
+      },
+      {
+        "name": "files",
+        "measured": true,
+        "value": 1,
+        "points": 0,
+        "band": "0-10",
+        "detail": "1 file changed; 1 excluded"
+      },
+      {
+        "name": "diffusion",
+        "measured": true,
+        "value": 1,
+        "points": 0,
+        "band": "0-2",
+        "detail": "1 directory; change entropy 0.00"
+      },
+      {
+        "name": "complexity_delta",
+        "measured": false,
+        "value": 0,
+        "points": 0,
+        "detail": "not measured: complexity analysis is not available yet"
+      },
+      {
+        "name": "test_signal",
+        "measured": true,
+        "value": 0,
+        "points": 0,
+        "band": "0-20",
+        "detail": "no source lines changed"
+      }
+    ],
+    "floors": [],
+    "excluded": [
+      "gen/api.go"
+    ],
+    "notes": []
+  }
+}
