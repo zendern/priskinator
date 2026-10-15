@@ -46,9 +46,6 @@ func attachPatches(files []File, patch []byte) error {
 			if err != nil {
 				return err
 			}
-			if b.binary {
-				f.Binary = true
-			}
 			f.Hunks = append(f.Hunks, b.hunks...)
 		}
 	}
@@ -60,7 +57,6 @@ func attachPatches(files []File, patch []byte) error {
 
 type block struct {
 	header string
-	binary bool
 	hunks  []Hunk
 }
 
@@ -77,23 +73,22 @@ func splitBlocks(patch []byte) ([]block, error) {
 		}
 		b := block{header: lines[i]}
 		i++
-		// Extended header lines up to the first hunk or the next file.
+		// Extended header lines up to the first hunk or the next file. The
+		// patch is generated with --text, so there are no binary markers.
 		for i < len(lines) && !strings.HasPrefix(lines[i], "@@ ") && !strings.HasPrefix(lines[i], "diff --git ") {
-			if strings.HasPrefix(lines[i], "Binary files ") || lines[i] == "GIT binary patch" {
-				b.binary = true
-			}
 			i++
 		}
 		// Hunks. Their headers give exact line counts, so content lines are
 		// consumed by count and never mistaken for headers.
 		for i < len(lines) && strings.HasPrefix(lines[i], "@@ ") {
-			h, err := parseHunkHeader(lines[i])
+			r, err := parseHunkHeader(lines[i])
 			if err != nil {
 				return nil, fmt.Errorf("line %d: %w", i+1, err)
 			}
 			i++
-			oldLine, newLine := h.OldStart, h.NewStart
-			for oldLine < h.OldStart+h.OldLines || newLine < h.NewStart+h.NewLines {
+			var h Hunk
+			oldLine, newLine := r.oldStart, r.newStart
+			for oldLine < r.oldStart+r.oldLines || newLine < r.newStart+r.newLines {
 				if i >= len(lines) {
 					return nil, fmt.Errorf("hunk %q truncated", b.header)
 				}
@@ -128,36 +123,37 @@ func splitBlocks(patch []byte) ([]block, error) {
 	return blocks, nil
 }
 
+// hunkRange is a hunk header's line ranges. With -U0 an empty side reports
+// the line before the change, but no lines are read from an empty side, so its
+// start never becomes a line number.
+type hunkRange struct {
+	oldStart, oldLines int
+	newStart, newLines int
+}
+
 // parseHunkHeader reads "@@ -old[,count] +new[,count] @@".
-func parseHunkHeader(s string) (Hunk, error) {
+func parseHunkHeader(s string) (hunkRange, error) {
 	rest, ok := strings.CutPrefix(s, "@@ -")
 	if !ok {
-		return Hunk{}, fmt.Errorf("bad hunk header %q", s)
+		return hunkRange{}, fmt.Errorf("bad hunk header %q", s)
 	}
 	ranges, _, ok := strings.Cut(rest, " @@")
 	if !ok {
-		return Hunk{}, fmt.Errorf("bad hunk header %q", s)
+		return hunkRange{}, fmt.Errorf("bad hunk header %q", s)
 	}
 	oldR, newR, ok := strings.Cut(ranges, " +")
 	if !ok {
-		return Hunk{}, fmt.Errorf("bad hunk header %q", s)
+		return hunkRange{}, fmt.Errorf("bad hunk header %q", s)
 	}
-	var h Hunk
+	var r hunkRange
 	var err error
-	if h.OldStart, h.OldLines, err = parseRange(oldR); err != nil {
-		return Hunk{}, fmt.Errorf("bad hunk header %q: %w", s, err)
+	if r.oldStart, r.oldLines, err = parseRange(oldR); err != nil {
+		return hunkRange{}, fmt.Errorf("bad hunk header %q: %w", s, err)
 	}
-	if h.NewStart, h.NewLines, err = parseRange(newR); err != nil {
-		return Hunk{}, fmt.Errorf("bad hunk header %q: %w", s, err)
+	if r.newStart, r.newLines, err = parseRange(newR); err != nil {
+		return hunkRange{}, fmt.Errorf("bad hunk header %q: %w", s, err)
 	}
-	// An empty side is reported at the line before the change.
-	if h.OldLines == 0 {
-		h.OldStart++
-	}
-	if h.NewLines == 0 {
-		h.NewStart++
-	}
-	return h, nil
+	return r, nil
 }
 
 func parseRange(s string) (start, count int, err error) {

@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestKind(t *testing.T) {
@@ -110,8 +111,8 @@ func TestParseRaw(t *testing.T) {
 		{Path: "new.go", Status: StatusAdded, NewMode: ModeRegular, NewOID: oidB},
 		{Path: "old.go", Status: StatusDeleted, OldMode: ModeRegular, OldOID: oidA},
 		{Path: "link", Status: StatusTypeChanged, OldMode: ModeRegular, NewMode: ModeSymlink, OldOID: oidA, NewOID: oidB},
-		{Path: "to.go", OldPath: "from.go", Status: StatusRenamed, OldMode: ModeRegular, NewMode: ModeRegular, OldOID: oidA, NewOID: oidB, Similarity: 87},
-		{Path: "dst.go", OldPath: "src.go", Status: StatusCopied, OldMode: ModeRegular, NewMode: ModeRegular, OldOID: oidA, NewOID: oidB, Similarity: 100},
+		{Path: "to.go", OldPath: "from.go", Status: StatusRenamed, OldMode: ModeRegular, NewMode: ModeRegular, OldOID: oidA, NewOID: oidB},
+		{Path: "dst.go", OldPath: "src.go", Status: StatusCopied, OldMode: ModeRegular, NewMode: ModeRegular, OldOID: oidA, NewOID: oidB},
 	}
 	if len(files) != len(want) {
 		t.Fatalf("got %d files, want %d: %+v", len(files), len(want), files)
@@ -126,7 +127,7 @@ func TestParseRaw(t *testing.T) {
 func filesEqual(a, b File) bool {
 	return a.Path == b.Path && a.OldPath == b.OldPath && a.Status == b.Status &&
 		a.OldMode == b.OldMode && a.NewMode == b.NewMode && a.OldOID == b.OldOID &&
-		a.NewOID == b.NewOID && a.Similarity == b.Similarity
+		a.NewOID == b.NewOID
 }
 
 func TestParseRawEmpty(t *testing.T) {
@@ -145,7 +146,6 @@ func TestParseRawErrors(t *testing.T) {
 		{"no colon", rawEntry("100644 100644 "+oidA+" "+oidB+" M", "a"), "unexpected raw entry"},
 		{"too few fields", rawEntry(":100644 100644 "+oidA+" M", "a"), "unexpected raw entry"},
 		{"unknown status", rawEntry(":100644 100644 "+oidA+" "+oidB+" X", "a"), `unsupported status "X"`},
-		{"bad score", rawEntry(":100644 100644 "+oidA+" "+oidB+" R8x", "a", "b"), "bad score"},
 		{"missing path", ":100644 100644 " + oidA + " " + oidB + " M\x00", "missing path"},
 		{"rename missing new path", ":100644 100644 " + oidA + " " + oidB + " R090\x00a\x00", "missing path"},
 	}
@@ -246,12 +246,12 @@ func TestIsLFSPointer(t *testing.T) {
 func TestParseHunkHeader(t *testing.T) {
 	tests := []struct {
 		in   string
-		want Hunk
+		want hunkRange
 	}{
-		{"@@ -3 +3 @@", Hunk{OldStart: 3, OldLines: 1, NewStart: 3, NewLines: 1}},
-		{"@@ -3,2 +4,5 @@ func f() {", Hunk{OldStart: 3, OldLines: 2, NewStart: 4, NewLines: 5}},
-		{"@@ -0,0 +1,3 @@", Hunk{OldStart: 1, OldLines: 0, NewStart: 1, NewLines: 3}},
-		{"@@ -7,2 +6,0 @@", Hunk{OldStart: 7, OldLines: 2, NewStart: 7, NewLines: 0}},
+		{"@@ -3 +3 @@", hunkRange{oldStart: 3, oldLines: 1, newStart: 3, newLines: 1}},
+		{"@@ -3,2 +4,5 @@ func f() {", hunkRange{oldStart: 3, oldLines: 2, newStart: 4, newLines: 5}},
+		{"@@ -0,0 +1,3 @@", hunkRange{oldStart: 0, oldLines: 0, newStart: 1, newLines: 3}},
+		{"@@ -7,2 +6,0 @@", hunkRange{oldStart: 7, oldLines: 2, newStart: 6, newLines: 0}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.in, func(t *testing.T) {
@@ -259,8 +259,7 @@ func TestParseHunkHeader(t *testing.T) {
 			if err != nil {
 				t.Fatalf("parseHunkHeader: %v", err)
 			}
-			if got.OldStart != tt.want.OldStart || got.OldLines != tt.want.OldLines ||
-				got.NewStart != tt.want.NewStart || got.NewLines != tt.want.NewLines {
+			if got != tt.want {
 				t.Errorf("got %+v, want %+v", got, tt.want)
 			}
 		})
@@ -323,7 +322,7 @@ func TestSplitBlocksErrors(t *testing.T) {
 	}
 }
 
-func TestSplitBlocksContextAndBinary(t *testing.T) {
+func TestSplitBlocksContext(t *testing.T) {
 	patch := "diff --git a/x b/x\n" +
 		"index 1..2 100644\n" +
 		"@@ -1,3 +1,3 @@\n" +
@@ -332,23 +331,21 @@ func TestSplitBlocksContextAndBinary(t *testing.T) {
 		"+new\n" +
 		" keep\n" +
 		"\\ No newline at end of file\n" +
-		"diff --git a/img b/img\n" +
-		"GIT binary patch\n" +
-		"diff --git a/bin b/bin\n" +
-		"Binary files a/bin and b/bin differ\n"
+		"diff --git a/y b/y\n" +
+		"new file mode 100644\n"
 	blocks, err := splitBlocks([]byte(patch))
 	if err != nil {
 		t.Fatalf("splitBlocks: %v", err)
 	}
-	if len(blocks) != 3 {
-		t.Fatalf("got %d blocks, want 3", len(blocks))
+	if len(blocks) != 2 {
+		t.Fatalf("got %d blocks, want 2", len(blocks))
 	}
 	h := blocks[0].hunks[0]
-	if blocks[0].binary || len(h.Removed) != 1 || h.Removed[0] != (Line{2, "old"}) || len(h.Added) != 1 || h.Added[0] != (Line{2, "new"}) {
+	if len(h.Removed) != 1 || h.Removed[0] != (Line{2, "old"}) || len(h.Added) != 1 || h.Added[0] != (Line{2, "new"}) {
 		t.Errorf("text block = %+v", blocks[0])
 	}
-	if !blocks[1].binary || !blocks[2].binary {
-		t.Errorf("binary flags = %v, %v; want both true", blocks[1].binary, blocks[2].binary)
+	if blocks[1].header != "diff --git a/y b/y" || len(blocks[1].hunks) != 0 {
+		t.Errorf("empty block = %+v", blocks[1])
 	}
 }
 
@@ -459,6 +456,27 @@ func TestReadBlobsReportsGitExitStatus(t *testing.T) {
 	_, err := FromGit(context.Background(), r.dir, base, head, Options{Git: git})
 	if err == nil || !strings.Contains(err.Error(), "git cat-file") || !strings.Contains(err.Error(), "injected failure") {
 		t.Errorf("error = %v, want the cat-file exit status with its stderr", err)
+	}
+}
+
+// A parse error must stop cat-file, not wait on it while it blocks writing
+// output nobody reads.
+func TestReadBlobsDoesNotHangOnParseError(t *testing.T) {
+	r := newRepo(t)
+	r.write("a.txt", "one\n")
+	base := r.commit("base")
+	r.write("a.txt", "two\n")
+	head := r.commit("head")
+
+	git := fakeGit(t, "--batch", `echo "`+oidA+` missing"; exec head -c 10000000 /dev/zero`)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	_, err := FromGit(ctx, r.dir, base, head, Options{Git: git})
+	if err == nil || !strings.Contains(err.Error(), "is missing") {
+		t.Errorf("error = %v, want the missing-object error", err)
+	}
+	if ctx.Err() != nil {
+		t.Error("FromGit waited for the deadline instead of stopping git")
 	}
 }
 
