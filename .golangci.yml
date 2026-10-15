@@ -7,6 +7,7 @@ linters:
   default: standard
   enable:
     - bodyclose
+    - depguard
     - errorlint
     - gocritic
     - gosec
@@ -16,6 +17,65 @@ linters:
     - unconvert
     - unparam
   settings:
+    # Import boundaries. Each rule applies to the files it names; a `$` suffix
+    # matches that exact package, otherwise a rule matches the path as a prefix.
+    depguard:
+      rules:
+        # ADR 0011: the evaluation core has no network dependencies and does not
+        # depend on forge or AI adapters, so it stays pure and runs the same
+        # locally as in enforcement. Adapters depend on the core, never the
+        # reverse.
+        core:
+          files:
+            - "**/internal/changeset/**"
+            - "**/internal/content/**"
+            - "**/internal/policy/**"
+            - "**/internal/scoring/**"
+            - "**/internal/triggers/**"
+            - "**/internal/verdict/**"
+          deny:
+            - pkg: net$
+              desc: the core has no network dependencies (ADR 0011)
+            - pkg: net/http
+              desc: the core has no network dependencies (ADR 0011)
+            - pkg: net/rpc
+              desc: the core has no network dependencies (ADR 0011)
+            - pkg: net/smtp
+              desc: the core has no network dependencies (ADR 0011)
+            - pkg: crypto/tls
+              desc: the core has no network dependencies (ADR 0011)
+            - pkg: github.com/google/go-github
+              desc: the core has no network dependencies; GitHub belongs in internal/forge (ADR 0011)
+            - pkg: github.com/zendern/priskinator/internal/forge
+              desc: the core does not depend on forge adapters; pass it data instead (ADR 0011)
+            - pkg: github.com/zendern/priskinator/internal/ai
+              desc: the core does not depend on the AI layer; verdict takes its result as data (ADR 0003, ADR 0008)
+            - pkg: github.com/zendern/priskinator/internal/evidence
+              desc: evidence records the core's results; the core does not write evidence (ADR 0009)
+        # ADR 0005: only changeset (git) and content (ast-grep) run other
+        # programs, each with a scrubbed environment and fixed arguments.
+        subprocess:
+          files:
+            - $all
+            - "!$test"
+            - "!**/internal/changeset/**"
+            - "!**/internal/content/**"
+          deny:
+            - pkg: os/exec
+              desc: only internal/changeset and internal/content run subprocesses, with hardened settings (ADR 0005)
+        # One package per job across the module.
+        consistency:
+          files:
+            - $all
+          deny:
+            - pkg: io/ioutil
+              desc: deprecated; use io and os
+            - pkg: gopkg.in/yaml.v3
+              desc: use go.yaml.in/yaml/v3, the maintained fork already in go.mod
+            - pkg: gopkg.in/yaml.v2
+              desc: use go.yaml.in/yaml/v3, the maintained fork already in go.mod
+            - pkg: github.com/pkg/errors
+              desc: use errors and fmt.Errorf with %w
     nolintlint:
       require-explanation: true
       require-specific: true
