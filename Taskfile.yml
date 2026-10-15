@@ -140,6 +140,14 @@ tasks:
       - task: lint
       - task: cover
 
+  verdict:
+    desc: Report priskinator's own verdict on HEAD against BASE (default origin/main), into OUT
+    vars:
+      BASE: '{{.BASE | default "origin/main"}}'
+      OUT: '{{.OUT | default ".local-ci/verdict"}}'
+    cmds:
+      - scripts/priskinator-verdict.sh "{{.BASE}}" "{{.OUT}}"
+
   ci-local:
     desc: Run every CI job locally and write a provenance record
     cmds:

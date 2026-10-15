@@ -98,6 +98,21 @@ for entry in "${STEPS[@]}"; do
 done
 finished=$(now)
 
+# priskinator's verdict on this change, report-only until it runs as a check
+# on every PR (ADR 0013). It never changes the result.
+verdict_log="$out/logs/verdict.log"
+echo "==> [verdict] priskinator evaluate (report-only)"
+if scripts/priskinator-verdict.sh "$LOCAL_CI_BASE" "$out/verdict" >"$verdict_log" 2>&1 &&
+  verdict_json=$(jq -c --slurpfile v "$out/verdict/verdict.json" \
+    --arg sha "$(sha256sum "$out/verdict/verdict.json" | cut -d' ' -f1)" \
+    '. + {risk: $v[0].risk, evaluation: $v[0].evaluation, triggers: $v[0].triggers, verdictSha256: $sha}' \
+    "$out/verdict/engine.json"); then
+  echo "    $(jq -r '"risk \(.risk), evaluation \(.evaluation)"' <<<"$verdict_json")"
+else
+  verdict_json='{"evaluation": "not run"}'
+  echo "    not run (see $verdict_log)"
+fi
+
 # A step that rewrote tracked files would make the results describe a different tree.
 if [[ -n "$(git status --porcelain -- . ':!.local-ci')" ]]; then
   echo "local-ci: a step modified the working tree" >&2
@@ -128,6 +143,7 @@ jq -n \
   --arg zizmor "$zizmor_version" \
   --arg task "$task_version" \
   --argjson steps "$steps_json" \
+  --argjson verdict "$verdict_json" \
   '{
     _type: "https://in-toto.io/Statement/v1",
     subject: [{name: ("git+" + $remote + "@" + $branch), digest: {gitCommit: $commit, gitTree: $tree}}],
@@ -140,7 +156,8 @@ jq -n \
       mutationBase: {ref: $base, gitCommit: $baseCommit},
       runner: {label: $label, os: $os, kernel: $kernel, arch: $arch},
       tools: {go: $go, task: $task, golangciLint: $golangci, gofumpt: $gofumpt, govulncheck: $govulncheck, goLicenses: $goLicenses, goTestCoverage: $goTestCoverage, gremlins: $gremlins, zizmor: $zizmor},
-      steps: $steps
+      steps: $steps,
+      verdict: $verdict
     }
   }' >"$out/attestation.json"
 
@@ -159,6 +176,22 @@ jq -n \
   jq -r '.predicate.steps[] | "| \(.job) | \(.name) | `\(.command)` | \(.status) | \(.durationSeconds)s |"' "$out/attestation.json"
   echo
   echo "Differences from hosted CI: zizmor runs with \`--offline\`, tools run from \`./bin\` at the versions pinned in Taskfile.yml, and mutation testing covers the packages changed since \`$LOCAL_CI_BASE\` (\`$(git rev-parse --short "$LOCAL_CI_BASE^{commit}")\`)."
+  echo
+  echo "### priskinator verdict (report-only)"
+  echo
+  if [[ "$(jq -r .evaluation <<<"$verdict_json")" != "not run" ]]; then
+    jq -r '"Risk **\(.risk)**, evaluation \(.evaluation), triggers: \(if (.triggers | length) == 0 then "none" else (.triggers | join(", ")) end). Engine built from the \(.engineFrom) commit `\(.engineCommit[0:7])`, judging `\(.mergeBase[0:7])..\(.head[0:7])`."' <<<"$verdict_json"
+    echo
+    echo "<details><summary>Verdict</summary>"
+    echo
+    echo '```text'
+    cat "$out/verdict/verdict.txt"
+    echo '```'
+    echo
+    echo "</details>"
+  else
+    echo "Not run; see \`logs/verdict.log\`."
+  fi
   echo
   echo "<details><summary>Attestation (in-toto Statement)</summary>"
   echo
