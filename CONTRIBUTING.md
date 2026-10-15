@@ -19,18 +19,20 @@
 2. Run `prek install` to enable the hooks in `.pre-commit-config.yaml`:
    - pre-commit: file hygiene checks built into prek, then `gofumpt`, `golangci-lint`, and `zizmor` on changed workflows, in parallel
    - commit-msg: Conventional Commits check
-   - pre-push: `task test`
+   - pre-push: `task cover` (tests plus the coverage gate)
 3. Run `task check` while you work. `task --list` shows every task.
 
-The other Go tools (golangci-lint, gofumpt, govulncheck, go-licenses) install into `./bin` on first use, at the versions pinned in `Taskfile.yml`, built with the `go.mod` toolchain.
+The other Go tools (golangci-lint, gofumpt, govulncheck, go-licenses, go-test-coverage, gremlins) install into `./bin` on first use, at the versions pinned in `Taskfile.yml`, built with the `go.mod` toolchain.
 
 ## Quality gates
 
 - **Import boundaries** are depguard rules in `.golangci.yml`, so `task lint` enforces them (`task imports` runs only them). The evaluation core (`changeset`, `content`, `policy`, `scoring`, `triggers`, `verdict`) has no network imports and does not import `forge`, `ai`, or `evidence` (ADR 0011). Only `changeset` and `content` may import `os/exec` (ADR 0005); tests may too. A new boundary is a new rule there, with the ADR it comes from in its `desc`.
+- **Coverage**: `task cover` runs the race tests with a coverage profile and fails under the file, package, or total thresholds in `.testcoverage.yml`. CI runs it in place of `task test`.
+- **Mutation testing**: [gremlins](https://gremlins.dev) mutates covered code and fails when test efficacy or mutant coverage drops under `.gremlins.yaml`'s thresholds. It takes minutes rather than seconds, so it isn't in `task check` or the hooks. `task mutate-diff BASE=<branch>` mutates only the lines changed since that branch; the `mutation` workflow runs that on PRs and `task mutate` on the whole module weekly. A surviving (`LIVED`) mutant is a line whose change no test notices: add the assertion, or say in the PR why it doesn't matter.
 
 ## Pull requests
 
 - Use the PR template and link the issue.
-- Run `task ci-local` on the final commit and paste `.local-ci/<commit>/summary.md` into the PR. It runs every CI job locally and records which commit, tools, and results it saw, so reviewers have proof the checks ran even when hosted CI does not. Re-run it after every push.
+- Run `task ci-local` on the final commit and paste `.local-ci/<commit>/summary.md` into the PR. It runs every CI job locally and records which commit, tools, and results it saw, so reviewers have proof the checks ran even when hosted CI does not. Re-run it after every push. Set `LOCAL_CI_BASE` to the PR's base branch (default `origin/main`) so its mutation step covers what the PR changes.
 - Stacked PRs are fine: base the PR on the branch it builds on.
 - Changes under `.github/`, policy files, or `docs/adr/` require review from a code owner.
