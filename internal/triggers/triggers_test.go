@@ -7,6 +7,7 @@ import (
 
 	"github.com/zendern/priskinator/internal/changeset"
 	"github.com/zendern/priskinator/internal/fixture"
+	"github.com/zendern/priskinator/internal/fixture/changes"
 	"github.com/zendern/priskinator/internal/policy"
 )
 
@@ -22,7 +23,7 @@ func TestFixtures(t *testing.T) {
 			t.Fatalf("fixture policy fired %v: %v %v", res.Triggers, res.ConfigErr, res.Weakenings)
 		}
 		var got fixture.Result
-		for _, h := range Evaluate(res.Policy, changeSet(f.Change)) {
+		for _, h := range Evaluate(res.Policy, changes.Build(f.Change)) {
 			got.Triggers = append(got.Triggers, h.Rule)
 			got.Reviewers = append(got.Reviewers, h.Reviewers...)
 		}
