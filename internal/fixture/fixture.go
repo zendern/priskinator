@@ -198,19 +198,28 @@ func Compare(exp Expect, got Result) []string {
 // Run loads the fixtures in dir and checks eval against each one as a subtest.
 func Run(t *testing.T, dir string, eval func(Fixture) (Result, error)) {
 	t.Helper()
+	for _, f := range mustLoad(t, dir) {
+		t.Run(f.Name, func(t *testing.T) { check(t, f, eval) })
+	}
+}
+
+func mustLoad(t testing.TB, dir string) []Fixture {
+	t.Helper()
 	fixtures, err := Load(dir)
 	if err != nil {
 		t.Fatalf("load fixtures: %v", err)
 	}
-	for _, f := range fixtures {
-		t.Run(f.Name, func(t *testing.T) {
-			got, err := eval(f)
-			if err != nil {
-				t.Fatalf("%s: evaluate: %v", f.Path, err)
-			}
-			for _, d := range Compare(f.Expect, got) {
-				t.Errorf("%s: %s", f.Path, d)
-			}
-		})
+	return fixtures
+}
+
+// check evaluates one fixture and reports every unmet expectation.
+func check(t testing.TB, f Fixture, eval func(Fixture) (Result, error)) {
+	t.Helper()
+	got, err := eval(f)
+	if err != nil {
+		t.Fatalf("%s: evaluate: %v", f.Path, err)
+	}
+	for _, d := range Compare(f.Expect, got) {
+		t.Errorf("%s: %s", f.Path, d)
 	}
 }
