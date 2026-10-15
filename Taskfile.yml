@@ -62,26 +62,28 @@ tasks:
     desc: Mutation test the module with gremlins (slow, so not part of check)
     deps: [tool:gremlins]
     cmds:
-      - "{{.BIN}}/gremlins unleash {{.CLI_ARGS}}"
+      - scripts/gremlins.sh "{{.BIN}}/gremlins" . {{.CLI_ARGS}}
 
   mutate-diff:
-    desc: Mutation test only the lines changed since BASE (default origin/main)
+    desc: Mutation test each package with Go changes since BASE (default origin/main), test-only changes included
     deps: [tool:gremlins]
     vars:
       BASE: '{{.BASE | default "origin/main"}}'
     cmds:
-      # gremlins reports 0% efficacy, and fails the threshold, when the diff has
-      # no mutants at all (docs or config only), so that case passes here.
+      # Whole packages rather than changed lines, so a PR that only adds tests
+      # is measured too. Each package must meet .gremlins.yaml on its own.
       - |
-        report="$(mktemp)"
-        trap 'rm -f "$report"' EXIT
-        code=0
-        {{.BIN}}/gremlins unleash --diff "{{.BASE}}" --output "$report" || code=$?
-        if [ "$code" -ne 0 ] && [ "$(jq -r '.mutants_total' "$report" 2>/dev/null)" = 0 ]; then
-          echo "No mutants in lines changed since {{.BASE}}."
-          exit 0
+        found=0
+        for dir in $(git diff --name-only "{{.BASE}}...HEAD" -- '*.go' | xargs -r -n1 dirname | sort -u); do
+          # Skip deleted packages and directories with only tests.
+          [ -n "$(find "$dir" -maxdepth 1 -name '*.go' ! -name '*_test.go' -print -quit 2>/dev/null)" ] || continue
+          found=1
+          echo "==> mutating ./$dir"
+          scripts/gremlins.sh "{{.BIN}}/gremlins" "./$dir"
+        done
+        if [ "$found" = 0 ]; then
+          echo "No Go packages changed since {{.BASE}}."
         fi
-        exit "$code"
 
   imports:
     desc: Check import boundaries only (the depguard rules in .golangci.yml; lint runs them too)

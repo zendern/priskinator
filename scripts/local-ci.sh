@@ -12,7 +12,7 @@
 # "laptop of @alice" or "Claude Code cloud session"); it is recorded as given.
 #
 # Keep STEPS in sync with the jobs in .github/workflows/ci.yml and
-# .github/workflows/mutation.yml. Mutation testing covers the lines changed
+# .github/workflows/mutation.yml. Mutation testing covers the packages changed
 # since LOCAL_CI_BASE (default origin/main; set it to the PR's base branch).
 set -euo pipefail
 
@@ -158,7 +158,7 @@ jq -n \
   echo "|---|---|---|---|---|"
   jq -r '.predicate.steps[] | "| \(.job) | \(.name) | `\(.command)` | \(.status) | \(.durationSeconds)s |"' "$out/attestation.json"
   echo
-  echo "Differences from hosted CI: zizmor runs with \`--offline\`, tools run from \`./bin\` at the versions pinned in Taskfile.yml, and mutation testing covers the lines changed since \`$LOCAL_CI_BASE\` (\`$(git rev-parse --short "$LOCAL_CI_BASE^{commit}")\`)."
+  echo "Differences from hosted CI: zizmor runs with \`--offline\`, tools run from \`./bin\` at the versions pinned in Taskfile.yml, and mutation testing covers the packages changed since \`$LOCAL_CI_BASE\` (\`$(git rev-parse --short "$LOCAL_CI_BASE^{commit}")\`)."
   echo
   echo "<details><summary>Attestation (in-toto Statement)</summary>"
   echo

@@ -3,12 +3,19 @@
 # when a threshold is missed.
 unleash:
   # Efficacy: killed / (killed + lived). Mutant coverage: mutants some test
-  # reaches / all mutants. Set under what the code had on 2026-10-15 (89% and
-  # 92% with #82's policy code); raise them as tests improve.
+  # reaches / all mutants. scripts/gremlins.sh also fails when more than 2% of
+  # mutants time out, since gremlins leaves those out of efficacy.
+  #
+  # Mutant coverage sits under efficacy because gremlins can't see coverage on
+  # `case` expressions: Go's coverage profile has no statement for them, so
+  # gremlins reports every mutant there as NOT COVERED even when tests run
+  # it (internal/policy: 92%, every such mutant on a `case` line or a panic on
+  # embedded data). Raise it when that changes.
   threshold:
-    efficacy: 85
-    mutant-coverage: 85
+    efficacy: 95
+    mutant-coverage: 90
   # The per-mutant timeout is the plain test run's time times this coefficient.
   # Low values report slow-but-killed mutants as TIMED OUT under parallel load,
-  # which hides results.
-  timeout-coefficient: 10
+  # which hides results: at 10, a run on internal/policy alone timed out 52 of
+  # 168 mutants; at 30 none time out.
+  timeout-coefficient: 30

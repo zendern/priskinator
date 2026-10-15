@@ -15,7 +15,7 @@ task fmt        # gofumpt
 task check      # fmt-check, lint, test with coverage thresholds
 task cover      # tests with the coverage gate (.testcoverage.yml)
 task imports    # import boundary rules only (also part of lint)
-task mutate     # mutation testing with gremlins (slow; mutate-diff BASE=<ref> for changed lines)
+task mutate     # mutation testing with gremlins (slow; mutate-diff BASE=<ref> for changed packages)
 task vuln       # govulncheck
 task licenses   # dependency license check
 task build      # ./bin/priskinator
