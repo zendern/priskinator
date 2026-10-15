@@ -1,5 +1,5 @@
 // Package fixture loads golden fixtures and compares evaluation results against them.
-// Unit tests and `riskinator test` share this harness (ADR 0010).
+// Unit tests and `priskinator test` share this harness (ADR 0010).
 package fixture
 
 import (

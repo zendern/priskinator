@@ -8,7 +8,7 @@ decision-makers: Nathan Zender
 
 ## Context and Problem Statement
 
-SOC 2 and ISO 27001 auditors test change management by sampling changes from the audit period. For each sample they want proof that the change was authorized, risk-assessed, reviewed by someone independent of the author, and tested before it reached production. A SOC 2 Type II audit covers a period, commonly 6 to 12 months. GitHub Actions logs and artifacts are deleted after 90 days by default (configurable up to 400 days on private repositories), and PR comments and labels can be edited. Coding agents add a new separation-of-duties gap: when an agent opens a PR under a bot account, the human who prompted it can approve it. What evidence does pr-riskinator produce, where is it kept, and which separation-of-duties rules does it enforce?
+SOC 2 and ISO 27001 auditors test change management by sampling changes from the audit period. For each sample they want proof that the change was authorized, risk-assessed, reviewed by someone independent of the author, and tested before it reached production. A SOC 2 Type II audit covers a period, commonly 6 to 12 months. GitHub Actions logs and artifacts are deleted after 90 days by default (configurable up to 400 days on private repositories), and PR comments and labels can be edited. Coding agents add a new separation-of-duties gap: when an agent opens a PR under a bot account, the human who prompted it can approve it. What evidence does priskinator produce, where is it kept, and which separation-of-duties rules does it enforce?
 
 ## Decision Drivers
 
@@ -21,7 +21,7 @@ SOC 2 and ISO 27001 auditors test change management by sampling changes from the
 
 No GRC function or auditor has reviewed this yet (as of 2026-10-13). The mapping and evidence design below are our best reading of SOC 2 and ISO 27001 practice. Every decision is built so a field can be added or retention extended later without re-architecting.
 
-| Framework reference | What pr-riskinator contributes |
+| Framework reference | What priskinator contributes |
 |---|---|
 | SOC 2 CC8.1 change management | Risk assessment per change, required approvals by tier, evidence record per change |
 | SOC 2 CC7.1 detection of configuration changes | Mandatory triggers for CI, lint, hook, and test configuration (ADR 0006) |
@@ -42,12 +42,12 @@ Evaluation record (written on every evaluation):
 
 ```json
 {
-  "schema": "riskinator.evidence.evaluation/v1",
+  "schema": "priskinator.evidence.evaluation/v1",
   "repo": "org/repo",
   "pr": 123,
   "base_sha": "…",
   "head_sha": "…",
-  "policy": {"source": "org/riskinator-policy@<sha>", "sha256": "…"},
+  "policy": {"source": "org/priskinator-policy@<sha>", "sha256": "…"},
   "tool": {"version": "x.y.z", "image_digest": "sha256:…"},
   "inputs": {"diff_sha256": "…"},
   "deterministic": {"risk": "medium", "points": 37, "factors": [], "triggers": []},
@@ -116,7 +116,7 @@ These feed a periodic report. Blocking on them is a later decision, once false-p
 
 ### 5. Break-glass
 
-- A designated label (for example `riskinator/break-glass`) applied by a member of the break-glass group, verified from the PR timeline, not just from the label's presence.
+- A designated label (for example `priskinator/break-glass`) applied by a member of the break-glass group, verified from the PR timeline, not just from the label's presence.
 - Effect: mandatory-trigger approvals reduce to one independent human approval. The tool never allows zero approvals.
 - The tool automatically opens a follow-up issue requiring a retrospective review within a configured number of business days, and reports open retrospectives.
 - Every use is flagged in the merge record and in the periodic report.

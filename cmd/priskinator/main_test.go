@@ -14,7 +14,7 @@ func TestRunVersion(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("exit code = %d, want 0 (stderr: %q)", code, stderr.String())
 	}
-	if got, want := stdout.String(), "riskinator "+version+"\n"; got != want {
+	if got, want := stdout.String(), "priskinator "+version+"\n"; got != want {
 		t.Fatalf("stdout = %q, want %q", got, want)
 	}
 }
@@ -27,7 +27,7 @@ func TestRunWithoutCommandPrintsUsage(t *testing.T) {
 	if code != 2 {
 		t.Fatalf("exit code = %d, want 2", code)
 	}
-	if !strings.Contains(stderr.String(), "usage: riskinator") {
+	if !strings.Contains(stderr.String(), "usage: priskinator") {
 		t.Fatalf("stderr = %q, want usage text", stderr.String())
 	}
 }

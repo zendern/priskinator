@@ -10,7 +10,7 @@ decision-makers: Nathan Zender
 
 Coding agents now open a large share of pull requests. An agent optimizing for "CI is green" can reach that goal by weakening the checks instead of fixing the code: editing a workflow, relaxing a linter, adding a suppression comment, skipping a test. Humans can do the same, deliberately or under deadline pressure. At the same time, the organization must show SOC 2 and ISO 27001 auditors that every change was authorized, reviewed by an appropriate person, and recorded.
 
-What exactly is pr-riskinator responsible for, what is it not responsible for, and which threats must it withstand?
+What exactly is priskinator responsible for, what is it not responsible for, and which threats must it withstand?
 
 ## Decision Drivers
 
@@ -33,7 +33,7 @@ What exactly is pr-riskinator responsible for, what is it not responsible for, a
 
 | ID | Threat | Example |
 |---|---|---|
-| T1 | Gate tampering | PR edits the workflow that runs pr-riskinator, its policy file, its prompts, or adds a workflow that posts a fake passing check. |
+| T1 | Gate tampering | PR edits the workflow that runs priskinator, its policy file, its prompts, or adds a workflow that posts a fake passing check. |
 | T2 | Check weakening | PR edits CI config, linter or type-checker config, hook-manager config, test-runner config, coverage thresholds, or build scripts that CI calls (`"test": "exit 0"`). |
 | T3 | Inline suppression | Added `# noqa`, `eslint-disable`, `@ts-ignore`, `# type: ignore`, `//nolint`, `#[allow(...)]`, `# pragma: no cover`. |
 | T4 | Test tampering | Added skip or xfail markers, deleted tests, weakened assertions, updated snapshots or golden files without a matching source change. |

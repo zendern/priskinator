@@ -42,9 +42,9 @@ tasks:
       - task: check
 
   build:
-    desc: Build ./bin/riskinator
+    desc: Build ./bin/priskinator
     cmds:
-      - go build -trimpath -ldflags "-s -w -X main.version={{.VERSION}}" -o {{.BIN}}/riskinator ./cmd/riskinator
+      - go build -trimpath -ldflags "-s -w -X main.version={{.VERSION}}" -o {{.BIN}}/priskinator ./cmd/priskinator
 
   test:
     desc: Run tests with the race detector

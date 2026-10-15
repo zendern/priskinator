@@ -48,7 +48,7 @@ There is no incident data linked to PRs and no agreed numeric targets. Exit crit
   - revert commits
   - SZZ-style identification of the changes that later bug-fix commits had to correct (PyDriller has helpers for this)
   - hotfix or incident labels, where they exist
-- **Collected from day one:** a `riskinator/incident` label, or the `/riskinator incident` comment command, links a merged PR to an incident. The tool records it against the PR's evidence, building the escape-rate dataset going forward.
+- **Collected from day one:** a `priskinator/incident` label, or the `/priskinator incident` comment command, links a merged PR to an incident. The tool records it against the PR's evidence, building the escape-rate dataset going forward.
 - **Targets:**
   - The false-positive target and the weekly reviewer-capacity target are set at the end of phase 1, from shadow data.
   - The escape-rate threshold for ADR 0004 option B is set per change class, once enough labeled history exists for that class.
