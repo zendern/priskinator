@@ -1,0 +1,11 @@
+name: a mid-size untested change is medium risk
+description: 600 lines (25) with no test change (15) reaches the medium threshold of 20.
+change:
+  files:
+  - path: internal/app/app.go
+    added: 600
+expect:
+  risk: medium
+  points:
+    size: 25
+    test_signal: 15
