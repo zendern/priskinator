@@ -10,6 +10,12 @@ GOFUMPT_VERSION := v0.12.0
 GOVULNCHECK_VERSION := v1.9.0
 GO_LICENSES_VERSION := v2.0.1
 
+# Build tools with the toolchain go.mod targets. `go install pkg@version` otherwise
+# picks the tool's own minimum Go, and tools built with an older Go refuse to
+# analyze this module.
+GO_TOOLCHAIN := go$(shell sed -n 's/^go //p' go.mod)
+TOOL_INSTALL := GOTOOLCHAIN=$(GO_TOOLCHAIN) GOBIN=$(BIN) go install
+
 ALLOWED_LICENSES := Apache-2.0,MIT,BSD-2-Clause,BSD-3-Clause,ISC
 
 GOLANGCI_LINT := $(BIN)/golangci-lint
@@ -50,16 +56,16 @@ check: fmt-check lint test
 tools: $(GOLANGCI_LINT) $(GOFUMPT) $(GOVULNCHECK) $(GO_LICENSES)
 
 $(GOLANGCI_LINT):
-	GOBIN=$(BIN) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	$(TOOL_INSTALL) github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 
 $(GOFUMPT):
-	GOBIN=$(BIN) go install mvdan.cc/gofumpt@$(GOFUMPT_VERSION)
+	$(TOOL_INSTALL) mvdan.cc/gofumpt@$(GOFUMPT_VERSION)
 
 $(GOVULNCHECK):
-	GOBIN=$(BIN) go install golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION)
+	$(TOOL_INSTALL) golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION)
 
 $(GO_LICENSES):
-	GOBIN=$(BIN) go install github.com/google/go-licenses/v2@$(GO_LICENSES_VERSION)
+	$(TOOL_INSTALL) github.com/google/go-licenses/v2@$(GO_LICENSES_VERSION)
 
 clean:
 	rm -rf $(BIN)
