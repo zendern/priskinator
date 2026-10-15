@@ -6,14 +6,21 @@ vars:
   VERSION:
     sh: git describe --tags --always --dirty 2>/dev/null || echo dev
 
-  # Pinned tool versions. Check for the latest release before bumping.
-  # TASK_VERSION and ZIZMOR_VERSION are installed by hand (see CONTRIBUTING);
-  # CI installs the same versions, and scripts/local-ci.sh checks them.
+  # Pinned tool versions, bumped by Renovate (see renovate.json). Check for the
+  # latest release before bumping by hand. TASK_VERSION is the one source for
+  # Task: CI installs it through .github/actions/setup-task. ZIZMOR_VERSION is
+  # installed by hand (see CONTRIBUTING); scripts/local-ci.sh checks both.
+  # renovate: datasource=github-releases depName=go-task/task extractVersion=^v(?<version>.+)$
   TASK_VERSION: 3.54.0
+  # renovate: datasource=pypi depName=zizmor
   ZIZMOR_VERSION: 1.31.0
+  # renovate: datasource=github-releases depName=golangci/golangci-lint
   GOLANGCI_LINT_VERSION: v2.14.0
+  # renovate: datasource=github-releases depName=mvdan/gofumpt
   GOFUMPT_VERSION: v0.12.0
+  # renovate: datasource=github-releases depName=golang/vuln
   GOVULNCHECK_VERSION: v1.9.0
+  # renovate: datasource=github-releases depName=google/go-licenses
   GO_LICENSES_VERSION: v2.0.1
 
   # Build tools with the toolchain go.mod targets. `go install pkg@version`

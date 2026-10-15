@@ -24,8 +24,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-      # Keep in sync with TASK_VERSION in Taskfile.yml.
-      - run: go install github.com/go-task/task/v3/cmd/task@v3.54.0
+      - uses: ./.github/actions/setup-task
       - run: task fmt-check
       - run: task test
 
@@ -41,8 +40,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-      # Keep in sync with TASK_VERSION in Taskfile.yml.
-      - run: go install github.com/go-task/task/v3/cmd/task@v3.54.0
+      - uses: ./.github/actions/setup-task
       # Built from source with the go.mod toolchain (see Taskfile.yml); a prebuilt
       # binary from an older Go refuses to load this module.
       - run: task lint
@@ -59,8 +57,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-      # Keep in sync with TASK_VERSION in Taskfile.yml.
-      - run: go install github.com/go-task/task/v3/cmd/task@v3.54.0
+      - uses: ./.github/actions/setup-task
       - run: task vuln
       - run: task licenses
 

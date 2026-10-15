@@ -12,7 +12,7 @@
 
 1. Install Go (version in `go.mod`), [Task](https://taskfile.dev), [prek](https://prek.j178.dev), and [zizmor](https://docs.zizmor.sh). Task and zizmor must match `TASK_VERSION` and `ZIZMOR_VERSION` in `Taskfile.yml`:
    ```sh
-   go install github.com/go-task/task/v3/cmd/task@v3.54.0
+   go install github.com/go-task/task/v3/cmd/task@v"$(sed -n 's/^  TASK_VERSION: *//p' Taskfile.yml)"
    uv tool install prek
    uv tool install zizmor==1.31.0
    ```
