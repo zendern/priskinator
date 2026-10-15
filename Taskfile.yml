@@ -1,0 +1,139 @@
+# https://taskfile.dev
+version: "3"
+
+vars:
+  BIN: "{{.ROOT_DIR}}/bin"
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo dev
+
+  # Pinned tool versions. Check for the latest release before bumping.
+  # TASK_VERSION and ZIZMOR_VERSION are installed by hand (see CONTRIBUTING);
+  # CI installs the same versions, and scripts/local-ci.sh checks them.
+  TASK_VERSION: 3.54.0
+  ZIZMOR_VERSION: 1.31.0
+  GOLANGCI_LINT_VERSION: v2.14.0
+  GOFUMPT_VERSION: v0.12.0
+  GOVULNCHECK_VERSION: v1.9.0
+  GO_LICENSES_VERSION: v2.0.1
+
+  # Build tools with the toolchain go.mod targets. `go install pkg@version`
+  # otherwise picks the tool's own minimum Go, and tools built with an older Go
+  # refuse to analyze this module.
+  GO_TOOLCHAIN:
+    sh: echo "go$(sed -n 's/^go //p' go.mod)"
+
+  ALLOWED_LICENSES: Apache-2.0,MIT,BSD-2-Clause,BSD-3-Clause,ISC
+
+tasks:
+  default:
+    desc: Format check, lint, and test
+    cmds:
+      - task: check
+
+  build:
+    desc: Build ./bin/riskinator
+    cmds:
+      - go build -trimpath -ldflags "-s -w -X main.version={{.VERSION}}" -o {{.BIN}}/riskinator ./cmd/riskinator
+
+  test:
+    desc: Run tests with the race detector
+    cmds:
+      - go test -race -count=1 ./...
+
+  lint:
+    desc: Run golangci-lint
+    deps: [tool:golangci-lint]
+    cmds:
+      - "{{.BIN}}/golangci-lint run ./..."
+
+  fmt:
+    desc: Format Go code with gofumpt
+    deps: [tool:gofumpt]
+    cmds:
+      - "{{.BIN}}/gofumpt -w ."
+
+  fmt-check:
+    desc: Fail if any Go file needs gofumpt
+    deps: [tool:gofumpt]
+    cmds:
+      - |
+        out="$({{.BIN}}/gofumpt -l .)"
+        if [ -n "$out" ]; then echo "gofumpt needed:"; echo "$out"; exit 1; fi
+
+  vuln:
+    desc: Check dependencies for known vulnerabilities
+    deps: [tool:govulncheck]
+    cmds:
+      - "{{.BIN}}/govulncheck ./..."
+
+  licenses:
+    desc: Check dependency licenses against the allow list
+    deps: [tool:go-licenses]
+    cmds:
+      - "{{.BIN}}/go-licenses check ./... --allowed_licenses={{.ALLOWED_LICENSES}}"
+
+  zizmor:
+    desc: Audit GitHub workflows with zizmor
+    preconditions:
+      - sh: '[ "$(zizmor --version 2>/dev/null)" = "zizmor {{.ZIZMOR_VERSION}}" ]'
+        msg: "zizmor {{.ZIZMOR_VERSION}} is required (uv tool install zizmor=={{.ZIZMOR_VERSION}})"
+    cmds:
+      - zizmor --offline .github/workflows
+
+  check:
+    desc: Format check, lint, and test
+    cmds:
+      - task: fmt-check
+      - task: lint
+      - task: test
+
+  ci-local:
+    desc: Run every CI job locally and write a provenance record
+    cmds:
+      - scripts/local-ci.sh
+
+  tools:
+    desc: Install the pinned Go tools into ./bin
+    deps: [tool:golangci-lint, tool:gofumpt, tool:govulncheck, tool:go-licenses]
+
+  tool:golangci-lint:
+    internal: true
+    cmds:
+      - task: go-install
+        vars: {NAME: golangci-lint, PKG: github.com/golangci/golangci-lint/v2/cmd/golangci-lint, MOD: github.com/golangci/golangci-lint/v2, VER: "{{.GOLANGCI_LINT_VERSION}}"}
+
+  tool:gofumpt:
+    internal: true
+    cmds:
+      - task: go-install
+        vars: {NAME: gofumpt, PKG: mvdan.cc/gofumpt, MOD: mvdan.cc/gofumpt, VER: "{{.GOFUMPT_VERSION}}"}
+
+  tool:govulncheck:
+    internal: true
+    cmds:
+      - task: go-install
+        vars: {NAME: govulncheck, PKG: golang.org/x/vuln/cmd/govulncheck, MOD: golang.org/x/vuln, VER: "{{.GOVULNCHECK_VERSION}}"}
+
+  tool:go-licenses:
+    internal: true
+    cmds:
+      - task: go-install
+        vars: {NAME: go-licenses, PKG: github.com/google/go-licenses/v2, MOD: github.com/google/go-licenses/v2, VER: "{{.GO_LICENSES_VERSION}}"}
+
+  # Installs a Go tool unless ./bin already holds that module version built with
+  # the go.mod toolchain, so bumping a pin or go.mod rebuilds it.
+  go-install:
+    internal: true
+    label: "install {{.NAME}}@{{.VER}}"
+    status:
+      - |
+        go version -m "{{.BIN}}/{{.NAME}}" 2>/dev/null | head -n1 | grep -qx "{{.BIN}}/{{.NAME}}: {{.GO_TOOLCHAIN}}"
+      - |
+        go version -m "{{.BIN}}/{{.NAME}}" 2>/dev/null | awk '$1 == "mod" && $2 == "{{.MOD}}" && $3 == "{{.VER}}" {found = 1} END {exit !found}'
+    cmds:
+      - GOTOOLCHAIN={{.GO_TOOLCHAIN}} GOBIN={{.BIN}} go install {{.PKG}}@{{.VER}}
+
+  clean:
+    desc: Remove ./bin
+    cmds:
+      - rm -rf {{.BIN}}

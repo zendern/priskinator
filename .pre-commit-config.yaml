@@ -1,0 +1,60 @@
+# Git hooks, run by prek (https://prek.j178.dev), a faster drop-in for
+# pre-commit. `prek install` sets up every hook type listed below.
+default_install_hook_types: [pre-commit, commit-msg, pre-push]
+default_stages: [pre-commit]
+
+repos:
+  # Built into prek: no download, no network.
+  - repo: builtin
+    hooks:
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+      - id: check-executables-have-shebangs
+      - id: check-symlinks
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # Same commands CI runs, through the Taskfile, so tool versions stay pinned in
+  # one place. Hooks with the same priority run in parallel.
+  - repo: local
+    hooks:
+      - id: gofumpt
+        name: gofumpt
+        entry: task fmt-check
+        language: system
+        types: [go]
+        pass_filenames: false
+        priority: 10
+      - id: golangci-lint
+        name: golangci-lint
+        entry: task lint
+        language: system
+        types: [go]
+        pass_filenames: false
+        priority: 10
+      - id: zizmor
+        name: zizmor
+        entry: task zizmor
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+        pass_filenames: false
+        priority: 10
+      - id: conventional-commit
+        name: conventional commit message
+        entry: scripts/check-commit-msg.sh
+        language: system
+        stages: [commit-msg]
+      - id: go-test
+        name: go test
+        entry: task test
+        language: system
+        types: [go]
+        pass_filenames: false
+        stages: [pre-push]

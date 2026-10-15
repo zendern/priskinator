@@ -16,19 +16,21 @@ set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
-ZIZMOR_VERSION=${ZIZMOR_VERSION:-$(sed -n 's/^ZIZMOR_VERSION := //p' Makefile)}
+taskfile_var() { sed -n "s/^  $1: //p" Taskfile.yml; }
+TASK_VERSION=${TASK_VERSION:-$(taskfile_var TASK_VERSION)}
+ZIZMOR_VERSION=${ZIZMOR_VERSION:-$(taskfile_var ZIZMOR_VERSION)}
 
 # job|step|command
 STEPS=(
-  "test|fmt-check|make fmt-check"
-  "test|test|make test"
-  "lint|lint|make lint"
-  "security|vuln|make vuln"
-  "security|licenses|make licenses"
-  "zizmor|zizmor|make zizmor"
+  "test|fmt-check|task fmt-check"
+  "test|test|task test"
+  "lint|lint|task lint"
+  "security|vuln|task vuln"
+  "security|licenses|task licenses"
+  "zizmor|zizmor|task zizmor"
 )
 
-for tool in git jq sha256sum make go zizmor; do
+for tool in git jq sha256sum task go zizmor; do
   command -v "$tool" >/dev/null || { echo "local-ci: $tool not found on PATH" >&2; exit 2; }
 done
 
@@ -40,7 +42,12 @@ fi
 
 zizmor_version=$(zizmor --version | awk '{print $2}')
 if [[ "$zizmor_version" != "$ZIZMOR_VERSION" ]]; then
-  echo "local-ci: zizmor $zizmor_version found, Makefile pins $ZIZMOR_VERSION" >&2
+  echo "local-ci: zizmor $zizmor_version found, Taskfile.yml pins $ZIZMOR_VERSION" >&2
+  exit 2
+fi
+task_version=$(task --version | sed -E 's/^(Task version: )?v?//; s/ .*//')
+if [[ "$task_version" != "$TASK_VERSION" ]]; then
+  echo "local-ci: task $task_version found, Taskfile.yml pins $TASK_VERSION" >&2
   exit 2
 fi
 
@@ -54,7 +61,7 @@ rm -rf "$out"
 mkdir -p "$out/logs"
 
 # Install pinned tools up front so their download noise stays out of step logs.
-make tools >"$out/logs/tools.log" 2>&1
+task tools >"$out/logs/tools.log" 2>&1
 
 now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 started=$(now)
@@ -97,7 +104,7 @@ jq -n \
   --arg started "$started" --arg finished "$finished" --arg result "$overall" \
   --arg label "${LOCAL_CI_RUNNER:-unspecified}" \
   --arg ciSha "$(sha256sum .github/workflows/ci.yml | cut -d' ' -f1)" \
-  --arg makeSha "$(sha256sum Makefile | cut -d' ' -f1)" \
+  --arg taskfileSha "$(sha256sum Taskfile.yml | cut -d' ' -f1)" \
   --arg os "$(. /etc/os-release 2>/dev/null && echo "$PRETTY_NAME" || uname -s)" \
   --arg kernel "$(uname -sr)" --arg arch "$(uname -m)" \
   --arg go "$(go version)" \
@@ -106,6 +113,7 @@ jq -n \
   --arg govulncheck "$(tool_version bin/govulncheck)" \
   --arg goLicenses "$(tool_version bin/go-licenses)" \
   --arg zizmor "$zizmor_version" \
+  --arg task "$task_version" \
   --argjson steps "$steps_json" \
   '{
     _type: "https://in-toto.io/Statement/v1",
@@ -115,9 +123,9 @@ jq -n \
       result: $result,
       startedOn: $started,
       finishedOn: $finished,
-      definition: {ciWorkflowSha256: $ciSha, makefileSha256: $makeSha},
+      definition: {ciWorkflowSha256: $ciSha, taskfileSha256: $taskfileSha},
       runner: {label: $label, os: $os, kernel: $kernel, arch: $arch},
-      tools: {go: $go, golangciLint: $golangci, gofumpt: $gofumpt, govulncheck: $govulncheck, goLicenses: $goLicenses, zizmor: $zizmor},
+      tools: {go: $go, task: $task, golangciLint: $golangci, gofumpt: $gofumpt, govulncheck: $govulncheck, goLicenses: $goLicenses, zizmor: $zizmor},
       steps: $steps
     }
   }' >"$out/attestation.json"
@@ -136,7 +144,7 @@ jq -n \
   echo "|---|---|---|---|---|"
   jq -r '.predicate.steps[] | "| \(.job) | \(.name) | `\(.command)` | \(.status) | \(.durationSeconds)s |"' "$out/attestation.json"
   echo
-  echo "Differences from hosted CI: zizmor runs with \`--offline\`, and tools run from \`./bin\` at the Makefile's pinned versions."
+  echo "Differences from hosted CI: zizmor runs with \`--offline\`, and tools run from \`./bin\` at the versions pinned in Taskfile.yml."
   echo
   echo "<details><summary>Attestation (in-toto Statement)</summary>"
   echo

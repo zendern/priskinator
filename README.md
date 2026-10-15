@@ -6,17 +6,17 @@ Design decisions live in [`docs/adr/`](docs/adr/README.md).
 
 ## Development
 
-Requirements: Go (see `go.mod`), GNU Make, and [lefthook](https://github.com/evilmartians/lefthook). Linters and other tools are installed at pinned versions into `./bin` on first use.
+Requirements: Go (see `go.mod`), [Task](https://taskfile.dev), [prek](https://prek.j178.dev), and [zizmor](https://docs.zizmor.sh). See [CONTRIBUTING](CONTRIBUTING.md) for versions and setup. Linters and other Go tools are installed at pinned versions into `./bin` on first use.
 
 ```sh
-make test       # go test with the race detector
-make lint       # golangci-lint
-make fmt        # gofumpt
-make check      # fmt-check, lint, test
-make vuln       # govulncheck
-make licenses   # dependency license check
-make build      # ./bin/riskinator
-make ci-local   # every CI job, plus a provenance record in .local-ci/
+task test       # go test with the race detector
+task lint       # golangci-lint
+task fmt        # gofumpt
+task check      # fmt-check, lint, test
+task vuln       # govulncheck
+task licenses   # dependency license check
+task build      # ./bin/riskinator
+task ci-local   # every CI job, plus a provenance record in .local-ci/
 ```
 
 Layout:

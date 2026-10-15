@@ -24,8 +24,10 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-      - run: make fmt-check
-      - run: make test
+      # Keep in sync with TASK_VERSION in Taskfile.yml.
+      - run: go install github.com/go-task/task/v3/cmd/task@v3.54.0
+      - run: task fmt-check
+      - run: task test
 
   lint:
     name: lint
@@ -39,9 +41,11 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-      # Built from source with the go.mod toolchain (see Makefile); a prebuilt
+      # Keep in sync with TASK_VERSION in Taskfile.yml.
+      - run: go install github.com/go-task/task/v3/cmd/task@v3.54.0
+      # Built from source with the go.mod toolchain (see Taskfile.yml); a prebuilt
       # binary from an older Go refuses to load this module.
-      - run: make lint
+      - run: task lint
 
   security:
     name: vulnerabilities and licenses
@@ -55,8 +59,10 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-      - run: make vuln
-      - run: make licenses
+      # Keep in sync with TASK_VERSION in Taskfile.yml.
+      - run: go install github.com/go-task/task/v3/cmd/task@v3.54.0
+      - run: task vuln
+      - run: task licenses
 
   zizmor:
     name: workflow security (zizmor)
