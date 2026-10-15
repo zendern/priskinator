@@ -1,0 +1,14 @@
+# Mutation testing with gremlins (https://gremlins.dev), run by `task mutate`
+# (whole module) and `task mutate-diff` (lines changed since a base). Both fail
+# when a threshold is missed.
+unleash:
+  # Efficacy: killed / (killed + lived). Mutant coverage: mutants some test
+  # reaches / all mutants. Set under what the code had on 2026-10-15 (89% and
+  # 92% with #82's policy code); raise them as tests improve.
+  threshold:
+    efficacy: 85
+    mutant-coverage: 85
+  # The per-mutant timeout is the plain test run's time times this coefficient.
+  # Low values report slow-but-killed mutants as TIMED OUT under parallel load,
+  # which hides results.
+  timeout-coefficient: 10

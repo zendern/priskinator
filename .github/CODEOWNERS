@@ -1,0 +1,4 @@
+# Changes to workflows, policy, and design decisions always need the maintainer.
+*              @zendern
+/.github/      @zendern
+/docs/adr/     @zendern

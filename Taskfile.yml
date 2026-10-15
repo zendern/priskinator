@@ -1,0 +1,200 @@
+# https://taskfile.dev
+version: "3"
+
+vars:
+  BIN: "{{.ROOT_DIR}}/bin"
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo dev
+
+  # Pinned tool versions, bumped by Renovate (see renovate.json). Check for the
+  # latest release before bumping by hand. TASK_VERSION is the one source for
+  # Task: CI installs it through .github/actions/setup-task. ZIZMOR_VERSION is
+  # installed by hand (see CONTRIBUTING); scripts/local-ci.sh checks both.
+  # renovate: datasource=github-releases depName=go-task/task extractVersion=^v(?<version>.+)$
+  TASK_VERSION: 3.54.0
+  # renovate: datasource=pypi depName=zizmor
+  ZIZMOR_VERSION: 1.31.0
+  # renovate: datasource=github-releases depName=golangci/golangci-lint
+  GOLANGCI_LINT_VERSION: v2.14.0
+  # renovate: datasource=github-releases depName=mvdan/gofumpt
+  GOFUMPT_VERSION: v0.12.0
+  # renovate: datasource=github-releases depName=golang/vuln
+  GOVULNCHECK_VERSION: v1.9.0
+  # renovate: datasource=github-releases depName=google/go-licenses
+  GO_LICENSES_VERSION: v2.0.1
+  # renovate: datasource=github-releases depName=vladopajic/go-test-coverage
+  GO_TEST_COVERAGE_VERSION: v2.20.0
+  # renovate: datasource=github-releases depName=go-gremlins/gremlins
+  GREMLINS_VERSION: v0.6.0
+
+  # Build tools with the toolchain go.mod targets. `go install pkg@version`
+  # otherwise picks the tool's own minimum Go, and tools built with an older Go
+  # refuse to analyze this module.
+  GO_TOOLCHAIN:
+    sh: echo "go$(sed -n 's/^go //p' go.mod)"
+
+  ALLOWED_LICENSES: Apache-2.0,MIT,BSD-2-Clause,BSD-3-Clause,ISC
+
+tasks:
+  default:
+    desc: Format check, lint, and test with coverage thresholds
+    cmds:
+      - task: check
+
+  build:
+    desc: Build ./bin/riskinator
+    cmds:
+      - go build -trimpath -ldflags "-s -w -X main.version={{.VERSION}}" -o {{.BIN}}/riskinator ./cmd/riskinator
+
+  test:
+    desc: Run tests with the race detector
+    cmds:
+      - go test -race -count=1 ./...
+
+  cover:
+    desc: Run tests with coverage and enforce the thresholds in .testcoverage.yml
+    deps: [tool:go-test-coverage]
+    cmds:
+      - go test -race -count=1 -covermode=atomic -coverprofile=coverage.out ./...
+      - "{{.BIN}}/go-test-coverage --config=.testcoverage.yml"
+
+  mutate:
+    desc: Mutation test the module with gremlins (slow, so not part of check)
+    deps: [tool:gremlins]
+    cmds:
+      - "{{.BIN}}/gremlins unleash {{.CLI_ARGS}}"
+
+  mutate-diff:
+    desc: Mutation test only the lines changed since BASE (default origin/main)
+    deps: [tool:gremlins]
+    vars:
+      BASE: '{{.BASE | default "origin/main"}}'
+    cmds:
+      # gremlins reports 0% efficacy, and fails the threshold, when the diff has
+      # no mutants at all (docs or config only), so that case passes here.
+      - |
+        report="$(mktemp)"
+        trap 'rm -f "$report"' EXIT
+        code=0
+        {{.BIN}}/gremlins unleash --diff "{{.BASE}}" --output "$report" || code=$?
+        if [ "$code" -ne 0 ] && [ "$(jq -r '.mutants_total' "$report" 2>/dev/null)" = 0 ]; then
+          echo "No mutants in lines changed since {{.BASE}}."
+          exit 0
+        fi
+        exit "$code"
+
+  imports:
+    desc: Check import boundaries only (the depguard rules in .golangci.yml; lint runs them too)
+    deps: [tool:golangci-lint]
+    cmds:
+      - "{{.BIN}}/golangci-lint run --enable-only depguard ./..."
+
+  lint:
+    desc: Run golangci-lint
+    deps: [tool:golangci-lint]
+    cmds:
+      - "{{.BIN}}/golangci-lint run ./..."
+
+  fmt:
+    desc: Format Go code with gofumpt
+    deps: [tool:gofumpt]
+    cmds:
+      - "{{.BIN}}/gofumpt -w ."
+
+  fmt-check:
+    desc: Fail if any Go file needs gofumpt
+    deps: [tool:gofumpt]
+    cmds:
+      - |
+        out="$({{.BIN}}/gofumpt -l .)"
+        if [ -n "$out" ]; then echo "gofumpt needed:"; echo "$out"; exit 1; fi
+
+  vuln:
+    desc: Check dependencies for known vulnerabilities
+    deps: [tool:govulncheck]
+    cmds:
+      - "{{.BIN}}/govulncheck ./..."
+
+  licenses:
+    desc: Check dependency licenses against the allow list
+    deps: [tool:go-licenses]
+    cmds:
+      - "{{.BIN}}/go-licenses check ./... --allowed_licenses={{.ALLOWED_LICENSES}}"
+
+  zizmor:
+    desc: Audit GitHub workflows with zizmor
+    preconditions:
+      - sh: '[ "$(zizmor --version 2>/dev/null)" = "zizmor {{.ZIZMOR_VERSION}}" ]'
+        msg: "zizmor {{.ZIZMOR_VERSION}} is required (uv tool install zizmor=={{.ZIZMOR_VERSION}})"
+    cmds:
+      - zizmor --offline .github/workflows
+
+  check:
+    desc: Format check, lint, and test with coverage thresholds
+    cmds:
+      - task: fmt-check
+      - task: lint
+      - task: cover
+
+  ci-local:
+    desc: Run every CI job locally and write a provenance record
+    cmds:
+      - scripts/local-ci.sh
+
+  tools:
+    desc: Install the pinned Go tools into ./bin
+    deps: [tool:golangci-lint, tool:gofumpt, tool:govulncheck, tool:go-licenses, tool:go-test-coverage, tool:gremlins]
+
+  tool:golangci-lint:
+    internal: true
+    cmds:
+      - task: go-install
+        vars: {NAME: golangci-lint, PKG: github.com/golangci/golangci-lint/v2/cmd/golangci-lint, MOD: github.com/golangci/golangci-lint/v2, VER: "{{.GOLANGCI_LINT_VERSION}}"}
+
+  tool:gofumpt:
+    internal: true
+    cmds:
+      - task: go-install
+        vars: {NAME: gofumpt, PKG: mvdan.cc/gofumpt, MOD: mvdan.cc/gofumpt, VER: "{{.GOFUMPT_VERSION}}"}
+
+  tool:govulncheck:
+    internal: true
+    cmds:
+      - task: go-install
+        vars: {NAME: govulncheck, PKG: golang.org/x/vuln/cmd/govulncheck, MOD: golang.org/x/vuln, VER: "{{.GOVULNCHECK_VERSION}}"}
+
+  tool:go-licenses:
+    internal: true
+    cmds:
+      - task: go-install
+        vars: {NAME: go-licenses, PKG: github.com/google/go-licenses/v2, MOD: github.com/google/go-licenses/v2, VER: "{{.GO_LICENSES_VERSION}}"}
+
+  tool:go-test-coverage:
+    internal: true
+    cmds:
+      - task: go-install
+        vars: {NAME: go-test-coverage, PKG: github.com/vladopajic/go-test-coverage/v2, MOD: github.com/vladopajic/go-test-coverage/v2, VER: "{{.GO_TEST_COVERAGE_VERSION}}"}
+
+  tool:gremlins:
+    internal: true
+    cmds:
+      - task: go-install
+        vars: {NAME: gremlins, PKG: github.com/go-gremlins/gremlins/cmd/gremlins, MOD: github.com/go-gremlins/gremlins, VER: "{{.GREMLINS_VERSION}}"}
+
+  # Installs a Go tool unless ./bin already holds that module version built with
+  # the go.mod toolchain, so bumping a pin or go.mod rebuilds it.
+  go-install:
+    internal: true
+    label: "install {{.NAME}}@{{.VER}}"
+    status:
+      - |
+        go version -m "{{.BIN}}/{{.NAME}}" 2>/dev/null | head -n1 | grep -qx "{{.BIN}}/{{.NAME}}: {{.GO_TOOLCHAIN}}"
+      - |
+        go version -m "{{.BIN}}/{{.NAME}}" 2>/dev/null | awk '$1 == "mod" && $2 == "{{.MOD}}" && $3 == "{{.VER}}" {found = 1} END {exit !found}'
+    cmds:
+      - GOTOOLCHAIN={{.GO_TOOLCHAIN}} GOBIN={{.BIN}} go install {{.PKG}}@{{.VER}}
+
+  clean:
+    desc: Remove ./bin
+    cmds:
+      - rm -rf {{.BIN}}

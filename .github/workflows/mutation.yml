@@ -1,0 +1,42 @@
+name: mutation
+
+# Mutation testing is slower than the rest of CI, so it has its own workflow:
+# pull requests mutate only the lines they change, and a weekly run covers the
+# whole module so thresholds in .gremlins.yaml hold for code nobody touched.
+on:
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mutation:
+    name: mutation testing
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # The diff against the base branch needs its history.
+          fetch-depth: 0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: $/.github/actions/setup-task
+      - name: Mutate changed lines
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: task mutate-diff BASE="$BASE_SHA"
+      - name: Mutate the whole module
+        if: github.event_name != 'pull_request'
+        run: task mutate

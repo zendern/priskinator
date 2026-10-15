@@ -1,0 +1,12 @@
+name: Set up Task
+description: Install the Task version pinned in Taskfile.yml. Requires Go on PATH.
+
+runs:
+  using: composite
+  steps:
+    - name: Install Task
+      shell: bash
+      run: |
+        version=$(sed -n 's/^  TASK_VERSION: *//p' Taskfile.yml)
+        [ -n "$version" ] || { echo "TASK_VERSION not found in Taskfile.yml" >&2; exit 1; }
+        go install "github.com/go-task/task/v3/cmd/task@v${version}"

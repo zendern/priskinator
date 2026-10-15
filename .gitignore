@@ -1,0 +1,13 @@
+# Build output and pinned tools
+/bin/
+/dist/
+
+# Test artifacts
+*.out
+coverage.*
+
+# Local git worktrees
+.worktrees/
+
+# Local CI runs and provenance (scripts/local-ci.sh)
+.local-ci/
