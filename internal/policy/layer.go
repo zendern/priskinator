@@ -191,13 +191,11 @@ func Merge(base, repo *Policy) (*Policy, []Weakening) {
 		if len(f.over) == 0 {
 			continue
 		}
-		path := "/scoring/factors/" + names[i]
-		switch {
-		case len(*f.dst) == 0 || bandsDominate(f.over, *f.dst):
-			*f.dst = cloneBands(f.over)
-		default:
-			reject("", path, "gives some values fewer points than the baseline")
+		if len(*f.dst) != 0 && !bandsDominate(f.over, *f.dst) {
+			reject("", "/scoring/factors/"+names[i], "gives some values fewer points than the baseline")
+			continue
 		}
+		*f.dst = cloneBands(f.over)
 	}
 	out.Scoring.Floors = appendFloors(out.Scoring.Floors, repo.Scoring.Floors)
 	if repo.Scoring.ExcludePaths != nil {
@@ -272,13 +270,14 @@ func mergeAI(out *AI, base, repo AI, reject rejectFn) {
 		}
 	}
 	fixed := func(dst *string, base, repo, path string) {
-		switch {
-		case repo == "" || repo == base:
-		case base == "":
-			*dst = repo
-		default:
-			reject("", path, "cannot change %q set by the baseline", base)
+		if repo == "" || repo == base {
+			return
 		}
+		if base != "" {
+			reject("", path, "cannot change %q set by the baseline", base)
+			return
+		}
+		*dst = repo
 	}
 	fixed(&out.Provider, base.Provider, repo.Provider, "/ai/provider")
 	fixed(&out.Model, base.Model, repo.Model, "/ai/model")
@@ -307,13 +306,14 @@ func mergeAI(out *AI, base, repo AI, reject rejectFn) {
 // lower sets *dst to repo when repo is not above it, and reports repo
 // otherwise. An unset repo value inherits; an unset base takes repo's.
 func lower[T cmp.Ordered](dst **T, repo *T, path string, reject rejectFn) {
-	switch {
-	case repo == nil:
-	case *dst == nil || *repo <= **dst:
-		*dst = ptr(*repo)
-	default:
-		reject("", path, "cannot raise %v to %v", **dst, *repo)
+	if repo == nil {
+		return
 	}
+	if *dst != nil && *repo > **dst {
+		reject("", path, "cannot raise %v to %v", **dst, *repo)
+		return
+	}
+	*dst = ptr(*repo)
 }
 
 // bandsDominate reports whether repo gives at least as many points as base for

@@ -302,12 +302,15 @@ func check(p *Policy) []Problem {
 	globs := func(path string, patterns []string) {
 		for i, g := range patterns {
 			at := path + "/" + strconv.Itoa(i)
-			switch {
-			case strings.Contains(g, `\`):
+			if strings.Contains(g, `\`) {
 				add(at, "glob %q must use forward slashes", g)
-			case strings.HasPrefix(g, "/") || strings.HasPrefix(g, "./"):
+				continue
+			}
+			if strings.HasPrefix(g, "/") || strings.HasPrefix(g, "./") {
 				add(at, "glob %q must be relative to the repository root, without a leading / or ./", g)
-			case !doublestar.ValidatePattern(g):
+				continue
+			}
+			if !doublestar.ValidatePattern(g) {
 				add(at, "invalid glob %q", g)
 			}
 		}
@@ -361,10 +364,10 @@ func checkBands(path string, bands Bands) []Problem {
 	}
 	for i, b := range bands {
 		last := i == len(bands)-1
-		switch {
-		case b.UpTo == nil && !last:
+		if b.UpTo == nil && !last {
 			add(i, "only the last band may omit up_to")
-		case b.UpTo != nil && last:
+		}
+		if b.UpTo != nil && last {
 			add(i, "the last band must omit up_to so every value has points")
 		}
 		if i == 0 {
