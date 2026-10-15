@@ -1,6 +1,8 @@
 package fixture
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -65,6 +67,10 @@ func TestLoadRejectsInvalidFixtures(t *testing.T) {
 		"missing name": {
 			yaml:    "expect: {risk: low}\n",
 			wantErr: "name is required",
+		},
+		"file without path": {
+			yaml:    "name: x\nchange: {files: [{path: a}, {status: added}]}\nexpect: {risk: low}\n",
+			wantErr: "change.files[1]: path is required",
 		},
 		"invalid status": {
 			yaml:    "name: x\nchange: {files: [{path: a, status: moved}]}\nexpect: {risk: low}\n",
@@ -175,4 +181,75 @@ func expectEqual(a, b Expect) bool {
 	return a.Risk == b.Risk && a.HumanReview == b.HumanReview &&
 		slices.Equal(a.Triggers, b.Triggers) && slices.Equal(a.TriggersAbsent, b.TriggersAbsent) &&
 		slices.Equal(a.Reviewers, b.Reviewers)
+}
+
+// recorder is a testing.TB that records failures. Fatalf stops the calling
+// function the way testing.T does, through a panic that try recovers.
+type recorder struct {
+	testing.TB
+	errors []string
+	fatal  string
+}
+
+type stopped struct{}
+
+func (r *recorder) Helper() {}
+
+func (r *recorder) Errorf(format string, args ...any) {
+	r.errors = append(r.errors, fmt.Sprintf(format, args...))
+}
+
+func (r *recorder) Fatalf(format string, args ...any) {
+	r.fatal = fmt.Sprintf(format, args...)
+	panic(stopped{})
+}
+
+func (r *recorder) try(fn func()) {
+	defer func() {
+		if v := recover(); v != nil {
+			if _, ok := v.(stopped); !ok {
+				panic(v)
+			}
+		}
+	}()
+	fn()
+}
+
+func TestMustLoadFailsOnAMissingDir(t *testing.T) {
+	r := &recorder{TB: t}
+	r.try(func() { mustLoad(r, filepath.Join(t.TempDir(), "missing")) })
+	if !strings.HasPrefix(r.fatal, "load fixtures: read fixture dir:") {
+		t.Errorf("fatal = %q", r.fatal)
+	}
+}
+
+func TestCheckReportsEvaluateErrors(t *testing.T) {
+	r := &recorder{TB: t}
+	f := Fixture{Path: "x.yaml", Expect: Expect{Risk: "low"}}
+	r.try(func() { check(r, f, func(Fixture) (Result, error) { return Result{}, errors.New("boom") }) })
+	if r.fatal != "x.yaml: evaluate: boom" || len(r.errors) != 0 {
+		t.Errorf("fatal = %q, errors = %q", r.fatal, r.errors)
+	}
+}
+
+func TestCheckReportsEveryDifference(t *testing.T) {
+	r := &recorder{TB: t}
+	f := Fixture{Path: "x.yaml", Expect: Expect{Risk: "high", HumanReview: "required"}}
+	r.try(func() {
+		check(r, f, func(Fixture) (Result, error) { return Result{Risk: "low", HumanReview: "optional"}, nil })
+	})
+	want := []string{`x.yaml: risk: got "low", want "high"`, `x.yaml: human_review: got "optional", want "required"`}
+	if r.fatal != "" || !slices.Equal(r.errors, want) {
+		t.Errorf("fatal = %q, errors = %q, want %q", r.fatal, r.errors, want)
+	}
+}
+
+func TestLoadReportsUnreadableFiles(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.Symlink(filepath.Join(dir, "nowhere"), filepath.Join(dir, "dangling.yaml")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(dir); err == nil || !strings.Contains(err.Error(), "dangling.yaml") {
+		t.Errorf("err = %v, want an error naming dangling.yaml", err)
+	}
 }

@@ -15,5 +15,10 @@ threshold:
 #   - path: ^cmd/priskinator$
 #     threshold: 60
 
+# Each excluded path needs a reason here.
 exclude:
-  paths: []
+  paths:
+    # Only main: it hands os.Args and the standard streams to run and exits.
+    # run holds the logic and is tested directly; a unit test cannot call
+    # main without exiting the test binary.
+    - ^cmd/priskinator/main\.go$
