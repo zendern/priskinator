@@ -295,30 +295,67 @@ func TestTestSignal(t *testing.T) {
 	}
 }
 
-func TestIsTestAndIsSource(t *testing.T) {
-	tests := []string{
+func TestIsTest(t *testing.T) {
+	for _, p := range []string{
 		"pkg/a_test.go", "tests/test_api.py", "api/views_test.py", "app/conftest.py",
 		"src/app.test.ts", "src/app.spec.tsx", "web/__tests__/x.js", "test/helper.rb",
 		"spec/models/user_spec.rb", "src/test/java/FooTest.java", "Foo.Tests/BarTests.cs",
-	}
-	for _, p := range tests {
+		"src/HTTPSpec.kt", "e2e/Login2Test.php", "TEST/x.c", "specs/a.js",
+	} {
 		if !isTest(p) {
 			t.Errorf("isTest(%q) = false", p)
 		}
 	}
-	for _, p := range []string{"pkg/a.go", "latest/x.go", "contest.py", "src/attest.ts", "docs/testing.md"} {
+	for _, p := range []string{
+		"pkg/a.go", "latest/x.go", "contest.py", "src/attest.ts", "app/inspect.py", "lib/respect.go",
+		"Specification.java", "internal/fixture/testdata/x.go", "Contest/Protest.java", "",
+	} {
 		if isTest(p) {
 			t.Errorf("isTest(%q) = true", p)
 		}
 	}
-	for _, p := range []string{"a.go", "b.PY", "c.tsx", "d.rs", "e.sh", "f.java"} {
-		if !isSource(p) {
-			t.Errorf("isSource(%q) = false", p)
+}
+
+func TestWords(t *testing.T) {
+	tests := map[string][]string{
+		"src/FooTest.java":  {"src", "foo", "test", "java"},
+		"HTTPSpec":          {"http", "spec"},
+		"a_b-c.d":           {"a", "b", "c", "d"},
+		"Login2Test":        {"login2", "test"},
+		"ABC":               {"abc"},
+		"x//__tests__//y":   {"x", "tests", "y"},
+		"getHTTPResponseOK": {"get", "http", "response", "ok"},
+		"":                  nil,
+	}
+	for in, want := range tests {
+		if got := words(in); !slices.Equal(got, want) {
+			t.Errorf("words(%q) = %q, want %q", in, got, want)
 		}
 	}
-	for _, p := range []string{"README.md", "go.mod", "data.json", "Makefile", "image.png"} {
-		if isSource(p) {
-			t.Errorf("isSource(%q) = true", p)
+}
+
+func TestIsSource(t *testing.T) {
+	src := func(p string, added ...string) changeset.File {
+		var ls []changeset.Line
+		for i, a := range added {
+			ls = append(ls, changeset.Line{Line: i + 1, Text: a})
+		}
+		return changeset.File{Path: p, Hunks: []changeset.Hunk{{Added: ls}}}
+	}
+	for _, f := range []changeset.File{
+		src("a.go"), src("dir/b.PY"), src("c.tsx"), src("e.sh"), src("f.java"), src("Makefile"),
+		src("lib.rs", "fn main() {", `    println!("hi");`, "}"),
+		src("tool.unknownext"),
+	} {
+		if !isSource(f) {
+			t.Errorf("isSource(%q) = false", f.Path)
+		}
+	}
+	for _, f := range []changeset.File{
+		src("README.md"), src("go.mod"), src("data.json"), src("x.yaml"), src("notes.txt"),
+	} {
+		if isSource(f) {
+			t.Errorf("isSource(%q) = true", f.Path)
 		}
 	}
 }

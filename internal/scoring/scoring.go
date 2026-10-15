@@ -215,7 +215,7 @@ func testSignalOf(files []changeset.File) measurement {
 			tests = true
 			continue
 		}
-		if isSource(f.Path) {
+		if isSource(f) {
 			source += f.AddedLines() + f.RemovedLines()
 		}
 	}
