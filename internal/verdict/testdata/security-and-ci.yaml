@@ -1,0 +1,18 @@
+name: reviewers from every trigger are required
+description: G1 routes to platform and G7 to security.
+change:
+  files:
+  - path: .github/workflows/ci.yml
+    added: 1
+  - path: internal/auth/token.go
+    added: 1
+  - path: internal/auth/token_test.go
+    added: 1
+expect:
+  risk: high
+  triggers:
+  - G1.ci-workflows
+  - G7.security-paths
+  reviewers:
+  - platform
+  - security
