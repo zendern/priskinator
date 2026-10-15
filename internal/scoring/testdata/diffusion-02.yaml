@@ -1,0 +1,11 @@
+name: 2 directories score 0
+description: Changes spread over 2 directories fall in the band worth 0 points.
+change:
+  files:
+  - path: d00/README.md
+    added: 1
+  - path: d01/README.md
+    added: 1
+expect:
+  points:
+    diffusion: 0

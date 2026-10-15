@@ -1,0 +1,16 @@
+name: a criticality floor raises the risk
+description: Migrations have a high floor, so a one-line change to one is high risk.
+change:
+  files:
+  - path: db/migrations/0001_init.sql
+    added: 1
+policy:
+  version: 1
+  scoring:
+    floors:
+    - description: Database migrations
+      paths:
+      - "db/migrations/**"
+      risk: high
+expect:
+  risk: high

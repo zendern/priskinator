@@ -1,0 +1,9 @@
+name: complexity scores nothing until it is measured
+description: Complexity delta needs per-language analysis, which does not exist yet.
+change:
+  files:
+  - path: internal/app/app.go
+    added: 10
+expect:
+  points:
+    complexity_delta: 0

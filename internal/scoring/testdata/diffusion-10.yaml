@@ -1,0 +1,27 @@
+name: 10 directories score 15
+description: Changes spread over 10 directories fall in the band worth 15 points.
+change:
+  files:
+  - path: d00/README.md
+    added: 1
+  - path: d01/README.md
+    added: 1
+  - path: d02/README.md
+    added: 1
+  - path: d03/README.md
+    added: 1
+  - path: d04/README.md
+    added: 1
+  - path: d05/README.md
+    added: 1
+  - path: d06/README.md
+    added: 1
+  - path: d07/README.md
+    added: 1
+  - path: d08/README.md
+    added: 1
+  - path: d09/README.md
+    added: 1
+expect:
+  points:
+    diffusion: 15

@@ -1,0 +1,16 @@
+name: a floor ignores other paths
+description: The migrations floor does not apply outside db/migrations.
+change:
+  files:
+  - path: db/seed.sql
+    added: 1
+policy:
+  version: 1
+  scoring:
+    floors:
+    - description: Database migrations
+      paths:
+      - "db/migrations/**"
+      risk: high
+expect:
+  risk: low
