@@ -26,7 +26,8 @@ jobs:
           go-version-file: go.mod
       - uses: $/.github/actions/setup-task
       - run: task fmt-check
-      - run: task test
+      # Race tests with a coverage profile, gated by .testcoverage.yml.
+      - run: task cover
 
   lint:
     name: lint

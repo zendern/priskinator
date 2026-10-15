@@ -11,7 +11,9 @@
 # LOCAL_CI_RUNNER to a short description of who or what ran it (for example
 # "laptop of @alice" or "Claude Code cloud session"); it is recorded as given.
 #
-# Keep STEPS in sync with the jobs in .github/workflows/ci.yml.
+# Keep STEPS in sync with the jobs in .github/workflows/ci.yml and
+# .github/workflows/mutation.yml. Mutation testing covers the lines changed
+# since LOCAL_CI_BASE (default origin/main; set it to the PR's base branch).
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
@@ -19,15 +21,17 @@ cd "$(git rev-parse --show-toplevel)"
 taskfile_var() { sed -n "s/^  $1: //p" Taskfile.yml; }
 TASK_VERSION=${TASK_VERSION:-$(taskfile_var TASK_VERSION)}
 ZIZMOR_VERSION=${ZIZMOR_VERSION:-$(taskfile_var ZIZMOR_VERSION)}
+LOCAL_CI_BASE=${LOCAL_CI_BASE:-origin/main}
 
 # job|step|command
 STEPS=(
   "test|fmt-check|task fmt-check"
-  "test|test|task test"
+  "test|cover|task cover"
   "lint|lint|task lint"
   "security|vuln|task vuln"
   "security|licenses|task licenses"
   "zizmor|zizmor|task zizmor"
+  "mutation|mutate-diff|task mutate-diff BASE=$LOCAL_CI_BASE"
 )
 
 for tool in git jq sha256sum task go zizmor; do
@@ -50,6 +54,11 @@ if [[ "$task_version" != "$TASK_VERSION" ]]; then
   echo "local-ci: task $task_version found, Taskfile.yml pins $TASK_VERSION" >&2
   exit 2
 fi
+
+git rev-parse --verify --quiet "$LOCAL_CI_BASE^{commit}" >/dev/null || {
+  echo "local-ci: LOCAL_CI_BASE=$LOCAL_CI_BASE is not a commit; fetch it or set LOCAL_CI_BASE to the PR's base branch" >&2
+  exit 2
+}
 
 commit=$(git rev-parse HEAD)
 tree=$(git rev-parse 'HEAD^{tree}')
@@ -104,6 +113,8 @@ jq -n \
   --arg started "$started" --arg finished "$finished" --arg result "$overall" \
   --arg label "${LOCAL_CI_RUNNER:-unspecified}" \
   --arg ciSha "$(sha256sum .github/workflows/ci.yml | cut -d' ' -f1)" \
+  --arg mutationSha "$(sha256sum .github/workflows/mutation.yml | cut -d' ' -f1)" \
+  --arg base "$LOCAL_CI_BASE" --arg baseCommit "$(git rev-parse "$LOCAL_CI_BASE^{commit}")" \
   --arg taskfileSha "$(sha256sum Taskfile.yml | cut -d' ' -f1)" \
   --arg os "$(. /etc/os-release 2>/dev/null && echo "$PRETTY_NAME" || uname -s)" \
   --arg kernel "$(uname -sr)" --arg arch "$(uname -m)" \
@@ -112,6 +123,8 @@ jq -n \
   --arg gofumpt "$(tool_version bin/gofumpt)" \
   --arg govulncheck "$(tool_version bin/govulncheck)" \
   --arg goLicenses "$(tool_version bin/go-licenses)" \
+  --arg goTestCoverage "$(tool_version bin/go-test-coverage)" \
+  --arg gremlins "$(tool_version bin/gremlins)" \
   --arg zizmor "$zizmor_version" \
   --arg task "$task_version" \
   --argjson steps "$steps_json" \
@@ -123,9 +136,10 @@ jq -n \
       result: $result,
       startedOn: $started,
       finishedOn: $finished,
-      definition: {ciWorkflowSha256: $ciSha, taskfileSha256: $taskfileSha},
+      definition: {ciWorkflowSha256: $ciSha, mutationWorkflowSha256: $mutationSha, taskfileSha256: $taskfileSha},
+      mutationBase: {ref: $base, gitCommit: $baseCommit},
       runner: {label: $label, os: $os, kernel: $kernel, arch: $arch},
-      tools: {go: $go, task: $task, golangciLint: $golangci, gofumpt: $gofumpt, govulncheck: $govulncheck, goLicenses: $goLicenses, zizmor: $zizmor},
+      tools: {go: $go, task: $task, golangciLint: $golangci, gofumpt: $gofumpt, govulncheck: $govulncheck, goLicenses: $goLicenses, goTestCoverage: $goTestCoverage, gremlins: $gremlins, zizmor: $zizmor},
       steps: $steps
     }
   }' >"$out/attestation.json"
@@ -144,7 +158,7 @@ jq -n \
   echo "|---|---|---|---|---|"
   jq -r '.predicate.steps[] | "| \(.job) | \(.name) | `\(.command)` | \(.status) | \(.durationSeconds)s |"' "$out/attestation.json"
   echo
-  echo "Differences from hosted CI: zizmor runs with \`--offline\`, and tools run from \`./bin\` at the versions pinned in Taskfile.yml."
+  echo "Differences from hosted CI: zizmor runs with \`--offline\`, tools run from \`./bin\` at the versions pinned in Taskfile.yml, and mutation testing covers the lines changed since \`$LOCAL_CI_BASE\` (\`$(git rev-parse --short "$LOCAL_CI_BASE^{commit}")\`)."
   echo
   echo "<details><summary>Attestation (in-toto Statement)</summary>"
   echo
