@@ -1,0 +1,11 @@
+name: G10.binary still fires on a rename
+description: Renaming the file does not hide it.
+change:
+  files:
+  - path: img/logo.png
+    old_path: assets/logo.png
+    status: renamed
+    binary: true
+expect:
+  triggers:
+  - G10.binary

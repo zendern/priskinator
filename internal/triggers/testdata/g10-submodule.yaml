@@ -1,0 +1,13 @@
+name: G10.submodule fires on a submodule pointer change
+description: A submodule pointer change is a hidden-change vector (ADR 0006, G10).
+change:
+  files:
+  - path: third_party/lib
+    status: modified
+    old_mode: "160000"
+    new_mode: "160000"
+expect:
+  triggers:
+  - G10.submodule
+  reviewers:
+  - platform

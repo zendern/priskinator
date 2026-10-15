@@ -1,0 +1,11 @@
+name: G3.lint-config fires on .golangci.yml
+description: A change to .golangci.yml needs platform review.
+change:
+  files:
+  - path: .golangci.yml
+    status: modified
+expect:
+  triggers:
+  - G3.lint-config
+  reviewers:
+  - platform

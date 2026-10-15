@@ -1,0 +1,12 @@
+name: G10.lfs fires on an LFS pointer change
+description: An LFS pointer change is a hidden-change vector (ADR 0006, G10).
+change:
+  files:
+  - path: models/weights.bin
+    status: modified
+    lfs: true
+expect:
+  triggers:
+  - G10.lfs
+  reviewers:
+  - platform

@@ -1,0 +1,11 @@
+name: G2.gate-governance fires when .gitattributes moves out
+description: Rules match the old path of a rename too, so moving a file out of a watched path still fires.
+change:
+  files:
+  - path: docs/gitattributes.txt
+    old_path: .gitattributes
+    status: renamed
+expect:
+  triggers:
+  - G2.gate-governance
+  - G10.watched-path-moved

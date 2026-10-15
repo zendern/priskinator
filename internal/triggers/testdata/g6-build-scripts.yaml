@@ -1,0 +1,11 @@
+name: G6.build-scripts fires on Taskfile.yml
+description: A change to Taskfile.yml needs platform review.
+change:
+  files:
+  - path: Taskfile.yml
+    status: modified
+expect:
+  triggers:
+  - G6.build-scripts
+  reviewers:
+  - platform

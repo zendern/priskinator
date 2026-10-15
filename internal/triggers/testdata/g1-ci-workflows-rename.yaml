@@ -1,0 +1,11 @@
+name: G1.ci-workflows fires when .github/workflows/old.yml moves out
+description: Rules match the old path of a rename too, so moving a file out of a watched path still fires.
+change:
+  files:
+  - path: ci/old.yml
+    old_path: .github/workflows/old.yml
+    status: renamed
+expect:
+  triggers:
+  - G1.ci-workflows
+  - G10.watched-path-moved

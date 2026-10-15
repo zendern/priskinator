@@ -1,0 +1,11 @@
+name: G4.hook-managers fires on .pre-commit-config.yaml
+description: A change to .pre-commit-config.yaml needs platform review.
+change:
+  files:
+  - path: .pre-commit-config.yaml
+    status: modified
+expect:
+  triggers:
+  - G4.hook-managers
+  reviewers:
+  - platform

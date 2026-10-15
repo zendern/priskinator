@@ -1,0 +1,11 @@
+name: G7.security-paths fires when internal/auth/token.go moves out
+description: Rules match the old path of a rename too, so moving a file out of a watched path still fires.
+change:
+  files:
+  - path: internal/user/token.go
+    old_path: internal/auth/token.go
+    status: renamed
+expect:
+  triggers:
+  - G7.security-paths
+  - G10.watched-path-moved

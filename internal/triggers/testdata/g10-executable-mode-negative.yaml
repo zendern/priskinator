@@ -1,0 +1,11 @@
+name: G10.executable-mode ignores a file made non-executable
+description: A file made non-executable is not a hidden-change vector.
+change:
+  files:
+  - path: scripts/release.sh
+    status: modified
+    old_mode: "100755"
+    new_mode: "100644"
+expect:
+  triggers_absent:
+  - G10.executable-mode

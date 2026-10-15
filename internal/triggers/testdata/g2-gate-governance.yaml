@@ -1,0 +1,11 @@
+name: G2.gate-governance fires on .github/CODEOWNERS
+description: A change to .github/CODEOWNERS needs platform review.
+change:
+  files:
+  - path: .github/CODEOWNERS
+    status: modified
+expect:
+  triggers:
+  - G2.gate-governance
+  reviewers:
+  - platform

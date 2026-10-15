@@ -1,0 +1,11 @@
+name: G1.ci-workflows fires on .github/workflows/release.yml
+description: A change to .github/workflows/release.yml needs platform review.
+change:
+  files:
+  - path: .github/workflows/release.yml
+    status: modified
+expect:
+  triggers:
+  - G1.ci-workflows
+  reviewers:
+  - platform

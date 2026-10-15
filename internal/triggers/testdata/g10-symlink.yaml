@@ -1,0 +1,12 @@
+name: G10.symlink fires on an added symlink
+description: An added symlink is a hidden-change vector (ADR 0006, G10).
+change:
+  files:
+  - path: config/current
+    status: added
+    new_mode: "120000"
+expect:
+  triggers:
+  - G10.symlink
+  reviewers:
+  - platform

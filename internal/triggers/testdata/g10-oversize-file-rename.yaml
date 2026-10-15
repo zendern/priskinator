@@ -1,0 +1,11 @@
+name: G10.oversize-file still fires on a rename
+description: Renaming the file does not hide it.
+change:
+  files:
+  - path: data/archive.json
+    old_path: data/dump.json
+    status: renamed
+    size: 2097152
+expect:
+  triggers:
+  - G10.oversize-file

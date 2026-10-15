@@ -1,0 +1,10 @@
+name: G10.symlink ignores a deleted symlink
+description: A deleted symlink is not a hidden-change vector.
+change:
+  files:
+  - path: config/current
+    status: deleted
+    old_mode: "120000"
+expect:
+  triggers_absent:
+  - G10.symlink

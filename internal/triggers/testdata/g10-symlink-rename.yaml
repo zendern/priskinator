@@ -1,0 +1,12 @@
+name: G10.symlink still fires on a rename
+description: Renaming the file does not hide it.
+change:
+  files:
+  - path: config/live
+    old_path: config/current
+    status: renamed
+    old_mode: "120000"
+    new_mode: "120000"
+expect:
+  triggers:
+  - G10.symlink

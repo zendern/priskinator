@@ -1,0 +1,10 @@
+name: G10.oversize-file ignores a file exactly at the 1 MiB default
+description: A file exactly at the 1 MiB default is not a hidden-change vector.
+change:
+  files:
+  - path: data/dump.json
+    status: added
+    size: 1048576
+expect:
+  triggers_absent:
+  - G10.oversize-file
