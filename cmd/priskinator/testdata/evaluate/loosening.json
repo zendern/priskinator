@@ -1,0 +1,74 @@
+{
+  "risk": "high",
+  "human_review": "required",
+  "bot_eligible": false,
+  "triggers": [
+    "G2.gate-governance",
+    "policy-loosening"
+  ],
+  "required_reviewers": [
+    "platform"
+  ],
+  "reasons": [
+    {
+      "rule": "G2.gate-governance",
+      "file": ".priskinator/policy.yaml",
+      "detail": "matches \".priskinator/**\""
+    },
+    {
+      "rule": "policy-loosening",
+      "file": "/limits/max_changed_lines",
+      "detail": "cannot raise 5000 to 9000"
+    }
+  ],
+  "evaluation": "ok",
+  "score": {
+    "points": 0,
+    "tier": "low",
+    "risk": "low",
+    "factors": [
+      {
+        "name": "size",
+        "measured": true,
+        "value": 2,
+        "points": 0,
+        "band": "0-50",
+        "detail": "1 added and 1 removed lines in 1 file"
+      },
+      {
+        "name": "files",
+        "measured": true,
+        "value": 1,
+        "points": 0,
+        "band": "0-10",
+        "detail": "1 file changed"
+      },
+      {
+        "name": "diffusion",
+        "measured": true,
+        "value": 1,
+        "points": 0,
+        "band": "0-2",
+        "detail": "1 directory; change entropy 0.00"
+      },
+      {
+        "name": "complexity_delta",
+        "measured": false,
+        "value": 0,
+        "points": 0,
+        "detail": "not measured: complexity analysis is not available yet"
+      },
+      {
+        "name": "test_signal",
+        "measured": true,
+        "value": 0,
+        "points": 0,
+        "band": "0-20",
+        "detail": "no source lines changed"
+      }
+    ],
+    "floors": [],
+    "excluded": [],
+    "notes": []
+  }
+}
