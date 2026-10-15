@@ -17,6 +17,17 @@ linters:
     - unconvert
     - unparam
   settings:
+    gocritic:
+      enabled-checks:
+        - ruleguard
+      # ifElseChain asks for a tagless switch, which tools/lint/rules.go bans.
+      disabled-checks:
+        - ifElseChain
+      settings:
+        ruleguard:
+          # Project rules; each says why it exists.
+          rules: "${base-path}/tools/lint/rules.go"
+          failOn: all
     # Import boundaries. Each rule applies to the files it names; a `$` suffix
     # matches that exact package, otherwise a rule matches the path as a prefix.
     depguard:

@@ -32,7 +32,7 @@ jobs:
         with:
           go-version-file: go.mod
       - uses: $/.github/actions/setup-task
-      - name: Mutate changed lines
+      - name: Mutate changed packages
         if: github.event_name == 'pull_request'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}

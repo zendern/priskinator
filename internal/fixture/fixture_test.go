@@ -253,3 +253,18 @@ func TestLoadReportsUnreadableFiles(t *testing.T) {
 		t.Errorf("err = %v, want an error naming dangling.yaml", err)
 	}
 }
+
+func TestValidateAcceptsAnySingleExpectation(t *testing.T) {
+	tests := map[string]Expect{
+		"risk":            {Risk: "low"},
+		"human_review":    {HumanReview: "required"},
+		"triggers":        {Triggers: []string{"G1.ci-workflows"}},
+		"triggers_absent": {TriggersAbsent: []string{"G1.ci-workflows"}},
+		"reviewers":       {Reviewers: []string{"@org/team"}},
+	}
+	for name, e := range tests {
+		if err := validate(Fixture{Name: name, Expect: e}); err != nil {
+			t.Errorf("validate with only %s: %v", name, err)
+		}
+	}
+}

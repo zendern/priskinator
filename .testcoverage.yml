@@ -1,14 +1,14 @@
 # Coverage gate for `task cover` (https://github.com/vladopajic/go-test-coverage).
-# Thresholds sit a few points under what the code had when they were set
-# (2026-10-15: total 88%, lowest package 84%, lowest file 80%), so a change that
-# adds untested code fails instead of slowly lowering the average. Raise them as
-# coverage grows; lowering one needs a reason in the PR.
+# Thresholds are 95% everywhere (set 2026-10-15 at a 98.7% total; the lowest
+# file, internal/policy/policy.go at 95.2%, misses only a panic on embedded
+# defaults), so a change that adds untested code fails instead of slowly lowering
+# the average. Lowering one, or excluding a path, needs a reason in the PR.
 profile: coverage.out
 
 threshold:
-  file: 75
-  package: 80
-  total: 85
+  file: 95
+  package: 95
+  total: 95
 
 # Per-path overrides, for example a thin main that only wires flags:
 # override:
