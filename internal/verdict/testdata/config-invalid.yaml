@@ -1,0 +1,14 @@
+name: an invalid repo policy fires config-invalid
+description: The repo policy has an unknown key, so the baseline applies.
+change:
+  files:
+  - path: docs/guide.md
+    added: 1
+policy:
+  version: 1
+  bogus: true
+expect:
+  risk: high
+  human_review: required
+  triggers:
+  - config-invalid

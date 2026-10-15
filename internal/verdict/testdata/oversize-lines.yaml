@@ -1,0 +1,11 @@
+name: a change over the line cap fires oversize
+description: limits.max_changed_lines defaults to 5000.
+change:
+  files:
+  - path: internal/app/big.go
+    added: 5001
+expect:
+  risk: high
+  human_review: required
+  triggers:
+  - oversize
