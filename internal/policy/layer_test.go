@@ -700,16 +700,54 @@ func TestResolve(t *testing.T) {
 		intsEq(t, "max_changed_lines", res.Policy.Limits.MaxChangedLines, 10)
 	})
 
-	t.Run("a weakening repo policy fires policy-weakening-attempt and keeps the baseline", func(t *testing.T) {
+	t.Run("a repo policy loosening the defaults applies and reports it", func(t *testing.T) {
 		res, err := Resolve(nil, []byte("version: 1\ntriggers:\n  G1.ci-workflows: {enabled: false}\n"))
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !slices.Equal(res.Triggers, []string{TriggerPolicyWeakeningAttempt}) || len(res.Weakenings) != 1 {
+		want := []Weakening{{Rule: "G1.ci-workflows", Path: "/triggers/G1.ci-workflows/enabled", Message: "disables a baseline rule", Applied: true}}
+		if len(res.Triggers) != 0 || !reflect.DeepEqual(res.Weakenings, want) {
+			t.Errorf("res = %+v", res)
+		}
+		if trigger(t, res.Policy, "G1.ci-workflows").IsEnabled() {
+			t.Error("rule is still enabled")
+		}
+	})
+
+	t.Run("a repo policy loosening the org baseline fires policy-weakening-attempt and keeps the baseline", func(t *testing.T) {
+		org := []byte("version: 1\ntriggers:\n  G1.ci-workflows: {enabled: true}\n")
+		res, err := Resolve(org, []byte("version: 1\ntriggers:\n  G1.ci-workflows: {enabled: false}\n"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !slices.Equal(res.Triggers, []string{TriggerPolicyWeakeningAttempt}) || len(res.Weakenings) != 1 || res.Weakenings[0].Applied {
 			t.Errorf("res = %+v", res)
 		}
 		if !trigger(t, res.Policy, "G1.ci-workflows").IsEnabled() {
 			t.Error("rule was disabled")
+		}
+	})
+
+	t.Run("an org baseline locks only the fields it sets", func(t *testing.T) {
+		org := []byte("version: 1\ntriggers:\n  G7.security-paths: {add_paths: [\"billing/**\"]}\n")
+		repo := []byte("version: 1\ntriggers:\n  G7.security-paths: {paths: [\"**/auth/**\"]}\n  G3.lint-config: {risk: low}\n")
+		res, err := Resolve(org, repo)
+		if err != nil {
+			t.Fatal(err)
+		}
+		applied := map[string]bool{}
+		for _, w := range res.Weakenings {
+			applied[w.Path] = w.Applied
+		}
+		want := map[string]bool{"/triggers/G7.security-paths/paths": false, "/triggers/G3.lint-config/risk": true}
+		if !reflect.DeepEqual(applied, want) || !slices.Equal(res.Triggers, []string{TriggerPolicyWeakeningAttempt}) {
+			t.Errorf("weakenings %+v, triggers %v", res.Weakenings, res.Triggers)
+		}
+		if !slices.Contains(trigger(t, res.Policy, "G7.security-paths").Paths, "billing/**") {
+			t.Error("org paths were dropped")
+		}
+		if trigger(t, res.Policy, "G3.lint-config").Risk != RiskLow {
+			t.Error("the repo could not lower a default risk")
 		}
 	})
 
@@ -755,4 +793,94 @@ func TestResolve(t *testing.T) {
 			t.Error("a path-less org rule must be rejected")
 		}
 	})
+}
+
+// Every weakening case: with no org baseline the repo's value takes effect,
+// exactly as if it were laid over the defaults, and each field is reported as
+// applied. With an org baseline that sets the field, it is held (ADR 0010).
+func TestResolveEveryWeakening(t *testing.T) {
+	for _, tc := range fieldCases() {
+		if tc.dir != weaken {
+			continue
+		}
+		t.Run(tc.field+"/"+tc.name, func(t *testing.T) {
+			var org []byte
+			if tc.org != "" {
+				org = []byte(tc.org)
+			}
+			res, err := Resolve(org, []byte(tc.repo))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var paths []string
+			for _, w := range res.Weakenings {
+				paths = append(paths, w.Path)
+				if w.Applied != (tc.org == "") {
+					t.Errorf("%s: Applied = %v with org %q", w.Path, w.Applied, tc.org)
+				}
+			}
+			sort.Strings(paths)
+			want := slices.Clone(tc.paths)
+			sort.Strings(want)
+			if !slices.Equal(paths, want) {
+				t.Errorf("weakenings at %v, want %v", paths, want)
+			}
+			if tc.org != "" {
+				if !slices.Equal(res.Triggers, []string{TriggerPolicyWeakeningAttempt}) {
+					t.Errorf("triggers = %v", res.Triggers)
+				}
+				tc.check(t, res.Policy)
+				return
+			}
+			if len(res.Triggers) != 0 {
+				t.Errorf("triggers = %v", res.Triggers)
+			}
+			if want := Overlay(Defaults(), mustParse(t, tc.repo)); !reflect.DeepEqual(res.Policy, want) {
+				t.Errorf("policy differs from the repo laid over the defaults:\n%+v\nwant\n%+v", res.Policy, want)
+			}
+		})
+	}
+}
+
+func TestSetByCoversEveryReportedPath(t *testing.T) {
+	org := mustParse(t, `
+version: 1
+match: {case_sensitive: true}
+limits: {max_file_bytes: 1, max_changed_files: 1, max_changed_lines: 1}
+triggers:
+  G1.ci-workflows: {enabled: true, paths: ["a/**"], reviewers: [x], risk: high}
+  G2.gate-governance: {add_paths: ["b/**"]}
+scoring:
+  thresholds: {medium: 1, high: 2}
+  factors:
+    size: [{points: 1}]
+    files: [{points: 1}]
+    diffusion: [{points: 1}]
+    complexity_delta: [{points: 1}]
+    test_signal: [{points: 1}]
+  exclude_paths: []
+ai: {enabled: true, required: true, provider: bedrock, model: m, endpoint: "https://e.example", max_input_tokens: 1, timeout_seconds: 1}
+`)
+	got := setBy(org)
+	var paths []string
+	for p := range got {
+		paths = append(paths, p)
+	}
+	sort.Strings(paths)
+	want := []string{
+		"/ai/enabled", "/ai/endpoint", "/ai/max_input_tokens", "/ai/model", "/ai/provider", "/ai/required", "/ai/timeout_seconds",
+		"/limits/max_changed_files", "/limits/max_changed_lines", "/limits/max_file_bytes",
+		"/match/case_sensitive",
+		"/scoring/exclude_paths",
+		"/scoring/factors/complexity_delta", "/scoring/factors/diffusion", "/scoring/factors/files", "/scoring/factors/size", "/scoring/factors/test_signal",
+		"/scoring/thresholds/high", "/scoring/thresholds/medium",
+		"/triggers/G1.ci-workflows/enabled", "/triggers/G1.ci-workflows/paths", "/triggers/G1.ci-workflows/reviewers", "/triggers/G1.ci-workflows/risk",
+		"/triggers/G2.gate-governance/paths",
+	}
+	if !slices.Equal(paths, want) {
+		t.Errorf("setBy =\n%v\nwant\n%v", paths, want)
+	}
+	if len(setBy(mustParse(t, "version: 1\ntriggers:\n  G3.lint-config: {description: x}\n"))) != 0 {
+		t.Error("a description alone locks a field")
+	}
 }

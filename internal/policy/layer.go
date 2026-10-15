@@ -6,12 +6,16 @@ import (
 	"slices"
 )
 
-// Weakening is one field a repo policy tried to loosen. The baseline value
-// stays in force and the evaluation fires TriggerPolicyWeakeningAttempt.
+// Weakening is one field a repo policy loosens. A repo may loosen what only
+// the built-in defaults set, and then Applied is true: the repo's value takes
+// effect and the weakening is reported so verdicts and evidence can name it. A
+// field the org baseline sets is a floor: Applied is false, the baseline value
+// stays, and the evaluation fires TriggerPolicyWeakeningAttempt.
 type Weakening struct {
 	Rule    string // trigger ID, empty for fields outside a rule
 	Path    string // JSON pointer to the field in the repo policy
 	Message string
+	Applied bool
 }
 
 // Result is the effective policy for one change and what layering found.
@@ -29,10 +33,12 @@ type Result struct {
 // baseline, then the repo policy (ADR 0010). A nil org or repo is a layer that
 // does not exist. An invalid org baseline is an error, because there is no
 // safe fallback for it. An invalid repo policy is ignored and fires
-// config-invalid; a repo policy that tries to weaken the baseline is merged
-// without the weakening and fires policy-weakening-attempt.
+// config-invalid. A repo policy may loosen what only the defaults set, and
+// each loosening is reported as an applied Weakening. Loosening a field the org
+// baseline sets is left out and fires policy-weakening-attempt.
 func Resolve(org, repo []byte) (*Result, error) {
 	base := Defaults()
+	locked := func(string) bool { return false }
 	if org != nil {
 		o, err := Parse(org)
 		if err != nil {
@@ -42,6 +48,8 @@ func Resolve(org, repo []byte) (*Result, error) {
 		if problems := check(base); len(problems) > 0 {
 			return nil, fmt.Errorf("org baseline: %w", &Error{Problems: problems})
 		}
+		set := setBy(o)
+		locked = func(path string) bool { return set[path] }
 	}
 	res := &Result{Policy: base}
 	if repo == nil {
@@ -53,11 +61,49 @@ func Resolve(org, repo []byte) (*Result, error) {
 		res.ConfigErr = err
 		return res, nil
 	}
-	res.Policy, res.Weakenings = Merge(base, r)
-	if len(res.Weakenings) > 0 {
+	res.Policy, res.Weakenings = merge(base, r, locked)
+	if slices.ContainsFunc(res.Weakenings, func(w Weakening) bool { return !w.Applied }) {
 		res.Triggers = []string{TriggerPolicyWeakeningAttempt}
 	}
 	return res, nil
+}
+
+// setBy returns the JSON pointer of every field p sets, in the form Merge
+// reports weakenings. A rule's paths count as set when p sets paths or
+// add_paths.
+func setBy(p *Policy) map[string]bool {
+	set := map[string]bool{}
+	mark := func(path string, ok bool) {
+		if ok {
+			set[path] = true
+		}
+	}
+	mark("/match/case_sensitive", p.Match.CaseSensitive != nil)
+	mark("/limits/max_file_bytes", p.Limits.MaxFileBytes != nil)
+	mark("/limits/max_changed_files", p.Limits.MaxChangedFiles != nil)
+	mark("/limits/max_changed_lines", p.Limits.MaxChangedLines != nil)
+	for id, t := range p.Triggers {
+		at := "/triggers/" + id
+		mark(at+"/enabled", t.Enabled != nil)
+		mark(at+"/paths", t.Paths != nil || len(t.AddPaths) > 0)
+		mark(at+"/reviewers", t.Reviewers != nil)
+		mark(at+"/risk", t.Risk != "")
+	}
+	mark("/scoring/thresholds/medium", p.Scoring.Thresholds != nil)
+	mark("/scoring/thresholds/high", p.Scoring.Thresholds != nil)
+	names := []string{"size", "files", "diffusion", "complexity_delta", "test_signal"}
+	for i, f := range factorsOf(&Factors{}, &p.Scoring.Factors) {
+		mark("/scoring/factors/"+names[i], len(f.over) > 0)
+	}
+	mark("/scoring/exclude_paths", p.Scoring.ExcludePaths != nil)
+	mark("/ai/enabled", p.AI.Enabled != nil)
+	mark("/ai/required", p.AI.Required != nil)
+	mark("/ai/provider", p.AI.Provider != "")
+	mark("/ai/model", p.AI.Model != "")
+	mark("/ai/endpoint", p.AI.Endpoint != "")
+	mark("/ai/max_input_tokens", p.AI.MaxInputTokens != 0)
+	mark("/ai/timeout_seconds", p.AI.TimeoutSeconds != 0)
+	return set
 }
 
 // Overlay applies a trusted layer (the org baseline) over base. The org may
@@ -136,24 +182,31 @@ func Overlay(base, org *Policy) *Policy {
 //     requires it. Provider, model, and endpoint are fixed once the baseline
 //     sets them, because they decide where source code is sent.
 func Merge(base, repo *Policy) (*Policy, []Weakening) {
+	return merge(base, repo, func(string) bool { return true })
+}
+
+// merge is Merge where only the fields locked reports are held to tighten-only.
+// A weakening of any other field is applied and reported as Applied.
+func merge(base, repo *Policy, locked func(path string) bool) (*Policy, []Weakening) {
 	out := clone(base)
 	var ws []Weakening
-	reject := func(rule, path, format string, args ...any) {
-		ws = append(ws, Weakening{Rule: rule, Path: path, Message: fmt.Sprintf(format, args...)})
+	weaken := func(rule, path, format string, args ...any) bool {
+		applied := !locked(path)
+		ws = append(ws, Weakening{Rule: rule, Path: path, Message: fmt.Sprintf(format, args...), Applied: applied})
+		return applied
 	}
 
 	// Case-insensitive matching is the stricter mode.
 	if c := repo.Match.CaseSensitive; c != nil {
-		if *c && !isTrue(base.Match.CaseSensitive) {
-			reject("", "/match/case_sensitive", "case-sensitive matching would miss paths the baseline matches")
-		} else if !*c {
-			out.Match.CaseSensitive = ptr(false)
+		if !*c || isTrue(base.Match.CaseSensitive) ||
+			weaken("", "/match/case_sensitive", "case-sensitive matching misses paths the baseline matches") {
+			out.Match.CaseSensitive = ptr(*c)
 		}
 	}
 
-	lower(&out.Limits.MaxFileBytes, repo.Limits.MaxFileBytes, "/limits/max_file_bytes", reject)
-	lower(&out.Limits.MaxChangedFiles, repo.Limits.MaxChangedFiles, "/limits/max_changed_files", reject)
-	lower(&out.Limits.MaxChangedLines, repo.Limits.MaxChangedLines, "/limits/max_changed_lines", reject)
+	lower(&out.Limits.MaxFileBytes, repo.Limits.MaxFileBytes, "/limits/max_file_bytes", weaken)
+	lower(&out.Limits.MaxChangedFiles, repo.Limits.MaxChangedFiles, "/limits/max_changed_files", weaken)
+	lower(&out.Limits.MaxChangedLines, repo.Limits.MaxChangedLines, "/limits/max_changed_lines", weaken)
 
 	ids := make([]string, 0, len(repo.Triggers))
 	for id := range repo.Triggers {
@@ -173,7 +226,7 @@ func Merge(base, repo *Policy) (*Policy, []Weakening) {
 			}
 			continue
 		}
-		mergeTrigger(id, bt, rt, reject)
+		mergeTrigger(id, bt, rt, weaken)
 	}
 
 	if rth := repo.Scoring.Thresholds; rth != nil {
@@ -181,8 +234,8 @@ func Merge(base, repo *Policy) (*Policy, []Weakening) {
 			out.Scoring.Thresholds = &Thresholds{Medium: rth.Medium, High: rth.High}
 		} else {
 			m, h := ptr(out.Scoring.Thresholds.Medium), ptr(out.Scoring.Thresholds.High)
-			lower(&m, ptr(rth.Medium), "/scoring/thresholds/medium", reject)
-			lower(&h, ptr(rth.High), "/scoring/thresholds/high", reject)
+			lower(&m, ptr(rth.Medium), "/scoring/thresholds/medium", weaken)
+			lower(&h, ptr(rth.High), "/scoring/thresholds/high", weaken)
 			out.Scoring.Thresholds = &Thresholds{Medium: *m, High: *h}
 		}
 	}
@@ -191,8 +244,8 @@ func Merge(base, repo *Policy) (*Policy, []Weakening) {
 		if len(f.over) == 0 {
 			continue
 		}
-		if len(*f.dst) != 0 && !bandsDominate(f.over, *f.dst) {
-			reject("", "/scoring/factors/"+names[i], "gives some values fewer points than the baseline")
+		if len(*f.dst) != 0 && !bandsDominate(f.over, *f.dst) &&
+			!weaken("", "/scoring/factors/"+names[i], "gives some values fewer points than the baseline") {
 			continue
 		}
 		*f.dst = cloneBands(f.over)
@@ -208,45 +261,43 @@ func Merge(base, repo *Policy) (*Policy, []Weakening) {
 				extra = append(extra, g)
 			}
 		}
-		if len(extra) > 0 {
-			reject("", "/scoring/exclude_paths", "cannot exclude paths the baseline scores: %v", extra)
+		if len(extra) > 0 && weaken("", "/scoring/exclude_paths", "excludes paths the baseline scores: %v", extra) {
+			kept = slices.Clone(repo.Scoring.ExcludePaths)
 		}
 		out.Scoring.ExcludePaths = kept
 	}
 
-	mergeAI(&out.AI, base.AI, repo.AI, reject)
+	mergeAI(&out.AI, base.AI, repo.AI, weaken)
 	return out, ws
 }
 
-type rejectFn func(rule, path, format string, args ...any)
+// weakenFn reports a loosening and returns whether to apply it.
+type weakenFn func(rule, path, format string, args ...any) bool
 
-func mergeTrigger(id string, out, repo *Trigger, reject rejectFn) {
+func mergeTrigger(id string, out, repo *Trigger, weaken weakenFn) {
 	at := "/triggers/" + id
 	if repo.Enabled != nil {
-		if !*repo.Enabled && out.IsEnabled() {
-			reject(id, at+"/enabled", "cannot disable a baseline rule")
-		} else if *repo.Enabled {
-			out.Enabled = ptr(true)
+		if *repo.Enabled || !out.IsEnabled() || weaken(id, at+"/enabled", "disables a baseline rule") {
+			out.Enabled = ptr(*repo.Enabled)
 		}
 	}
 	if repo.Paths != nil {
-		if missing := difference(out.Paths, repo.Paths); len(missing) > 0 {
-			reject(id, at+"/paths", "cannot remove baseline paths: %v", missing)
+		if missing := difference(out.Paths, repo.Paths); len(missing) > 0 && weaken(id, at+"/paths", "removes baseline paths: %v", missing) {
+			out.Paths = nil
 		}
 		out.Paths = union(out.Paths, repo.Paths)
 	}
 	out.Paths = union(out.Paths, repo.AddPaths)
 	if repo.Reviewers != nil {
-		if missing := difference(out.Reviewers, repo.Reviewers); len(missing) > 0 {
-			reject(id, at+"/reviewers", "cannot remove baseline reviewers: %v", missing)
+		if missing := difference(out.Reviewers, repo.Reviewers); len(missing) > 0 && weaken(id, at+"/reviewers", "removes baseline reviewers: %v", missing) {
+			out.Reviewers = nil
 		}
 		out.Reviewers = union(out.Reviewers, repo.Reviewers)
 	}
 	if repo.Risk != "" {
-		if out.Risk == "" || repo.Risk.Rank() >= out.Risk.Rank() {
+		if out.Risk == "" || repo.Risk.Rank() >= out.Risk.Rank() ||
+			weaken(id, at+"/risk", "lowers the risk floor from %s to %s", out.Risk, repo.Risk) {
 			out.Risk = repo.Risk
-		} else {
-			reject(id, at+"/risk", "cannot lower the risk floor from %s to %s", out.Risk, repo.Risk)
 		}
 	}
 	if out.Description == "" {
@@ -254,18 +305,15 @@ func mergeTrigger(id string, out, repo *Trigger, reject rejectFn) {
 	}
 }
 
-func mergeAI(out *AI, base, repo AI, reject rejectFn) {
+func mergeAI(out *AI, base, repo AI, weaken weakenFn) {
 	if repo.Required != nil {
-		if base.IsRequired() && !*repo.Required {
-			reject("", "/ai/required", "cannot stop requiring the AI assessment")
-		} else {
+		if *repo.Required || !base.IsRequired() || weaken("", "/ai/required", "stops requiring the AI assessment") {
 			out.Required = ptr(*repo.Required)
 		}
 	}
 	if repo.Enabled != nil {
-		if !*repo.Enabled && out.IsRequired() && out.IsEnabled() {
-			reject("", "/ai/enabled", "cannot disable a required AI assessment")
-		} else {
+		if *repo.Enabled || !out.IsRequired() || !out.IsEnabled() ||
+			weaken("", "/ai/enabled", "disables a required AI assessment") {
 			out.Enabled = ptr(*repo.Enabled)
 		}
 	}
@@ -273,8 +321,7 @@ func mergeAI(out *AI, base, repo AI, reject rejectFn) {
 		if repo == "" || repo == base {
 			return
 		}
-		if base != "" {
-			reject("", path, "cannot change %q set by the baseline", base)
+		if base != "" && !weaken("", path, "changes %q set by the baseline", base) {
 			return
 		}
 		*dst = repo
@@ -298,19 +345,19 @@ func mergeAI(out *AI, base, repo AI, reject rejectFn) {
 		if f.base == 0 {
 			v = nil
 		}
-		lower(&v, ptr(f.repo), f.path, reject)
+		lower(&v, ptr(f.repo), f.path, weaken)
 		*f.dst = *v
 	}
 }
 
-// lower sets *dst to repo when repo is not above it, and reports repo
-// otherwise. An unset repo value inherits; an unset base takes repo's.
-func lower[T cmp.Ordered](dst **T, repo *T, path string, reject rejectFn) {
+// lower sets *dst to repo when repo is not above it. A higher repo is
+// reported, and applied only when weaken allows it. An unset repo value
+// inherits; an unset base takes repo's.
+func lower[T cmp.Ordered](dst **T, repo *T, path string, weaken weakenFn) {
 	if repo == nil {
 		return
 	}
-	if *dst != nil && *repo > **dst {
-		reject("", path, "cannot raise %v to %v", **dst, *repo)
+	if *dst != nil && *repo > **dst && !weaken("", path, "raises %v to %v", **dst, *repo) {
 		return
 	}
 	*dst = ptr(*repo)
