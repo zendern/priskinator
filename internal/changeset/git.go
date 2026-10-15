@@ -31,10 +31,11 @@ var objectID = regexp.MustCompile(`^[0-9a-f]{40}([0-9a-f]{24})?$`)
 // base and head must be full commit IDs. The head is read only as git objects:
 // nothing configured by the repository runs. Git is called through plumbing
 // commands with a scrubbed environment, external diff and textconv disabled,
-// hooks and fsmonitor off, and attributes read from an empty tree, so neither
-// .git/config nor a .gitattributes in the PR can change or hide the diff.
+// hooks and fsmonitor off, and attributes read from an empty tree. The patch is
+// always produced as text and binary is judged from content, so no config or
+// attributes file can turn a text change into a hidden "binary" one.
 func FromGit(ctx context.Context, dir, base, head string, opts Options) (*ChangeSet, error) {
-	g, err := newGit(dir, opts)
+	g, err := newGit(ctx, dir, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +54,7 @@ func FromGit(ctx context.Context, dir, base, head string, opts Options) (*Change
 		return nil, fmt.Errorf("parse raw diff: %w", err)
 	}
 
-	patch, err := g.run(ctx, nil, g.diffArgs("-p", "-U0", "--submodule=short", "--src-prefix=a/", "--dst-prefix=b/", base, head)...)
+	patch, err := g.run(ctx, nil, g.diffArgs("-p", "-U0", "--text", "--submodule=short", "--src-prefix=a/", "--dst-prefix=b/", base, head)...)
 	if err != nil {
 		return nil, fmt.Errorf("diff: %w", err)
 	}
@@ -99,7 +100,7 @@ type gitRunner struct {
 	emptyTree string
 }
 
-func newGit(dir string, opts Options) (*gitRunner, error) {
+func newGit(ctx context.Context, dir string, opts Options) (*gitRunner, error) {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return nil, err
@@ -117,6 +118,7 @@ func newGit(dir string, opts Options) (*gitRunner, error) {
 			"PATH=" + os.Getenv("PATH"),
 			"LC_ALL=C",
 			"GIT_CONFIG_NOSYSTEM=1",
+			"GIT_ATTR_NOSYSTEM=1",
 			"GIT_CONFIG_GLOBAL=" + os.DevNull,
 			"GIT_TERMINAL_PROMPT=0",
 			"GIT_OPTIONAL_LOCKS=0",
@@ -125,7 +127,7 @@ func newGit(dir string, opts Options) (*gitRunner, error) {
 			"PAGER=cat",
 		},
 	}
-	out, err := g.run(context.Background(), strings.NewReader(""), "hash-object", "-t", "tree", "--stdin")
+	out, err := g.run(ctx, strings.NewReader(""), "hash-object", "-t", "tree", "--stdin")
 	if err != nil {
 		return nil, fmt.Errorf("compute empty tree: %w", err)
 	}
@@ -133,8 +135,8 @@ func newGit(dir string, opts Options) (*gitRunner, error) {
 	return g, nil
 }
 
-// run executes git with the hardening options every call shares.
-func (g *gitRunner) run(ctx context.Context, stdin io.Reader, args ...string) ([]byte, error) {
+// command builds a git call with the hardening options every call shares.
+func (g *gitRunner) command(ctx context.Context, stdin io.Reader, args ...string) *exec.Cmd {
 	base := []string{
 		"--no-pager",
 		"-c", "safe.directory=" + g.dir,
@@ -152,6 +154,12 @@ func (g *gitRunner) run(ctx context.Context, stdin io.Reader, args ...string) ([
 	cmd.Dir = g.dir
 	cmd.Env = g.env
 	cmd.Stdin = stdin
+	return cmd
+}
+
+// run executes git and returns its output.
+func (g *gitRunner) run(ctx context.Context, stdin io.Reader, args ...string) ([]byte, error) {
+	cmd := g.command(ctx, stdin, args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -204,7 +212,7 @@ func parseRaw(raw []byte) ([]File, error) {
 			return nil, fmt.Errorf("unexpected raw entry %q", meta)
 		}
 		f := File{OldMode: parts[0], NewMode: parts[1], OldOID: parts[2], NewOID: parts[3]}
-		code, score := parts[4][0], parts[4][1:]
+		code := parts[4][0]
 		paths := 1
 		switch code {
 		case 'A':
@@ -221,13 +229,6 @@ func parseRaw(raw []byte) ([]File, error) {
 			f.Status, paths = StatusCopied, 2
 		default:
 			return nil, fmt.Errorf("unsupported status %q", parts[4])
-		}
-		if score != "" {
-			s, err := strconv.Atoi(score)
-			if err != nil {
-				return nil, fmt.Errorf("bad score in %q", meta)
-			}
-			f.Similarity = s
 		}
 		if i+paths > len(fields) {
 			return nil, fmt.Errorf("missing path for %q", meta)
@@ -275,12 +276,11 @@ func (g *gitRunner) inspectBlobs(ctx context.Context, files []File) error {
 		f := &files[i]
 		// Submodule commits were never requested, so they are not in blobs.
 		if b, ok := blobs[f.OldOID]; ok {
-			f.OldSize = b.size
 			f.Binary = f.Binary || isBinary(b.head)
 			f.LFS = f.LFS || isLFSPointer(b)
 		}
 		if b, ok := blobs[f.NewOID]; ok {
-			f.NewSize = b.size
+			f.Size = b.size
 			f.Binary = f.Binary || isBinary(b.head)
 			f.LFS = f.LFS || isLFSPointer(b)
 			if f.NewMode == ModeSymlink {
@@ -296,13 +296,12 @@ type blob struct {
 	head []byte
 }
 
+// readBlobs streams blobs through cat-file and keeps each one's size and first
+// bytes. A parse error stops git before waiting, so an unread pipe cannot hang.
 func (g *gitRunner) readBlobs(ctx context.Context, oids []string) (map[string]blob, error) {
-	cmd := exec.CommandContext(ctx, g.bin, "--no-pager", //nolint:gosec // fixed binary and constant args; object IDs go through stdin
-		"-c", "safe.directory="+g.dir, "-c", "core.hooksPath="+os.DevNull, "-c", "core.fsmonitor=false",
-		"cat-file", "--batch")
-	cmd.Dir = g.dir
-	cmd.Env = g.env
-	cmd.Stdin = strings.NewReader(strings.Join(oids, "\n") + "\n")
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	cmd := g.command(ctx, strings.NewReader(strings.Join(oids, "\n")+"\n"), "cat-file", "--batch")
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	stdout, err := cmd.StdoutPipe()
@@ -312,13 +311,14 @@ func (g *gitRunner) readBlobs(ctx context.Context, oids []string) (map[string]bl
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("git cat-file: %w", err)
 	}
-	blobs, readErr := parseBatch(bufio.NewReader(stdout), len(oids))
-	waitErr := cmd.Wait()
-	if readErr != nil {
-		return nil, fmt.Errorf("read blobs: %w", readErr)
+	blobs, err := parseBatch(bufio.NewReader(stdout), len(oids))
+	if err != nil {
+		cancel()
+		_ = cmd.Wait()
+		return nil, fmt.Errorf("read blobs: %w", err)
 	}
-	if waitErr != nil {
-		return nil, fmt.Errorf("git cat-file: %w: %s", waitErr, strings.TrimSpace(stderr.String()))
+	if err := cmd.Wait(); err != nil {
+		return nil, fmt.Errorf("git cat-file: %w: %s", err, strings.TrimSpace(stderr.String()))
 	}
 	return blobs, nil
 }

