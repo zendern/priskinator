@@ -144,14 +144,21 @@ type Floor struct {
 
 // AI configures the optional AI assessment (ADR 0008).
 type AI struct {
-	Enabled        bool   `yaml:"enabled"`
-	Required       bool   `yaml:"required"`
+	Enabled        *bool  `yaml:"enabled"`
+	Required       *bool  `yaml:"required"`
 	Provider       string `yaml:"provider"`
 	Model          string `yaml:"model"`
 	Endpoint       string `yaml:"endpoint"`
 	MaxInputTokens int    `yaml:"max_input_tokens"`
 	TimeoutSeconds int    `yaml:"timeout_seconds"`
 }
+
+// IsEnabled reports whether the AI assessment is on. It is off unless enabled.
+func (a AI) IsEnabled() bool { return a.Enabled != nil && *a.Enabled }
+
+// IsRequired reports whether the AI assessment is mandatory, so a repo cannot
+// turn it off.
+func (a AI) IsRequired() bool { return a.Required != nil && *a.Required }
 
 // Defaults returns a fresh copy of the built-in defaults (ADR 0010, layer 1).
 // Tests guarantee the embedded defaults validate.

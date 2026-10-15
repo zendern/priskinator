@@ -76,7 +76,7 @@ func TestDefaultsPathExamples(t *testing.T) {
 }
 
 func TestDefaultsAIOff(t *testing.T) {
-	if Defaults().AI.Enabled {
+	if Defaults().AI.IsEnabled() {
 		t.Error("AI must be disabled by default (ADR 0008)")
 	}
 }
@@ -114,7 +114,7 @@ ai:
 	if len(p.Scoring.Floors) != 1 || p.Scoring.Floors[0].Risk != RiskHigh {
 		t.Errorf("floors = %+v", p.Scoring.Floors)
 	}
-	if !p.AI.Enabled || p.AI.Provider != "anthropic" {
+	if !p.AI.IsEnabled() || p.AI.Provider != "anthropic" {
 		t.Errorf("ai = %+v", p.AI)
 	}
 }
