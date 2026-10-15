@@ -98,21 +98,24 @@ func splitBlocks(patch []byte) ([]block, error) {
 				}
 				l := lines[i]
 				i++
-				switch {
-				case strings.HasPrefix(l, "-"):
+				if strings.HasPrefix(l, `\`) {
+					continue // "\ No newline at end of file"
+				}
+				if strings.HasPrefix(l, "-") {
 					h.Removed = append(h.Removed, Line{Line: oldLine, Text: l[1:]})
 					oldLine++
-				case strings.HasPrefix(l, "+"):
+					continue
+				}
+				if strings.HasPrefix(l, "+") {
 					h.Added = append(h.Added, Line{Line: newLine, Text: l[1:]})
 					newLine++
-				case strings.HasPrefix(l, " "):
-					oldLine++
-					newLine++
-				case strings.HasPrefix(l, `\`):
-					// "\ No newline at end of file"
-				default:
+					continue
+				}
+				if !strings.HasPrefix(l, " ") {
 					return nil, fmt.Errorf("unexpected hunk line %q in %q", l, b.header)
 				}
+				oldLine++
+				newLine++
 			}
 			for i < len(lines) && strings.HasPrefix(lines[i], `\`) {
 				i++
