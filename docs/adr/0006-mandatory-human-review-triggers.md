@@ -20,7 +20,7 @@ Some changes must always get human review regardless of their size or risk score
 ## Considered Options
 
 1. Path-only rules, delegated entirely to CODEOWNERS and ruleset required-reviewer rules
-2. Path rules plus content rules evaluated by pr-riskinator
+2. Path rules plus content rules evaluated by priskinator
 3. AI-only detection
 
 ## Decision Outcome
@@ -35,7 +35,7 @@ Each rule has a stable ID used in verdicts, evidence, routing, and waivers.
 `.github/workflows/**`, `.github/actions/**`, `action.yml`, `.gitlab-ci.yml`, `.gitlab/**`, `Jenkinsfile`, `.circleci/**`, `azure-pipelines.yml`, `.buildkite/**`, `bitbucket-pipelines.yml`
 
 **G2 — Gate and governance files** (T1)
-pr-riskinator policy and prompt files, octo-sts trust policies (`.github/chainguard/**`, ADR 0017), `CODEOWNERS` in any supported location, `.gitattributes`, `.gitmodules`, `.github/dependabot.yml`, `renovate.json*`, settings-as-code files
+priskinator policy and prompt files, octo-sts trust policies (`.github/chainguard/**`, ADR 0017), `CODEOWNERS` in any supported location, `.gitattributes`, `.gitmodules`, `.github/dependabot.yml`, `renovate.json*`, settings-as-code files
 
 **G3 — Lint, format, and type-check configuration** (T2)
 `.eslintrc*`, `eslint.config.*`, `.prettierrc*`, `biome.json*`, `ruff.toml`, `.ruff.toml`, `.flake8`, `.pylintrc`, `mypy.ini`, `pyrightconfig.json`, `.golangci.y*ml`, `.rubocop.yml`, `tsconfig*.json`, `.stylelintrc*`, `clippy.toml`, `rustfmt.toml`, plus tool sections inside `pyproject.toml` and `setup.cfg` (`[tool.ruff]`, `[tool.mypy]`, `[tool.pylint]`, and similar)

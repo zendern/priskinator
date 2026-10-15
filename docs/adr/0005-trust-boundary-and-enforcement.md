@@ -54,7 +54,7 @@ Approvals on an older head SHA do not count toward the tool's requirements, even
 The tool depends on forge settings it cannot enforce by itself. A scheduled job checks each covered repository and records drift as evidence:
 
 - PR required for the protected branch; no direct pushes
-- required check from pr-riskinator pinned to the expected App
+- required check from priskinator pinned to the expected App
 - stale approvals dismissed; approval of the most recent push required
 - force push and deletion blocked
 - bypass list limited to the break-glass group

@@ -73,7 +73,7 @@ GitHub Actions was originally rejected because a PR can rewrite a `pull_request`
 | **D1. `pull_request_target` for every PR** | One path. The trust policy can require `ref` = default branch, so no `pull_request` run ever gets a token. | Requires discipline. Review events need a relay. | **Chosen** |
 | D2. `pull_request` for same-repo PRs, `pull_request_target` for forks | Same-repo PRs avoid `pull_request_target` | Two paths. More trust-policy rules. | Rejected |
 | D3. Only require approval before fork workflows run | None | Fork runs still get no OIDC token, so the check never posts | Rejected |
-| D4. Maintainer comment `/riskinator evaluate` | Manual override in the default branch's context | Manual | Added as an override |
+| D4. Maintainer comment `/priskinator evaluate` | Manual override in the default branch's context | Manual | Added as an override |
 
 ## Decision Outcome
 
@@ -85,7 +85,7 @@ Chosen: **A8 + B4 + C3 + D1.** The gate runs in GitHub Actions on `pull_request_
 - **Reusable workflow** (`zendern/priskinator/.github/workflows/gate.yml@<sha>`): one job, one step that uses the action. This is the recommended entry point and the trust anchor.
 - **Caller workflow** in each repository: a few lines that invoke the reusable workflow on the triggers below.
 - **Token provider**: an octo-sts broker, either Chainguard's public instance or one self-hosted per organization with the organization's own GitHub App (the tenancy model of ADR 0014 is kept). The App's private key lives only in the broker's key store.
-- **Trust policy** in each repository at `.github/chainguard/riskinator.sts.yaml`.
+- **Trust policy** in each repository at `.github/chainguard/priskinator.sts.yaml`.
 
 ### Triggers
 
@@ -93,7 +93,7 @@ Chosen: **A8 + B4 + C3 + D1.** The gate runs in GitHub Actions on `pull_request_
 |---|---|---|
 | PR opened, pushed, retargeted, labeled | `pull_request_target` | Default branch (always, since GitHub's 2025-12-08 change) |
 | Review submitted or dismissed | `pull_request_review` (no privileges) triggers `workflow_run`. The privileged run looks the PR up by head SHA, because `workflow_run.pull_requests` is empty for fork PRs. | Default branch |
-| Re-run or manual evaluation | Actions "Re-run jobs", or `/riskinator rerun` and `/riskinator evaluate` through `issue_comment`, after checking that the commenter has write access | Default branch |
+| Re-run or manual evaluation | Actions "Re-run jobs", or `/priskinator rerun` and `/priskinator evaluate` through `issue_comment`, after checking that the commenter has write access | Default branch |
 | Policy merged | `push` to the default branch, re-evaluating open PRs | Default branch |
 | Settings drift, waiver expiry, reports | `schedule` in the organization's central policy repository, covering every repository (ADR 0009, decision 8) | Default branch |
 | Org-baseline policy changed | Picked up on each PR's next event. Immediate re-evaluation across repositories is deferred. | n/a |
@@ -148,7 +148,7 @@ permissions:
 
 | Layer | Availability |
 |---|---|
-| Environment `riskinator` (default branch only, administrator bypass off), plus an `environment` claim required in the trust policy | Public repositories on any plan. Private repositories need Pro, Team, or Enterprise. |
+| Environment `priskinator` (default branch only, administrator bypass off), plus an `environment` claim required in the trust policy | Public repositories on any plan. Private repositories need Pro, Team, or Enterprise. |
 | Required check pinned to the App, which makes enforcement possible (ADR 0013, phase 3) | Public repositories on any plan. Private repositories need Pro, Team, or Enterprise. |
 | CODEOWNERS on `.github/**` with code-owner review required | Everywhere |
 | Ruleset required-reviewer rule | Organization-owned repositories only |

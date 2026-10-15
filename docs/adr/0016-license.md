@@ -8,7 +8,7 @@ decision-makers: Nathan Zender
 
 ## Context and Problem Statement
 
-pr-riskinator is planned for use by other organizations, each running its own instance (ADR 0014). Its likely adopters are compliance-minded organizations whose legal teams review licenses before adoption, and contributions may come from several companies. Under which license is the project distributed?
+priskinator is planned for use by other organizations, each running its own instance (ADR 0014). Its likely adopters are compliance-minded organizations whose legal teams review licenses before adoption, and contributions may come from several companies. Under which license is the project distributed?
 
 ## Decision Drivers
 

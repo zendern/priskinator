@@ -8,7 +8,7 @@ decision-makers: Nathan Zender
 
 ## Context and Problem Statement
 
-pr-riskinator is a change-management control that gates pull requests. SOC 2 and ISO 27001 auditors will ask why the control works the way it does, and future contributors will need to know which constraints are deliberate. Where do we record design decisions so they are reviewable, versioned, and auditable?
+priskinator is a change-management control that gates pull requests. SOC 2 and ISO 27001 auditors will ask why the control works the way it does, and future contributors will need to know which constraints are deliberate. Where do we record design decisions so they are reviewable, versioned, and auditable?
 
 ## Decision Drivers
 
