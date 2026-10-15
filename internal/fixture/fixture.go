@@ -60,6 +60,10 @@ type File struct {
 	LFS     bool   `yaml:"lfs"`
 	Size    int64  `yaml:"size"`
 	Hunks   []Hunk `yaml:"hunks"`
+	// Added and Removed are counts of placeholder lines on top of Hunks, for
+	// fixtures that only care how big a change is.
+	Added   int `yaml:"added"`
+	Removed int `yaml:"removed"`
 }
 
 type Hunk struct {
@@ -88,6 +92,8 @@ type Expect struct {
 	Triggers       []string `yaml:"triggers"`
 	TriggersAbsent []string `yaml:"triggers_absent"`
 	Reviewers      []string `yaml:"reviewers"`
+	// Points maps scoring factor names to the points expected for each.
+	Points map[string]int `yaml:"points"`
 }
 
 // Result is the part of an evaluation that fixtures assert on.
@@ -96,6 +102,7 @@ type Result struct {
 	HumanReview string
 	Triggers    []string
 	Reviewers   []string
+	Points      map[string]int
 }
 
 // Load reads every *.yaml and *.yml file in dir, in name order, rejecting unknown
@@ -155,6 +162,9 @@ func validate(f Fixture) error {
 		if (file.Status == StatusRenamed || file.Status == StatusCopied) && file.OldPath == "" {
 			return fmt.Errorf("change.files[%d]: old_path is required for status %q", i, file.Status)
 		}
+		if file.Added < 0 || file.Removed < 0 {
+			return fmt.Errorf("change.files[%d]: added and removed must not be negative", i)
+		}
 	}
 	e := f.Expect
 	if e.Risk != "" && !slices.Contains(validRisks, e.Risk) {
@@ -163,7 +173,7 @@ func validate(f Fixture) error {
 	if e.HumanReview != "" && !slices.Contains(validHumanReviews, e.HumanReview) {
 		return fmt.Errorf("invalid expect.human_review %q (want one of %s)", e.HumanReview, strings.Join(validHumanReviews, ", "))
 	}
-	if e.Risk == "" && e.HumanReview == "" && len(e.Triggers) == 0 && len(e.TriggersAbsent) == 0 && len(e.Reviewers) == 0 {
+	if e.Risk == "" && e.HumanReview == "" && len(e.Triggers) == 0 && len(e.TriggersAbsent) == 0 && len(e.Reviewers) == 0 && len(e.Points) == 0 {
 		return errors.New("expect must set at least one field")
 	}
 	return nil
@@ -191,6 +201,21 @@ func Compare(exp Expect, got Result) []string {
 	for _, r := range exp.Reviewers {
 		if !slices.Contains(got.Reviewers, r) {
 			diffs = append(diffs, fmt.Sprintf("missing reviewer %q", r))
+		}
+	}
+	factors := make([]string, 0, len(exp.Points))
+	for name := range exp.Points {
+		factors = append(factors, name)
+	}
+	sort.Strings(factors)
+	for _, name := range factors {
+		got, ok := got.Points[name]
+		if !ok {
+			diffs = append(diffs, fmt.Sprintf("points[%s]: missing, want %d", name, exp.Points[name]))
+			continue
+		}
+		if got != exp.Points[name] {
+			diffs = append(diffs, fmt.Sprintf("points[%s]: got %d, want %d", name, got, exp.Points[name]))
 		}
 	}
 	return diffs
