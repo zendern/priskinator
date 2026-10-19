@@ -25,12 +25,12 @@ LOCAL_CI_BASE=${LOCAL_CI_BASE:-origin/main}
 
 # job|step|command
 STEPS=(
-  "test|fmt-check|task fmt-check"
+  "checks|fmt-check|task fmt-check"
+  "checks|lint|task lint"
+  "checks|vuln|task vuln"
+  "checks|licenses|task licenses"
+  "checks|zizmor|task zizmor"
   "test|cover|task cover"
-  "lint|lint|task lint"
-  "security|vuln|task vuln"
-  "security|licenses|task licenses"
-  "zizmor|zizmor|task zizmor"
   "mutation|mutate-diff|task mutate-diff BASE=$LOCAL_CI_BASE"
 )
 
