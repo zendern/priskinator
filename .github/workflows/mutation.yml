@@ -1,10 +1,22 @@
 name: mutation
 
 # Mutation testing is slower than the rest of CI, so it has its own workflow:
-# pull requests mutate only the lines they change, and a weekly run covers the
-# whole module so thresholds in .gremlins.yaml hold for code nobody touched.
+# pull requests mutate only the packages they change, and a weekly run covers
+# the whole module so thresholds in .gremlins.yaml hold for code nobody touched.
+#
+# It is also the most expensive job to repeat, and stacked PRs re-run on every
+# rebase of the stack. So a pull request is only mutated when it is not a draft
+# and either targets main or carries the `mutation` label. Stacked PRs (whose
+# base is another PR branch) skip it until GitHub retargets them to main when
+# the PR below merges, which fires `edited` with a base change. Add the
+# `mutation` label to a stacked PR to mutate it earlier; adding the label runs
+# it right away. Docs-only changes never run it.
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, edited, labeled]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
   schedule:
     - cron: "17 6 * * 1"
   workflow_dispatch:
@@ -12,12 +24,27 @@ on:
 permissions: {}
 
 concurrency:
-  group: mutation-${{ github.ref }}
+  # A new push cancels the run in flight for the same ref. A title or body edit,
+  # or a label other than `mutation`, skips the job anyway, so those events get
+  # a unique group via run_id: sharing the ref's group would let them cancel a
+  # real run in progress.
+  group: mutation-${{ github.ref }}${{ ((github.event.action == 'edited' && !github.event.changes.base) || (github.event.action == 'labeled' && github.event.label.name != 'mutation')) && format('-skip-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 jobs:
   mutation:
     name: mutation testing
+    # Schedule and manual runs always go. Pull requests: not a draft; an
+    # `edited` event only when the base changed (a retarget, not a title edit);
+    # a `labeled` event only for the mutation label; and only when the PR
+    # targets main or carries the label.
+    if: >-
+      ${{ github.event_name != 'pull_request' || (
+      !github.event.pull_request.draft &&
+      (github.event.action != 'edited' || github.event.changes.base) &&
+      (github.event.action != 'labeled' || github.event.label.name == 'mutation') &&
+      (github.event.pull_request.base.ref == 'main' || contains(github.event.pull_request.labels.*.name, 'mutation'))
+      ) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
