@@ -1,19 +1,44 @@
 name: ci
 
+# GitHub Free bills every job rounded up to a whole minute, and this repo is
+# developed as stacked PRs, so one rebase re-runs CI on the whole stack. To keep
+# that cheap: few jobs (each repeats checkout, setup-go and setup-task), no runs
+# for drafts, and no push-to-main run (merged.yml re-tests a merge only when its
+# content differs from what the PR already tested).
 on:
-  push:
-    branches: [main]
   pull_request:
+    # `edited` is here for one case: GitHub retargets a stacked PR to main when
+    # the PR below it merges, and that does not fire `synchronize`. It also
+    # fires for title and body edits, which every job skips (see `if` below).
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+  # Called by merged.yml to test a merge commit that was not already tested.
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit to check out; empty tests the pull request ref
+        required: true
+        type: string
 
 permissions: {}
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # A new push cancels the run in flight for the same PR. A title or body edit
+  # (an `edited` event that did not change the base) skips every job anyway, so
+  # it gets a unique group via run_id: sharing the PR's group would let it
+  # cancel a real run in progress. The merged suffix keeps merged.yml's call of
+  # this workflow apart from PR runs.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}-${{ github.event.action == 'closed' && 'merged' || 'pr' }}${{ github.event.action == 'edited' && !github.event.changes.base && format('-edit-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: test
+  # One job for every static check: each extra job would repeat checkout,
+  # setup-go and setup-task and bill another rounded-up minute. Steps after the
+  # first run even when an earlier one failed, so one run reports everything
+  # that is wrong instead of needing a re-run per finding.
+  checks:
+    name: checks
+    # Skip drafts, and `edited` events that did not retarget the PR.
+    if: ${{ !github.event.pull_request.draft && (github.event.action != 'edited' || github.event.changes.base) }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -21,33 +46,40 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty on pull_request, which checks out the default ref.
+          ref: ${{ inputs.ref }}
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        id: setup-go
         with:
           go-version-file: go.mod
       - uses: $/.github/actions/setup-task
+      # The tools are built from source into ./bin (see Taskfile.yml). Restoring
+      # ./bin lets Task's status check in go-install see the right module
+      # version and Go toolchain and skip the build. A bumped pin in
+      # Taskfile.yml, go.mod or the Go version changes the key and rebuilds.
+      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: bin
+          key: tools-checks-${{ runner.os }}-go${{ steps.setup-go.outputs.go-version }}-${{ hashFiles('go.mod', 'Taskfile.yml') }}
       - run: task fmt-check
-      # Race tests with a coverage profile, gated by .testcoverage.yml.
-      - run: task cover
-
-  lint:
-    name: lint
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-      - uses: $/.github/actions/setup-task
       # Built from source with the go.mod toolchain (see Taskfile.yml); a prebuilt
       # binary from an older Go refuses to load this module.
       - run: task lint
+        if: ${{ !cancelled() }}
+      - run: task vuln
+        if: ${{ !cancelled() }}
+      - run: task licenses
+        if: ${{ !cancelled() }}
+      - uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        if: ${{ !cancelled() }}
+        with:
+          advanced-security: false
 
-  security:
-    name: vulnerabilities and licenses
+  # Stays its own job so it runs in parallel with the checks. Tests run on every
+  # PR, stacked ones included.
+  test:
+    name: test
+    if: ${{ !github.event.pull_request.draft && (github.event.action != 'edited' || github.event.changes.base) }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -55,22 +87,34 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: ${{ inputs.ref }}
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        id: setup-go
         with:
           go-version-file: go.mod
       - uses: $/.github/actions/setup-task
-      - run: task vuln
-      - run: task licenses
+      # Separate key from the checks job: both save ./bin at the end, and a
+      # shared key would keep only whichever job saved first.
+      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: bin
+          key: tools-test-${{ runner.os }}-go${{ steps.setup-go.outputs.go-version }}-${{ hashFiles('go.mod', 'Taskfile.yml') }}
+      # Race tests with a coverage profile, gated by .testcoverage.yml.
+      - run: task cover
 
-  zizmor:
-    name: workflow security (zizmor)
+  # The one check to require. A job that needs a failed job is skipped, which
+  # reads as neither pass nor fail; always() plus alls-green turns checks and
+  # test into a single explicit result (failure if either failed or was
+  # cancelled). merged.yml
+  # looks for a successful check run with this exact name on the PR head to
+  # decide whether the merged content was already tested; renaming it there and
+  # here must happen together.
+  workflow-summary:
+    if: ${{ always() && !github.event.pull_request.draft && (github.event.action != 'edited' || github.event.changes.base) }}
+    needs: [checks, test]
     runs-on: ubuntu-24.04
-    permissions:
-      contents: read
+    permissions: {}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
-          persist-credentials: false
-      - uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
-        with:
-          advanced-security: false
+          jobs: ${{ toJSON(needs) }}
