@@ -3,14 +3,21 @@ name: ci
 # GitHub Free bills every job rounded up to a whole minute, and this repo is
 # developed as stacked PRs, so one rebase re-runs CI on the whole stack. To keep
 # that cheap: few jobs (each repeats checkout, setup-go and setup-task), no runs
-# for drafts, and no push-to-main run (merged.yml re-tests a merge only when its
-# content differs from what the PR already tested).
+# for drafts, and push-to-main runs only to warm the tool cache (merged.yml
+# re-tests a merge only when its content differs from what the PR already
+# tested).
 on:
   pull_request:
     # `edited` is here for one case: GitHub retargets a stacked PR to main when
     # the PR below it merges, and that does not fire `synchronize`. It also
     # fires for title and body edits, which every job skips (see `if` below).
     types: [opened, synchronize, reopened, ready_for_review, edited]
+  # Only when the tool cache key inputs change. PR runs save caches scoped to
+  # their own PR, so without a main run every new PR rebuilds the tools from
+  # source; this run saves them where every PR can restore them.
+  push:
+    branches: [main]
+    paths: [go.mod, Taskfile.yml]
   # Called by merged.yml to test a merge commit that was not already tested.
   workflow_call:
     inputs:
