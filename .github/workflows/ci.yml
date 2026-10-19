@@ -39,9 +39,7 @@ concurrency:
 
 jobs:
   # One job for every static check: each extra job would repeat checkout,
-  # setup-go and setup-task and bill another rounded-up minute. Steps after the
-  # first run even when an earlier one failed, so one run reports everything
-  # that is wrong instead of needing a re-run per finding.
+  # setup-go and setup-task and bill another rounded-up minute.
   checks:
     name: checks
     # Skip drafts, and `edited` events that did not retarget the PR.
@@ -72,13 +70,9 @@ jobs:
       # Built from source with the go.mod toolchain (see Taskfile.yml); a prebuilt
       # binary from an older Go refuses to load this module.
       - run: task lint
-        if: ${{ !cancelled() }}
       - run: task vuln
-        if: ${{ !cancelled() }}
       - run: task licenses
-        if: ${{ !cancelled() }}
       - uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
-        if: ${{ !cancelled() }}
         with:
           advanced-security: false
 
