@@ -1,7 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", "helpers:pinGitHubActionDigests", "schedule:weekly"],
-  "updateNotScheduled": false,
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests", "github>zendern/gha-shared"],
   "customManagers": [
     {
       "customType": "regex",

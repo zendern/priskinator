@@ -23,34 +23,14 @@ jobs:
       contents: read
       checks: read
     outputs:
-      tested: ${{ steps.compare.outputs.tested }}
+      tested: ${{ steps.tree.outputs.tested }}
     steps:
-      - name: Compare merged tree with the tested PR head
-        id: compare
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          tree() {
-            gh api "repos/$REPO/git/commits/$1" --jq '.tree.sha'
-          }
-          # Successful ci.yml gate (workflow-summary) on the PR head. Filtered
-          # to the Actions app so another integration's check with the same
-          # name can't count.
-          passed() {
-            gh api "repos/$REPO/commits/$HEAD_SHA/check-runs?check_name=workflow-summary" \
-              --jq '[.check_runs[] | select(.app.slug == "github-actions" and .conclusion == "success")] | length'
-          }
-          merge_tree="$(tree "$MERGE_SHA")"
-          head_tree="$(tree "$HEAD_SHA")"
-          tested=false
-          if [ "$merge_tree" = "$head_tree" ] && [ "$(passed)" -gt 0 ]; then
-            tested=true
-          fi
-          echo "merge tree $merge_tree, head tree $head_tree, tested=$tested"
-          echo "tested=$tested" >> "$GITHUB_OUTPUT"
+      # Checks ci.yml's workflow-summary gate on the PR head.
+      - id: tree
+        uses: zendern/gha-shared/tree-check@821b6ab4f9e3451ceb24092940122691a96573e1 # v1.0.0
+        with:
+          merge-sha: ${{ github.event.pull_request.merge_commit_sha }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
 
   test:
     needs:
