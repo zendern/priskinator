@@ -130,7 +130,8 @@ tasks:
       - sh: '[ "$(zizmor --version 2>/dev/null)" = "zizmor {{.ZIZMOR_VERSION}}" ]'
         msg: "zizmor {{.ZIZMOR_VERSION}} is required (uv tool install zizmor=={{.ZIZMOR_VERSION}})"
     cmds:
-      - zizmor --offline .github/workflows
+      # Online audits (they query GitHub) when a token is available, as in CI.
+      - zizmor {{if not .GH_TOKEN}}--offline {{end}}.github/workflows
 
   check:
     desc: Format check, lint, and test with coverage thresholds
