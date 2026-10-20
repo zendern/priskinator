@@ -53,6 +53,14 @@ jobs:
           persist-credentials: false
           # Empty on pull_request, which checks out the default ref.
           ref: ${{ inputs.ref }}
+      # The shared no-latest-runners hook (zendern/pre-commit-hooks), run the
+      # same way as in the other repos. Only that hook: the local hooks call the
+      # Task targets this job already runs.
+      - name: Runner labels are pinned
+        uses: j178/prek-action@af4d4fcb6922b8e6f65c0426947125fcc38794ce # v3.0.2
+        with:
+          prek-version: "0.5.6"
+          extra-args: no-latest-runners --all-files
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         id: setup-go
         with:
