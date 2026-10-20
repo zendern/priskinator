@@ -69,7 +69,7 @@ repos:
 
   # Shared hooks, same block in every repo (https://github.com/zendern/pre-commit-hooks).
   - repo: https://github.com/zendern/pre-commit-hooks
-    rev: b4fcad38bf046d501fcf7e4b0fbb4c5f0358cae4  # frozen: v1.0.0
+    rev: bcd3f728c7aa4daad8f531cfaa3f941a3a4bc488  # frozen: v2.0.0
     hooks:
       - id: no-latest-runners
         priority: checks
