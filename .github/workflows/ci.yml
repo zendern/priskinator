@@ -53,14 +53,6 @@ jobs:
           persist-credentials: false
           # Empty on pull_request, which checks out the default ref.
           ref: ${{ inputs.ref }}
-      # The shared no-latest-runners hook (zendern/pre-commit-hooks), run the
-      # same way as in the other repos. Only that hook: the local hooks call the
-      # Task targets this job already runs.
-      - name: Runner labels are pinned
-        uses: j178/prek-action@af4d4fcb6922b8e6f65c0426947125fcc38794ce # v3.0.2
-        with:
-          prek-version: "0.5.6"
-          extra-args: no-latest-runners --all-files
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         id: setup-go
         with:
@@ -74,15 +66,24 @@ jobs:
         with:
           path: bin
           key: tools-checks-${{ runner.os }}-go${{ steps.setup-go.outputs.go-version }}-${{ hashFiles('go.mod', 'Taskfile.yml') }}
-      - run: task fmt-check
-      # Built from source with the go.mod toolchain (see Taskfile.yml); a prebuilt
-      # binary from an older Go refuses to load this module.
-      - run: task lint
+      # The zizmor hook runs `task zizmor`, which requires the version pinned in
+      # Taskfile.yml.
+      - name: Install zizmor (version pinned in Taskfile.yml)
+        run: |
+          version="$(sed -n 's/^  ZIZMOR_VERSION: *//p' Taskfile.yml)"
+          pipx install "zizmor==${version}"
+      # Every pre-commit hook, exactly as it runs locally: file hygiene,
+      # gofumpt and golangci-lint (via Task), zizmor, and the shared
+      # no-latest-runners hook. The token turns on zizmor's online audits.
+      - name: Run prek hooks
+        uses: j178/prek-action@af4d4fcb6922b8e6f65c0426947125fcc38794ce # v3.0.2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          prek-version: "0.5.6"
+      # Not prek hooks: they check dependencies rather than changed files.
       - run: task vuln
       - run: task licenses
-      - uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
-        with:
-          advanced-security: false
 
   # Stays its own job so it runs in parallel with the checks. Tests run on every
   # PR, stacked ones included.
