@@ -1,9 +1,16 @@
 name: priskinator
 
-# priskinator judges its own pull requests (ADR 0013 phase 1, shadow). The job
-# reports neutral: it passes whatever the verdict, posts nothing to the PR, and
-# fails only when the engine can't be built. The verdict goes to the job
-# summary, and verdict.json is kept as an artifact for calibration.
+# priskinator judges its own pull requests. The verdict job reports neutral: it
+# passes whatever the verdict and fails only when the engine can't be built. The
+# verdict goes to the job summary, and the verdict files are kept as an artifact
+# for calibration (ADR 0013 phase 1).
+#
+# The comment job also posts the verdict as one PR comment and edits it on each
+# push (a step toward phase 2). Set the repository variable
+# PRISKINATOR_PR_COMMENT to "off" to keep the run silent. It only runs for PRs
+# from this repository: a fork's token can't write comments, and that waits for
+# the GitHub App (ADR 0005). It checks out nothing, so no PR code runs with the
+# write token.
 #
 # The engine is built from the PR's merge base when that commit has the
 # evaluate command, so a PR can't change the code that judges it. The verdict
@@ -85,3 +92,55 @@ jobs:
           path: ${{ runner.temp }}/verdict/
           if-no-files-found: ignore
           retention-days: 90
+
+  comment:
+    name: priskinator comment
+    needs: verdict
+    if: >-
+      ${{ !cancelled() && needs.verdict.result == 'success' &&
+      vars.PRISKINATOR_PR_COMMENT != 'off' &&
+      github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: priskinator-verdict
+          path: ${{ runner.temp }}/verdict
+      - name: Post or update the verdict comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          dir=$RUNNER_TEMP/verdict
+          if [ ! -f "$dir/verdict.md" ]; then
+            echo "::notice::the engine predates the Markdown verdict, so no comment"
+            exit 0
+          fi
+          marker='<!-- priskinator:verdict -->'
+          commit=$(jq -r .engineCommit "$dir/engine.json")
+          body=$RUNNER_TEMP/comment.md
+          {
+            echo "$marker"
+            echo "## priskinator"
+            echo
+            # A comment holds at most 65536 characters; the verdict is far
+            # smaller unless a change has thousands of reasons.
+            head -c 60000 "$dir/verdict.md"
+            echo
+            echo "<sub>Report-only: this verdict doesn't gate the merge. Engine \`${commit:0:12}\`, [run]($RUN_URL).</sub>"
+          } >"$body"
+          # The first earlier comment of ours, if any. Kept out of a pipe to
+          # head, which would fail the step with SIGPIPE under pipefail.
+          ids=$(gh api --paginate "repos/$REPO/issues/$PR/comments" \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id")
+          id=${ids%%$'\n'*}
+          if [ -n "$id" ]; then
+            gh api --method PATCH "repos/$REPO/issues/comments/$id" -F "body=@$body" >/dev/null
+          else
+            gh api --method POST "repos/$REPO/issues/$PR/comments" -F "body=@$body" >/dev/null
+          fi
