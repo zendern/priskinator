@@ -9,6 +9,9 @@
   "required_reviewers": [
     "platform"
   ],
+  "descriptions": {
+    "G2.gate-governance": "priskinator policy and prompts, trust policies, ownership and repository settings"
+  },
   "reasons": [
     {
       "rule": "G2.gate-governance",
@@ -26,6 +29,10 @@
     "points": 0,
     "tier": "low",
     "risk": "low",
+    "thresholds": {
+      "medium": 20,
+      "high": 50
+    },
     "factors": [
       {
         "name": "size",

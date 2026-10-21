@@ -10,6 +10,10 @@
     "points": 0,
     "tier": "low",
     "risk": "low",
+    "thresholds": {
+      "medium": 20,
+      "high": 50
+    },
     "factors": [
       {
         "name": "size",

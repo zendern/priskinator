@@ -2,6 +2,7 @@ package verdict
 
 import (
 	"errors"
+	"maps"
 	"math/rand/v2"
 	"reflect"
 	"slices"
@@ -112,6 +113,9 @@ func TestEvaluateCollectsTriggerReasonsAndReviewers(t *testing.T) {
 	}
 	if !slices.Equal(v.RequiredReviewers, []string{"platform", "security"}) {
 		t.Errorf("reviewers = %v", v.RequiredReviewers)
+	}
+	if want := map[string]string{"G1.ci-workflows": "CI/CD pipeline definitions", "G7.security-paths": "Security-sensitive paths"}; !maps.Equal(v.Descriptions, want) {
+		t.Errorf("descriptions = %v, want %v", v.Descriptions, want)
 	}
 	for _, want := range []Reason{
 		{Rule: "G1.ci-workflows", File: ".github/workflows/ci.yml", Detail: `matches ".github/workflows/**"`},

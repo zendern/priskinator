@@ -136,6 +136,9 @@ func TestTierThresholds(t *testing.T) {
 	if r := Score(p, changeset.ChangeSet{Files: []changeset.File{file("a.go", 11, 0)}}, Generated{}); r.Tier != policy.RiskMedium {
 		t.Errorf("10 points with medium at 5: tier %s, want medium", r.Tier)
 	}
+	if r := Score(p, changeset.ChangeSet{}, Generated{}); r.Thresholds == nil || *r.Thresholds != (policy.Thresholds{Medium: 5, High: 20}) {
+		t.Errorf("Thresholds = %v, want the policy's 5 and 20", r.Thresholds)
+	}
 }
 
 func TestMissingThresholdsFailClosed(t *testing.T) {
@@ -144,6 +147,9 @@ func TestMissingThresholdsFailClosed(t *testing.T) {
 	r := Score(p, changeset.ChangeSet{}, Generated{})
 	if r.Tier != policy.RiskHigh || r.Risk != policy.RiskHigh {
 		t.Errorf("Tier %s, Risk %s; want high", r.Tier, r.Risk)
+	}
+	if r.Thresholds != nil {
+		t.Errorf("Thresholds = %v, want nil", r.Thresholds)
 	}
 	if !slices.Equal(r.Notes, []string{"policy sets no scoring thresholds, so the tier is high"}) {
 		t.Errorf("Notes = %q", r.Notes)
