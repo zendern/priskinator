@@ -2,6 +2,37 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", "helpers:pinGitHubActionDigests", "schedule:weekly"],
   "updateNotScheduled": false,
+  "minimumReleaseAge": "7 days",
+  "internalChecksFilter": "strict",
+  "pre-commit": {
+    "description": "Opt-in manager: bumps the frozen rev of every remote hook repo in .pre-commit-config.yaml (run by prek).",
+    "enabled": true
+  },
+  "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
+  "packageRules": [
+    {
+      "description": "One PR for every GitHub Actions update (action SHAs and runner images) instead of one per action.",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    },
+    {
+      "description": "One PR for the dev tools: the versions pinned in Taskfile.yml (Task, prek, the Go tools) and the prek hook revs, whose hooks install their own tools.",
+      "matchFileNames": ["Taskfile.yml", ".pre-commit-config.yaml"],
+      "groupName": "dev tools"
+    },
+    {
+      "description": "One PR for the application's dependencies: the modules and go directive in go.mod.",
+      "matchManagers": ["gomod"],
+      "groupName": "app dependencies"
+    },
+    {
+      "description": "Bump the go directive in go.mod, which Renovate leaves alone by default. It is the Go toolchain CI and Task use.",
+      "matchManagers": ["gomod"],
+      "matchDepNames": ["go"],
+      "matchDepTypes": ["golang"],
+      "rangeStrategy": "bump"
+    }
+  ],
   "customManagers": [
     {
       "customType": "regex",

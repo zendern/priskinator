@@ -10,19 +10,17 @@
 
 ## Setup
 
-1. Install Go (version in `go.mod`), [Task](https://taskfile.dev), [prek](https://prek.j178.dev), and [zizmor](https://docs.zizmor.sh). Task and zizmor must match `TASK_VERSION` and `ZIZMOR_VERSION` in `Taskfile.yml`:
+1. Install Go 1.21 or newer, then [Task](https://taskfile.dev) at the `TASK_VERSION` pinned in `Taskfile.yml`:
    ```sh
    go install github.com/go-task/task/v3/cmd/task@v"$(sed -n 's/^  TASK_VERSION: *//p' Taskfile.yml)"
-   uv tool install prek
-   uv tool install zizmor==1.31.0
    ```
-2. Run `prek install` to enable the hooks in `.pre-commit-config.yaml`:
-   - pre-commit: file hygiene checks built into prek, then `gofumpt`, `golangci-lint`, and `zizmor` on changed workflows, in parallel
+2. Run `task setup` (alias `task install-tools`) in the main checkout, not a worktree: worktrees share its git hooks, and the hooks run the prek in the `./bin` of whichever checkout installed them. It installs every other tool into `./bin` at the versions pinned in `Taskfile.yml` ([prek](https://prek.j178.dev), golangci-lint, gofumpt, govulncheck, go-licenses, go-test-coverage, gremlins), then the hooks in `.pre-commit-config.yaml`:
+   - pre-commit: file hygiene checks built into prek, then `gofumpt`, `golangci-lint`, `go mod tidy -diff`, [zizmor](https://docs.zizmor.sh) on changed workflows and actions, and the Renovate config validator on `renovate.json`, in parallel
    - commit-msg: Conventional Commits check
    - pre-push: `task cover` (tests plus the coverage gate)
 3. Run `task check` while you work. `task --list` shows every task.
 
-The other Go tools (golangci-lint, gofumpt, govulncheck, go-licenses, go-test-coverage, gremlins) install into `./bin` on first use, at the versions pinned in `Taskfile.yml`, built with the `go.mod` toolchain.
+Every `go` command Task runs uses the exact toolchain in `go.mod` (`GOTOOLCHAIN`), which Go downloads when yours is a different version, so local results match CI. The Go tools are built with it too. prek installs each remote hook's tool, zizmor included, at the version its `rev` pins.
 
 ## Quality gates
 
