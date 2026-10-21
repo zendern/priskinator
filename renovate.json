@@ -6,6 +6,7 @@
     "description": "Opt-in manager: bumps the frozen rev of every remote hook repo in .pre-commit-config.yaml (run by prek).",
     "enabled": true
   },
+  "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
   "customManagers": [
     {
       "customType": "regex",
