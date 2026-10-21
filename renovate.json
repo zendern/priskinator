@@ -2,6 +2,8 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", "helpers:pinGitHubActionDigests", "schedule:weekly"],
   "updateNotScheduled": false,
+  "minimumReleaseAge": "7 days",
+  "internalChecksFilter": "strict",
   "pre-commit": {
     "description": "Opt-in manager: bumps the frozen rev of every remote hook repo in .pre-commit-config.yaml (run by prek).",
     "enabled": true
