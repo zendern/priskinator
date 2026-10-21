@@ -45,6 +45,9 @@ jobs:
     # Skip drafts, and `edited` events that did not retarget the PR.
     if: ${{ !github.event.pull_request.draft && (github.event.action != 'edited' || github.event.changes.base) }}
     runs-on: ubuntu-24.04
+    # Under a minute with a warm ./bin cache; a cold one rebuilds every tool
+    # from source. Well past either means the run hung.
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -91,6 +94,8 @@ jobs:
     name: test
     if: ${{ !github.event.pull_request.draft && (github.event.action != 'edited' || github.event.changes.base) }}
     runs-on: ubuntu-24.04
+    # Under a minute today (race tests plus the coverage gate).
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
@@ -123,6 +128,7 @@ jobs:
     if: ${{ always() && !github.event.pull_request.draft && (github.event.action != 'edited' || github.event.changes.base) }}
     needs: [checks, test]
     runs-on: ubuntu-24.04
+    timeout-minutes: 5
     permissions: {}
     steps:
       - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
