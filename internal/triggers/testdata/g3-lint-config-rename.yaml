@@ -1,0 +1,11 @@
+name: G3.lint-config fires when web/.eslintrc.json moves out
+description: Rules match the old path of a rename too, so moving a file out of a watched path still fires.
+change:
+  files:
+  - path: web/eslintrc.bak
+    old_path: web/.eslintrc.json
+    status: renamed
+expect:
+  triggers:
+  - G3.lint-config
+  - G10.watched-path-moved

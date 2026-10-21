@@ -1,0 +1,12 @@
+name: G10.watched-path-moved ignores a rename inside the watched path
+description: The file is still watched by the same rule after the move.
+change:
+  files:
+  - path: .github/workflows/b.yml
+    old_path: .github/workflows/a.yml
+    status: renamed
+expect:
+  triggers:
+  - G1.ci-workflows
+  triggers_absent:
+  - G10.watched-path-moved

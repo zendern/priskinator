@@ -1,0 +1,9 @@
+name: path rules ignore case by default
+description: macOS and Windows checkouts are case-insensitive, so .GitHub/Workflows is the same directory.
+change:
+  files:
+  - path: .GitHub/Workflows/CI.yml
+    status: added
+expect:
+  triggers:
+  - G1.ci-workflows

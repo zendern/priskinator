@@ -1,0 +1,11 @@
+name: G8.registry-config fires when web/.npmrc moves out
+description: Rules match the old path of a rename too, so moving a file out of a watched path still fires.
+change:
+  files:
+  - path: web/npmrc.example
+    old_path: web/.npmrc
+    status: renamed
+expect:
+  triggers:
+  - G8.registry-config
+  - G10.watched-path-moved

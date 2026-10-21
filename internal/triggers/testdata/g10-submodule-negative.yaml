@@ -1,0 +1,11 @@
+name: G10.submodule ignores a regular file
+description: A regular file is not a hidden-change vector.
+change:
+  files:
+  - path: third_party/lib.go
+    status: modified
+    old_mode: "100644"
+    new_mode: "100644"
+expect:
+  triggers_absent:
+  - G10.submodule

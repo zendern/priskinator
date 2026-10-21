@@ -1,0 +1,12 @@
+name: G10.watched-path-moved fires on deleting a workflow
+description: Deleting a watched file can remove a check.
+change:
+  files:
+  - path: .github/workflows/ci.yml
+    status: deleted
+expect:
+  triggers:
+  - G10.watched-path-moved
+  - G1.ci-workflows
+  reviewers:
+  - platform

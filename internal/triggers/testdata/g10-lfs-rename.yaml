@@ -1,0 +1,11 @@
+name: G10.lfs still fires on a rename
+description: Renaming the file does not hide it.
+change:
+  files:
+  - path: data/weights.bin
+    old_path: models/weights.bin
+    status: renamed
+    lfs: true
+expect:
+  triggers:
+  - G10.lfs

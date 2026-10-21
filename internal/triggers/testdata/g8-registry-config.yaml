@@ -1,0 +1,11 @@
+name: G8.registry-config fires on .npmrc
+description: A change to .npmrc needs security review.
+change:
+  files:
+  - path: .npmrc
+    status: modified
+expect:
+  triggers:
+  - G8.registry-config
+  reviewers:
+  - security

@@ -1,0 +1,11 @@
+name: G4.hook-managers fires when .husky/pre-commit moves out
+description: Rules match the old path of a rename too, so moving a file out of a watched path still fires.
+change:
+  files:
+  - path: scripts/pre-commit
+    old_path: .husky/pre-commit
+    status: renamed
+expect:
+  triggers:
+  - G4.hook-managers
+  - G10.watched-path-moved

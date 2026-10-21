@@ -1,0 +1,10 @@
+name: G10.watched-path-moved ignores a copy
+description: A copy leaves the watched file in place.
+change:
+  files:
+  - path: docs/ci.yml
+    old_path: .github/workflows/ci.yml
+    status: copied
+expect:
+  triggers_absent:
+  - G10.watched-path-moved
