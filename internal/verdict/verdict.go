@@ -48,12 +48,15 @@ type Verdict struct {
 	HumanReview string      `json:"human_review"`
 	// BotEligible and ChangeClass are computed and recorded but never acted on
 	// under ADR 0004 option A.
-	BotEligible       bool       `json:"bot_eligible"`
-	ChangeClass       string     `json:"change_class,omitempty"`
-	Triggers          []string   `json:"triggers"`
-	RequiredReviewers []string   `json:"required_reviewers"`
-	Reasons           []Reason   `json:"reasons"`
-	Evaluation        Evaluation `json:"evaluation"`
+	BotEligible       bool     `json:"bot_eligible"`
+	ChangeClass       string   `json:"change_class,omitempty"`
+	Triggers          []string `json:"triggers"`
+	RequiredReviewers []string `json:"required_reviewers"`
+	// Descriptions give the policy's description of each fired rule that
+	// has one, so a report can say what the rule is for.
+	Descriptions map[string]string `json:"descriptions,omitempty"`
+	Reasons      []Reason          `json:"reasons"`
+	Evaluation   Evaluation        `json:"evaluation"`
 	// Score is the scoring breakdown, nil when evaluation failed.
 	Score *scoring.Result `json:"score,omitempty"`
 	// Error says why evaluation failed or was degraded.
@@ -187,6 +190,14 @@ func Evaluate(in Input) Verdict {
 	}
 
 	slices.Sort(v.Triggers)
+	for _, id := range v.Triggers {
+		if t := p.Triggers[id]; t != nil && t.Description != "" {
+			if v.Descriptions == nil {
+				v.Descriptions = map[string]string{}
+			}
+			v.Descriptions[id] = t.Description
+		}
+	}
 	v.BotEligible = eligible(v)
 	return v
 }

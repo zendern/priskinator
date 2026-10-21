@@ -1,16 +1,12 @@
 ### 🔴 high risk, human review required
 
-**Triggers:** ` G2.gate-governance `, ` policy-loosening ` · **Required reviewers:** ` platform `
+**Triggers:** ` G2.gate-governance ` (priskinator policy and prompts, trust policies, ownership and repository settings), ` policy-loosening ` · **Required reviewers:** ` platform `
 
-**Score:** 0 points, low tier, low risk after floors
+**Decided by:** the triggers above. On its own the score is low risk.
 
-| Factor | Points | Value | Band | Detail |
-|---|--:|--:|---|---|
-| size | +0 | 2 | 0-50 | 1 added and 1 removed lines in 1 file |
-| files | +0 | 1 | 0-10 | 1 file changed |
-| diffusion | +0 | 1 | 0-2 | 1 directory; change entropy 0.00 |
-| complexity_delta | – | – | – | not measured: complexity analysis is not available yet |
-| test_signal | +0 | 0 | 0-20 | no source lines changed |
+**Score:** 0 points; medium starts at 20 and high at 50
+
+<sub>Factors that added no points are hidden. [How priskinator scores a PR](https://github.com/zendern/priskinator/blob/main/docs/verdict.md)</sub>
 
 <details>
 <summary>Reasons (2)</summary>

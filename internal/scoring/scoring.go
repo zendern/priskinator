@@ -31,11 +31,14 @@ type Result struct {
 	// Tier is what Points reaches against the policy thresholds.
 	Tier policy.Risk `json:"tier"`
 	// Risk is Tier raised to the highest criticality floor that applied.
-	Risk     policy.Risk `json:"risk"`
-	Factors  []Factor    `json:"factors"`
-	Floors   []FloorHit  `json:"floors"`
-	Excluded []string    `json:"excluded"`
-	Notes    []string    `json:"notes"`
+	Risk policy.Risk `json:"risk"`
+	// Thresholds are the points the tier needs, so a reader can see how far
+	// the score is from the next one. Nil when the policy sets none.
+	Thresholds *policy.Thresholds `json:"thresholds,omitempty"`
+	Factors    []Factor           `json:"factors"`
+	Floors     []FloorHit         `json:"floors"`
+	Excluded   []string           `json:"excluded"`
+	Notes      []string           `json:"notes"`
 }
 
 // Factor is one scoring factor: its raw value, the band it fell in, and the
@@ -90,6 +93,7 @@ func Score(p *policy.Policy, cs changeset.ChangeSet, gen Generated) Result {
 		r.Notes = append(r.Notes, "policy sets no scoring thresholds, so the tier is high")
 	} else {
 		r.Tier = tier(r.Points, *th)
+		r.Thresholds = &policy.Thresholds{Medium: th.Medium, High: th.High}
 	}
 
 	fold := p.Match.CaseSensitive == nil || !*p.Match.CaseSensitive

@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/zendern/priskinator/internal/policy"
@@ -15,6 +16,7 @@ func TestMarkdownCoversEverySection(t *testing.T) {
 		HumanReview:       "required",
 		Triggers:          []string{"G7.security-paths"},
 		RequiredReviewers: []string{"security"},
+		Descriptions:      map[string]string{"G7.security-paths": "Security *paths*"},
 		Reasons: []verdict.Reason{
 			{Rule: "G7.security-paths", File: "auth/login.go", Detail: `matches "auth/**"`},
 			{Rule: "score.size", Detail: "60 added and 0 removed lines in 1 file"},
@@ -23,6 +25,7 @@ func TestMarkdownCoversEverySection(t *testing.T) {
 		Error:      "AI assessment unavailable",
 		Score: &scoring.Result{
 			Points: 5, Tier: policy.RiskLow, Risk: policy.RiskMedium,
+			Thresholds: &policy.Thresholds{Medium: 20, High: 50},
 			Factors: []scoring.Factor{
 				{Name: "size", Measured: true, Value: 60, Points: 5, Band: "51-200", Detail: "60 lines"},
 				{Name: "complexity_delta", Detail: "not measured"},
@@ -92,5 +95,12 @@ func TestCodesNone(t *testing.T) {
 	}
 	if got := codes([]string{"a", "b"}); got != "` a `, ` b `" {
 		t.Errorf("codes = %q", got)
+	}
+}
+
+func TestMarkdownScoreWithoutThresholds(t *testing.T) {
+	got := markdown(verdict.Verdict{Risk: policy.RiskHigh, Evaluation: verdict.EvaluationOK, Score: &scoring.Result{Points: 7, Risk: policy.RiskHigh}})
+	if !strings.Contains(got, "\n**Score:** 7 points\n") || !strings.Contains(got, "**Decided by:** the score.\n") {
+		t.Errorf("markdown = %q", got)
 	}
 }
