@@ -34,6 +34,14 @@ repos:
       - id: conventional-pre-commit
         stages: [commit-msg]
 
+  # Renovate ignores an invalid config without failing, so validate it here.
+  - repo: https://github.com/renovatebot/pre-commit-hooks
+    rev: f62507af2294bef36e59700281e3459a3d30ac74 # frozen: 44.155.8
+    hooks:
+      - id: renovate-config-validator
+        args: [--strict]
+        priority: 10
+
   # Same commands CI runs, through the Taskfile, so tool versions stay pinned in
   # one place. Hooks with the same priority run in parallel.
   - repo: local
