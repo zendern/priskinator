@@ -1,0 +1,27 @@
+# priskinator's policy for its own repository (ADR 0010, repo layer).
+#
+# This repo hosts the gate, so engine code decides every future verdict. The
+# defaults only see a change's size, and rated policy-layer changes low in the
+# first dogfooding run. These rules only tighten the defaults.
+version: 1
+
+triggers:
+  G2.gate-governance:
+    add_paths:
+      - "internal/policy/defaults.yaml"
+      - "internal/policy/*.schema.json"
+
+scoring:
+  floors:
+    - description: the policy layer decides what the gate enforces
+      paths:
+        - "internal/policy/**"
+      risk: high
+    - description: the evaluation core and CLI decide every verdict
+      paths:
+        - "internal/changeset/**"
+        - "internal/triggers/**"
+        - "internal/scoring/**"
+        - "internal/verdict/**"
+        - "cmd/priskinator/**"
+      risk: medium
