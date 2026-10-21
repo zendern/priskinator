@@ -67,33 +67,37 @@ func splitBlocks(patch []byte) ([]block, error) {
 		lines = lines[:last]
 	}
 	var blocks []block
-	for i := 0; i < len(lines); {
-		if !strings.HasPrefix(lines[i], "diff --git ") {
-			return nil, fmt.Errorf("line %d: expected diff header, got %q", i+1, lines[i])
+	// Lines are consumed by reslicing rather than an index, so a mutated step
+	// can't revisit lines and grow blocks until memory runs out.
+	rest := lines
+	lineNo := func() int { return len(lines) - len(rest) + 1 }
+	for len(rest) > 0 {
+		if !strings.HasPrefix(rest[0], "diff --git ") {
+			return nil, fmt.Errorf("line %d: expected diff header, got %q", lineNo(), rest[0])
 		}
-		b := block{header: lines[i]}
-		i++
+		b := block{header: rest[0]}
+		rest = rest[1:]
 		// Extended header lines up to the first hunk or the next file. The
 		// patch is generated with --text, so there are no binary markers.
-		for i < len(lines) && !strings.HasPrefix(lines[i], "@@ ") && !strings.HasPrefix(lines[i], "diff --git ") {
-			i++
+		for len(rest) > 0 && !strings.HasPrefix(rest[0], "@@ ") && !strings.HasPrefix(rest[0], "diff --git ") {
+			rest = rest[1:]
 		}
 		// Hunks. Their headers give exact line counts, so content lines are
 		// consumed by count and never mistaken for headers.
-		for i < len(lines) && strings.HasPrefix(lines[i], "@@ ") {
-			r, err := parseHunkHeader(lines[i])
+		for len(rest) > 0 && strings.HasPrefix(rest[0], "@@ ") {
+			r, err := parseHunkHeader(rest[0])
 			if err != nil {
-				return nil, fmt.Errorf("line %d: %w", i+1, err)
+				return nil, fmt.Errorf("line %d: %w", lineNo(), err)
 			}
-			i++
+			rest = rest[1:]
 			var h Hunk
 			oldLine, newLine := r.oldStart, r.newStart
 			for oldLine < r.oldStart+r.oldLines || newLine < r.newStart+r.newLines {
-				if i >= len(lines) {
+				if len(rest) == 0 {
 					return nil, fmt.Errorf("hunk %q truncated", b.header)
 				}
-				l := lines[i]
-				i++
+				l := rest[0]
+				rest = rest[1:]
 				if strings.HasPrefix(l, `\`) {
 					continue // "\ No newline at end of file"
 				}
@@ -113,8 +117,8 @@ func splitBlocks(patch []byte) ([]block, error) {
 				oldLine++
 				newLine++
 			}
-			for i < len(lines) && strings.HasPrefix(lines[i], `\`) {
-				i++
+			for len(rest) > 0 && strings.HasPrefix(rest[0], `\`) {
+				rest = rest[1:]
 			}
 			b.hunks = append(b.hunks, h)
 		}
