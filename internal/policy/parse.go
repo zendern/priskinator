@@ -249,11 +249,12 @@ func objectOf(schemaURL string, fallback []string) []string {
 		return fallback
 	}
 	var loc []string
-	for i := 0; i < len(segs)-1; i += 2 {
-		if segs[i] != "properties" || i+1 >= len(segs)-1 {
+	// Pairs are consumed by reslicing, so a mutated step can't loop forever.
+	for rest := segs[:len(segs)-1]; len(rest) > 0; rest = rest[2:] {
+		if rest[0] != "properties" || len(rest) < 2 {
 			return fallback
 		}
-		loc = append(loc, segs[i+1])
+		loc = append(loc, rest[1])
 	}
 	return loc
 }
