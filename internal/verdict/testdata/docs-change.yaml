@@ -1,0 +1,13 @@
+name: a small docs change is low risk
+description: No trigger fires and the score is 0. Human review is still required while ADR 0004 option A is in force.
+change:
+  files:
+  - path: docs/guide.md
+    added: 5
+    removed: 2
+expect:
+  risk: low
+  human_review: required
+  triggers_absent:
+  - G1.ci-workflows
+  - oversize
