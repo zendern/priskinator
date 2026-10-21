@@ -52,6 +52,14 @@ repos:
         types: [go]
         pass_filenames: false
         priority: 10
+      # Go files too: adding or dropping an import can leave go.mod untidy.
+      - id: go-mod-tidy
+        name: go mod tidy
+        entry: task tidy-check
+        language: system
+        files: (\.go|(^|/)go\.(mod|sum))$
+        pass_filenames: false
+        priority: 10
       - id: zizmor
         name: zizmor
         entry: task zizmor

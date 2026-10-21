@@ -37,7 +37,7 @@ vars:
 
 tasks:
   default:
-    desc: Format check, lint, and test with coverage thresholds
+    desc: Format and tidy check, lint, and test with coverage thresholds
     cmds:
       - task: check
 
@@ -112,6 +112,11 @@ tasks:
         out="$({{.BIN}}/gofumpt -l .)"
         if [ -n "$out" ]; then echo "gofumpt needed:"; echo "$out"; exit 1; fi
 
+  tidy-check:
+    desc: Fail if go.mod or go.sum needs go mod tidy
+    cmds:
+      - go mod tidy -diff
+
   vuln:
     desc: Check dependencies for known vulnerabilities
     deps: [tool:govulncheck]
@@ -134,9 +139,10 @@ tasks:
       - zizmor {{if not .GH_TOKEN}}--offline {{end}}.github/workflows
 
   check:
-    desc: Format check, lint, and test with coverage thresholds
+    desc: Format and tidy check, lint, and test with coverage thresholds
     cmds:
       - task: fmt-check
+      - task: tidy-check
       - task: lint
       - task: cover
 

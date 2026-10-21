@@ -12,7 +12,7 @@ Requirements: Go (see `go.mod`), [Task](https://taskfile.dev), [prek](https://pr
 task test       # go test with the race detector
 task lint       # golangci-lint
 task fmt        # gofumpt
-task check      # fmt-check, lint, test with coverage thresholds
+task check      # fmt-check, tidy-check, lint, test with coverage thresholds
 task cover      # tests with the coverage gate (.testcoverage.yml)
 task imports    # import boundary rules only (also part of lint)
 task mutate     # mutation testing with gremlins (slow; mutate-diff BASE=<ref> for changed packages)

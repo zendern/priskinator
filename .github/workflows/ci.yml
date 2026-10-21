@@ -73,8 +73,8 @@ jobs:
           version="$(sed -n 's/^  ZIZMOR_VERSION: *//p' Taskfile.yml)"
           pipx install "zizmor==${version}"
       # Every pre-commit hook, exactly as it runs locally: file hygiene,
-      # gofumpt and golangci-lint (via Task), zizmor, and the shared
-      # no-latest-runners hook. The token turns on zizmor's online audits.
+      # gofumpt, golangci-lint and go mod tidy (via Task), zizmor, and the
+      # shared no-latest-runners hook. The token turns on zizmor's online audits.
       - name: Run prek hooks
         uses: j178/prek-action@af4d4fcb6922b8e6f65c0426947125fcc38794ce # v3.0.2
         env:
