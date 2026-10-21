@@ -9,6 +9,13 @@
     "enabled": true
   },
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
+  "packageRules": [
+    {
+      "description": "One PR for every GitHub Actions update (action SHAs, runner images, prek-action's prek-version) instead of one per action.",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    }
+  ],
   "customManagers": [
     {
       "customType": "regex",
