@@ -42,6 +42,15 @@ repos:
         args: [--strict]
         priority: 10
 
+  # GitHub Actions security audit of workflows, actions, and this file. prek
+  # installs zizmor itself at the version this rev pins. It runs offline unless
+  # GH_TOKEN is set, as in CI, which turns on the online audits.
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: d25b2b1dc80689fb633f21f6978bba69871181d3 # frozen: v1.31.0
+    hooks:
+      - id: zizmor
+        priority: 10
+
   # Same commands CI runs, through the Taskfile, so tool versions stay pinned in
   # one place. Hooks with the same priority run in parallel.
   - repo: local
@@ -66,13 +75,6 @@ repos:
         entry: task tidy-check
         language: system
         files: (\.go|(^|/)go\.(mod|sum))$
-        pass_filenames: false
-        priority: 10
-      - id: zizmor
-        name: zizmor
-        entry: task zizmor
-        language: system
-        files: ^\.github/workflows/.*\.ya?ml$
         pass_filenames: false
         priority: 10
       - id: go-test

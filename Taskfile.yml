@@ -7,13 +7,14 @@ vars:
     sh: git describe --tags --always --dirty 2>/dev/null || echo dev
 
   # Pinned tool versions, bumped by Renovate (see renovate.json). Check for the
-  # latest release before bumping by hand. TASK_VERSION is the one source for
-  # Task: CI installs it through .github/actions/setup-task. ZIZMOR_VERSION is
-  # installed by hand (see CONTRIBUTING); scripts/local-ci.sh checks both.
+  # latest release before bumping by hand. `task setup` installs all of them
+  # into ./bin except Task itself, which has to exist before any task can run:
+  # CONTRIBUTING shows how, and CI uses .github/actions/setup-task.
   # renovate: datasource=github-releases depName=go-task/task extractVersion=^v(?<version>.+)$
   TASK_VERSION: 3.54.0
-  # renovate: datasource=pypi depName=zizmor
-  ZIZMOR_VERSION: 1.31.0
+  # CI's prek-action reads this pin too.
+  # renovate: datasource=github-releases depName=j178/prek extractVersion=^v(?<version>.+)$
+  PREK_VERSION: 0.5.6
   # renovate: datasource=github-releases depName=golangci/golangci-lint
   GOLANGCI_LINT_VERSION: v2.14.0
   # renovate: datasource=github-releases depName=mvdan/gofumpt
@@ -31,6 +32,9 @@ vars:
   GO_TOOLCHAIN:
     sh: echo "go$(sed -n 's/^go //p' go.mod)"
 
+  # Target of the prek release binary for this machine.
+  PREK_TARGET: '{{if eq ARCH "arm64"}}aarch64{{else}}x86_64{{end}}-{{if eq OS "darwin"}}apple-darwin{{else}}unknown-linux-gnu{{end}}'
+
   ALLOWED_LICENSES: Apache-2.0,MIT,BSD-2-Clause,BSD-3-Clause,ISC
 
 env:
@@ -38,7 +42,7 @@ env:
   # different version (older or newer), so local runs match CI. Tools are built
   # with it too: `go install pkg@version` otherwise picks the tool's own minimum
   # Go, and tools built with an older Go refuse to analyze this module. Go
-  # before 1.21 ignores GOTOOLCHAIN.
+  # before 1.21 ignores GOTOOLCHAIN, which `task setup` checks for.
   GOTOOLCHAIN: "{{.GO_TOOLCHAIN}}"
 
 tasks:
@@ -135,15 +139,6 @@ tasks:
     cmds:
       - "{{.BIN}}/go-licenses check ./... --allowed_licenses={{.ALLOWED_LICENSES}}"
 
-  zizmor:
-    desc: Audit GitHub workflows with zizmor
-    preconditions:
-      - sh: '[ "$(zizmor --version 2>/dev/null)" = "zizmor {{.ZIZMOR_VERSION}}" ]'
-        msg: "zizmor {{.ZIZMOR_VERSION}} is required (uv tool install zizmor=={{.ZIZMOR_VERSION}})"
-    cmds:
-      # Online audits (they query GitHub) when a token is available, as in CI.
-      - zizmor {{if not .GH_TOKEN}}--offline {{end}}.github/workflows
-
   check:
     desc: Format and tidy check, lint, and test with coverage thresholds
     cmds:
@@ -157,9 +152,51 @@ tasks:
     cmds:
       - scripts/local-ci.sh
 
+  setup:
+    desc: Install every pinned tool into ./bin, then the git hooks (run once per clone, after installing Go and Task)
+    aliases: [install-tools]
+    preconditions:
+      - sh: GOTOOLCHAIN=local go env GOVERSION | awk -F. '{sub(/^go/, "", $1); exit !($1 > 1 || ($1 == 1 && $2 + 0 >= 21))}'
+        msg: "Go 1.21 or newer is required: older versions ignore GOTOOLCHAIN, so they cannot switch to the {{.GO_TOOLCHAIN}} that go.mod targets"
+      - sh: '[ "$({{.TASK_EXE}} --version | sed -E "s/^(Task version: )?v?//; s/ .*//")" = "{{.TASK_VERSION}}" ]'
+        msg: "Task {{.TASK_VERSION}} is required (see CONTRIBUTING)"
+    cmds:
+      - task: tools
+      - "{{.BIN}}/prek install"
+
   tools:
-    desc: Install the pinned Go tools into ./bin
-    deps: [tool:golangci-lint, tool:gofumpt, tool:govulncheck, tool:go-licenses, tool:go-test-coverage, tool:gremlins]
+    desc: Install the pinned tools into ./bin (each also installs on first use)
+    deps: [tool:golangci-lint, tool:gofumpt, tool:govulncheck, tool:go-licenses, tool:go-test-coverage, tool:gremlins, tool:prek]
+
+  # prek runs the git hooks, and installs each hook's own tool (zizmor, the
+  # Renovate validator) at the version its rev pins. Its release binary is
+  # checked against the .sha256 published next to it, and releases are
+  # immutable, so a tag's assets cannot be replaced after the fact.
+  tool:prek:
+    internal: true
+    label: "install prek@{{.PREK_VERSION}}"
+    preconditions:
+      - sh: case "{{OS}}/{{ARCH}}" in darwin/amd64 | darwin/arm64 | linux/amd64 | linux/arm64) ;; *) exit 1 ;; esac
+        msg: "no prek release binary for {{OS}}/{{ARCH}}; install prek {{.PREK_VERSION}} into {{.BIN}} by hand"
+    status:
+      - |
+        "{{.BIN}}/prek" --version 2>/dev/null | awk '$1 == "prek" && $2 == "{{.PREK_VERSION}}" {found = 1} END {exit !found}'
+    cmds:
+      - |
+        set -eu
+        asset="prek-{{.PREK_TARGET}}.tar.gz"
+        url="https://github.com/j178/prek/releases/download/v{{.PREK_VERSION}}/$asset"
+        tmp="{{.BIN}}/.download-prek"
+        rm -rf "$tmp"
+        mkdir -p "$tmp"
+        curl -fsSL -o "$tmp/$asset" "$url"
+        curl -fsSL -o "$tmp/$asset.sha256" "$url.sha256"
+        want="$(cut -d ' ' -f 1 "$tmp/$asset.sha256")"
+        got="$( (sha256sum "$tmp/$asset" 2>/dev/null || shasum -a 256 "$tmp/$asset") | cut -d ' ' -f 1)"
+        if [ "$got" != "$want" ]; then echo "checksum mismatch for $asset: got $got, want $want" >&2; rm -rf "$tmp"; exit 1; fi
+        tar -xzf "$tmp/$asset" -C "$tmp"
+        install -m 0755 "$(find "$tmp" -type f -name prek | head -n 1)" "{{.BIN}}/prek"
+        rm -rf "$tmp"
 
   tool:golangci-lint:
     internal: true

@@ -66,12 +66,10 @@ jobs:
         with:
           path: bin
           key: tools-checks-${{ runner.os }}-go${{ steps.setup-go.outputs.go-version }}-${{ hashFiles('go.mod', 'Taskfile.yml') }}
-      # The zizmor hook runs `task zizmor`, which requires the version pinned in
-      # Taskfile.yml.
-      - name: Install zizmor (version pinned in Taskfile.yml)
-        run: |
-          version="$(sed -n 's/^  ZIZMOR_VERSION: *//p' Taskfile.yml)"
-          pipx install "zizmor==${version}"
+      # Same prek as `task setup` installs locally.
+      - name: Read the prek version pinned in Taskfile.yml
+        id: prek
+        run: echo "version=$(sed -n 's/^  PREK_VERSION: *//p' Taskfile.yml)" >> "$GITHUB_OUTPUT"
       # Every pre-commit hook, exactly as it runs locally: file hygiene,
       # gofumpt, golangci-lint and go mod tidy (via Task), zizmor, the Renovate
       # config validator, and the shared no-latest-runners hook. The token
@@ -81,7 +79,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         with:
-          prek-version: "0.5.6"
+          prek-version: ${{ steps.prek.outputs.version }}
       # Not prek hooks: they check dependencies rather than changed files.
       - run: task vuln
       - run: task licenses

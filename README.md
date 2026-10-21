@@ -6,12 +6,13 @@ Design decisions live in [`docs/adr/`](docs/adr/README.md).
 
 ## Development
 
-Requirements: Go (see `go.mod`), [Task](https://taskfile.dev), [prek](https://prek.j178.dev), and [zizmor](https://docs.zizmor.sh). See [CONTRIBUTING](CONTRIBUTING.md) for versions and setup. Linters and other Go tools are installed at pinned versions into `./bin` on first use.
+Requirements: Go 1.21 or newer and [Task](https://taskfile.dev). `task setup` installs every other tool at its pinned version into `./bin`, plus the git hooks; see [CONTRIBUTING](CONTRIBUTING.md). Task runs every `go` command with the exact toolchain in `go.mod`.
 
 ```sh
 task test       # go test with the race detector
 task lint       # golangci-lint
 task fmt        # gofumpt
+task setup      # install the pinned tools into ./bin and the git hooks (once per clone)
 task check      # fmt-check, tidy-check, lint, test with coverage thresholds
 task cover      # tests with the coverage gate (.testcoverage.yml)
 task imports    # import boundary rules only (also part of lint)
