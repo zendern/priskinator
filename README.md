@@ -20,7 +20,6 @@ task mutate     # mutation testing with gremlins (slow; mutate-diff BASE=<ref> f
 task vuln       # govulncheck
 task licenses   # dependency license check
 task build      # ./bin/priskinator
-task ci-local   # every CI job, plus a provenance record in .local-ci/
 ```
 
 Layout:
