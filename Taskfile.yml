@@ -27,6 +27,12 @@ vars:
   GO_TEST_COVERAGE_VERSION: v2.20.0
   # renovate: datasource=github-releases depName=go-gremlins/gremlins
   GREMLINS_VERSION: v0.6.0
+  # renovate: datasource=github-releases depName=sethvargo/ratchet
+  RATCHET_VERSION: v0.12.0
+
+  # Every file ratchet pins: the workflows and any composite actions.
+  ACTION_FILES:
+    sh: ls .github/workflows/*.yml .github/workflows/*.yaml .github/actions/*/action.yml .github/actions/*/action.yaml 2>/dev/null | tr '\n' ' '
 
   # The Go toolchain go.mod targets. Every go command below runs it (see env).
   GO_TOOLCHAIN:
@@ -159,9 +165,26 @@ tasks:
       - task: tools
       - "{{.BIN}}/prek install"
 
+  # zizmor's unpinned-uses audit fails any action that is not pinned to a
+  # commit SHA, on commit and in CI, but cannot pin one. ratchet does: run
+  # `task pin` after adding or changing a `uses:` line. Renovate keeps the pins
+  # current afterwards (it reads ratchet's comments), so ratchet's own update
+  # and upgrade commands are not used.
+  pin:
+    desc: Pin every GitHub Action (and container image) in the workflows to a SHA; set GITHUB_TOKEN to avoid API rate limits
+    deps: [tool:ratchet]
+    cmds:
+      - "{{.BIN}}/ratchet pin {{.ACTION_FILES}}"
+
+  pin-check:
+    desc: Fail if any GitHub Action or container image in the workflows is not pinned (zizmor checks actions on commit too)
+    deps: [tool:ratchet]
+    cmds:
+      - "{{.BIN}}/ratchet lint {{.ACTION_FILES}}"
+
   tools:
     desc: Install the pinned tools into ./bin (each also installs on first use)
-    deps: [tool:golangci-lint, tool:gofumpt, tool:govulncheck, tool:go-licenses, tool:go-test-coverage, tool:gremlins, tool:prek]
+    deps: [tool:golangci-lint, tool:gofumpt, tool:govulncheck, tool:go-licenses, tool:go-test-coverage, tool:gremlins, tool:ratchet, tool:prek]
 
   # prek runs the git hooks, and installs each hook's own tool (zizmor, the
   # Renovate validator) at the version its rev pins. Its release binary is
@@ -222,6 +245,12 @@ tasks:
     cmds:
       - task: go-install
         vars: {NAME: go-test-coverage, PKG: github.com/vladopajic/go-test-coverage/v2, MOD: github.com/vladopajic/go-test-coverage/v2, VER: "{{.GO_TEST_COVERAGE_VERSION}}"}
+
+  tool:ratchet:
+    internal: true
+    cmds:
+      - task: go-install
+        vars: {NAME: ratchet, PKG: github.com/sethvargo/ratchet, MOD: github.com/sethvargo/ratchet, VER: "{{.RATCHET_VERSION}}"}
 
   tool:gremlins:
     internal: true
