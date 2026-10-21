@@ -14,7 +14,7 @@
    ```sh
    go install github.com/go-task/task/v3/cmd/task@v"$(sed -n 's/^  TASK_VERSION: *//p' Taskfile.yml)"
    uv tool install prek
-   uv tool install zizmor==1.31.0
+   uv tool install zizmor=="$(sed -n 's/^  ZIZMOR_VERSION: *//p' Taskfile.yml)"
    ```
 2. Run `prek install` to enable the hooks in `.pre-commit-config.yaml`:
    - pre-commit: file hygiene checks built into prek, then `gofumpt`, `golangci-lint`, and `zizmor` on changed workflows, in parallel
