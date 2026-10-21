@@ -6,7 +6,7 @@
 - **Tests first.** Write the test or golden fixture (`internal/fixture`) before the implementation.
 - **Signed, conventional commits.** Every commit is signed and follows [Conventional Commits](https://www.conventionalcommits.org/) (`feat(policy): add layering`). The `commit-msg` hook ([conventional-pre-commit](https://github.com/compilerla/conventional-pre-commit)) checks the format.
 - **Small, atomic commits.** One logical change per commit.
-- **Pinned dependencies.** Check for the latest release before adding or bumping a dependency. Pin GitHub Actions by full commit SHA, and pin runner images to a specific version (`ubuntu-24.04`), never `ubuntu-latest`.
+- **Pinned dependencies.** Check for the latest release before adding or bumping a dependency. Pin GitHub Actions by full commit SHA, and pin runner images to a specific version (`ubuntu-24.04`), never `ubuntu-latest`. Give every workflow job a `timeout-minutes`, so a hung run is cancelled long before GitHub's 6-hour default. A job that calls a reusable workflow (`uses:`) can't set one; the called workflow's jobs carry the limits instead. The shared `no-latest-runners` and `require-timeouts` hooks check both.
 
 ## Setup
 
@@ -34,6 +34,5 @@ The other Go tools (golangci-lint, gofumpt, govulncheck, go-licenses, go-test-co
 ## Pull requests
 
 - Use the PR template and link the issue.
-- Run `task ci-local` on the final commit and paste `.local-ci/<commit>/summary.md` into the PR. It runs every CI job locally and records which commit, tools, and results it saw, so reviewers have proof the checks ran even when hosted CI does not. Re-run it after every push. Set `LOCAL_CI_BASE` to the PR's base branch (default `origin/main`) so its mutation step covers what the PR changes.
 - Stacked PRs are fine: base the PR on the branch it builds on.
 - Changes under `.github/`, policy files, or `docs/adr/` require review from a code owner.

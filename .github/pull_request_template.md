@@ -21,10 +21,5 @@ names from the diff. -->
 ## Checklist
 
 - [ ] Tests or golden fixtures written before the implementation
-- [ ] `task ci-local` passes on the head commit; provenance summary pasted below
 - [ ] Commits are signed and follow Conventional Commits
 - [ ] ADRs and docs updated if a decision changed
-
-## Local CI provenance
-
-<!-- Paste .local-ci/<commit>/summary.md from `task ci-local`. -->
