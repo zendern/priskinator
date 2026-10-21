@@ -6,7 +6,7 @@ Guidance for coding agents working in this repository. It points into [README](R
 
 priskinator is a Go CLI that runs in CI against pull requests and decides, deterministically, when a human must review a change. Mandatory triggers (changes to CI, linters, hooks, tests, auth, or the gate itself) always require review. Everything else is tiered by a transparent additive risk score. An optional AI pass can raise the risk, never lower it. Every decision is recorded as evidence for SOC 2 and ISO 27001.
 
-The project is early. `changeset`, `policy`, and `fixture` are implemented. `triggers`, `content`, `scoring`, `verdict`, `evidence`, `forge/github`, and `ai` hold only a package doc comment, and the CLI has only `version`. The design is ahead of the code: each package's doc comment names its ADR, so read that ADR before changing or filling in the package.
+The project is early. `changeset`, `policy`, and `fixture` are implemented. `triggers`, `content`, `scoring`, `verdict`, `evidence`, `forge/github`, and `ai` hold only a package doc comment, and the CLI has only `version`. The design is ahead of the code: each `internal/` package's doc comment names its ADR, so read that ADR before changing or filling in the package.
 
 ## Commands
 
