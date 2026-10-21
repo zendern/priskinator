@@ -65,5 +65,5 @@ func toGlob(pattern string) string {
 
 // Matches reports whether p is generated or vendored.
 func (g Generated) Matches(p string) bool {
-	return matchAny(g.include, p, false) && !matchAny(g.exclude, p, false)
+	return matchAny(g.include, p, false, false) && !matchAny(g.exclude, p, false, false)
 }

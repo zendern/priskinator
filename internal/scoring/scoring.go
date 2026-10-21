@@ -241,7 +241,7 @@ func plural(n int, noun string) string {
 
 func excluded(globs []string, gen Generated, f changeset.File) bool {
 	for _, p := range f.Paths() {
-		if !gen.Matches(p) && !matchAny(globs, p, false) {
+		if !gen.Matches(p) && !matchAny(globs, p, false, false) {
 			return false
 		}
 	}
@@ -252,7 +252,7 @@ func excluded(globs []string, gen Generated, f changeset.File) bool {
 // fails to parse counts as a match, so a bad policy raises risk.
 func floorMatches(globs []string, f changeset.File, fold bool) bool {
 	for _, p := range f.Paths() {
-		if matchAny(globs, p, fold) {
+		if matchAny(globs, p, fold, true) {
 			return true
 		}
 	}
@@ -260,10 +260,9 @@ func floorMatches(globs []string, f changeset.File, fold bool) bool {
 }
 
 // matchAny reports whether name matches any glob, lowercasing both when fold
-// is set. A glob that fails to parse matches only when fold is set: floors
-// pass fold from policy and treat a bad glob as a match, while exclusions
-// never fold and never exclude on a bad glob.
-func matchAny(globs []string, name string, fold bool) bool {
+// is set. A glob that fails to parse matches only when bad is set: floors
+// treat a bad glob as a match, while exclusions never exclude on one.
+func matchAny(globs []string, name string, fold, bad bool) bool {
 	if fold {
 		name = strings.ToLower(name)
 	}
@@ -272,7 +271,7 @@ func matchAny(globs []string, name string, fold bool) bool {
 			g = strings.ToLower(g)
 		}
 		ok, err := doublestar.Match(g, name)
-		if ok || (err != nil && fold) {
+		if ok || (err != nil && bad) {
 			return true
 		}
 	}

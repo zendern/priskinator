@@ -213,11 +213,14 @@ func TestFloors(t *testing.T) {
 }
 
 func TestFloorWithABadGlobFailsClosed(t *testing.T) {
-	p := basePolicy()
-	p.Scoring.Floors = []policy.Floor{{Description: "Bad", Paths: []string{"a/["}, Risk: policy.RiskHigh}}
-	r := Score(p, changeset.ChangeSet{Files: []changeset.File{file("a/b", 1, 0)}}, Generated{})
-	if r.Risk != policy.RiskHigh {
-		t.Errorf("Risk %s, want high", r.Risk)
+	for _, sensitive := range []bool{false, true} {
+		p := basePolicy()
+		p.Match.CaseSensitive = ptr(sensitive)
+		p.Scoring.Floors = []policy.Floor{{Description: "Bad", Paths: []string{"a/["}, Risk: policy.RiskHigh}}
+		r := Score(p, changeset.ChangeSet{Files: []changeset.File{file("a/b", 1, 0)}}, Generated{})
+		if r.Risk != policy.RiskHigh {
+			t.Errorf("case-sensitive %t: Risk %s, want high", sensitive, r.Risk)
+		}
 	}
 }
 
