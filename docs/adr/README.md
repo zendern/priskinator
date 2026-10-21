@@ -15,7 +15,7 @@ Decisions for priskinator, recorded per [ADR 0001](0001-record-architecture-deci
 | [0007](0007-risk-and-complexity-scoring.md) | Risk and complexity scoring: transparent additive points | accepted |
 | [0008](0008-ai-assessment-layer.md) | AI assessment layer: optional, provider-agnostic, escalate-only, fully configurable | accepted |
 | [0009](0009-compliance-evidence-and-segregation-of-duties.md) | Compliance evidence, segregation of duties, waivers, break-glass | accepted |
-| [0010](0010-policy-configuration-and-inheritance.md) | Policy configuration: layered, tighten-only, tested | accepted |
+| [0010](0010-policy-configuration-and-inheritance.md) | Policy configuration: layered, the org baseline is a floor, tested | accepted; amended 2026-10-15 |
 | [0011](0011-platform-and-distribution.md) | Platform and distribution: forge-agnostic core, GitHub first | accepted |
 | [0012](0012-implementation-language.md) | Implementation language: Go, content rules through ast-grep | accepted |
 | [0013](0013-rollout-and-calibration.md) | Rollout and calibration | accepted |

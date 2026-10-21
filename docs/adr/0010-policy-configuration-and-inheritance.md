@@ -1,10 +1,11 @@
 ---
 status: accepted
 date: 2026-10-13
+amended: 2026-10-15
 decision-makers: Nathan Zender
 ---
 
-# Policy configuration: layered YAML, repos can only tighten, policies are tested
+# Policy configuration: layered YAML, the org baseline is a floor, policies are tested
 
 ## Context and Problem Statement
 
@@ -14,6 +15,7 @@ Rules, weights, thresholds, reviewer routing, waivers, and AI settings must be c
 
 - Policy is read only from trusted locations (ADR 0005).
 - An org baseline that individual repos cannot weaken.
+- Repos without an org baseline, or with one that leaves a field open, can tune the shipped defaults to their codebase.
 - Strict validation: a typo must not silently disable a rule.
 - Policy changes are themselves changes that need impact analysis and review.
 
@@ -25,7 +27,7 @@ Rules, weights, thresholds, reviewer routing, waivers, and AI settings must be c
 
 ## Decision Outcome
 
-Chosen option: "Layered, tighten-only", because it gives a central baseline and local flexibility without letting a repo opt out of the baseline. A general policy engine adds a language most contributors do not know, for little gain at this scope. It stays an option for complex org-specific rules later.
+Chosen option: "Layered, tighten-only", because it gives a central baseline and local flexibility without letting a repo opt out of the baseline. Amended 2026-10-15: tighten-only applies to what the org baseline sets. A repo may loosen what only the built-in defaults set (see Merge semantics). A general policy engine adds a language most contributors do not know, for little gain at this scope. It stays an option for complex org-specific rules later.
 
 ### Layers
 
@@ -36,9 +38,10 @@ Chosen option: "Layered, tighten-only", because it gives a central baseline and 
 ### Merge semantics
 
 - A repo can add rules, add paths to existing rules, raise risk floors, lower score thresholds, add required reviewers, and enable stricter options.
-- A repo cannot remove or disable a baseline rule, remove paths, lower floors, raise thresholds, or disable the AI if the baseline requires it.
-- A repo policy that tries to weaken a rule is rejected for that rule with a `policy-weakening-attempt` trigger, and the baseline value applies.
-- Exceptions to the baseline go through waivers only (ADR 0009).
+- **Fields the org baseline sets are a floor.** A repo cannot remove or disable them, remove their paths, lower their floors, raise their thresholds, or disable the AI if the baseline requires it. A repo policy that tries is rejected for that field with a `policy-weakening-attempt` trigger, and the baseline value applies. A rule's paths count as set when the org sets `paths` or `add_paths` for it.
+- **Fields only the built-in defaults set can be loosened** by the repo: for example narrowing a default glob, raising a threshold, or disabling a default rule. The repo's value takes effect, and each loosened field is reported as an applied weakening. The defaults are a starting point written without knowledge of the repo; the org baseline is the organization's control.
+- **A loosening never takes effect without human review.** Policy is read from the base branch only (ADR 0005), so a PR that changes `.priskinator/` is evaluated under the old policy, cannot apply its own change, and fires G2 (ADR 0006), which always requires human review. That PR's verdict names each field its policy loosens, so the reviewer sees what is being given up rather than only a YAML diff. After merge, every evaluation's evidence lists the weakenings in force (ADR 0009).
+- Exceptions to the org baseline go through waivers only (ADR 0009).
 
 ### Format and validation
 
@@ -80,11 +83,12 @@ ai:
 - Good, because the baseline is enforced everywhere and is auditable in one place.
 - Good, because policy changes come with tests and a measured impact.
 - Bad, because tighten-only semantics need careful definitions per field, and those definitions need their own tests.
+- Bad, because a repo without an org baseline can loosen any default. The protection is human review of the policy PR and the weakenings recorded in evidence, not the tool refusing.
 - Bad, because a central policy repo is another protected asset in audit scope.
 
 ### Confirmation
 
-- Merge-semantics tests: for every field, a weakening attempt is rejected and a tightening is applied.
+- Merge-semantics tests: for every field, a tightening is applied; a weakening is rejected when the org baseline sets the field, and applied and reported when only the defaults do.
 - Schema tests: unknown keys, wrong types, and an unsupported version all produce `config-invalid`.
 
 ## More Information
