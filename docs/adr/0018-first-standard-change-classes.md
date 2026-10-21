@@ -82,6 +82,7 @@ standard_changes:
   - Where the org baseline sets the field, it is a floor. A repo policy that loosens it is rejected for that field, the baseline value stays, and `policy-weakening-attempt` fires. So an org that leaves a class `off` or `shadow` cannot be overridden by a repo.
   - Where only the built-in defaults set it, the repo's value takes effect. The PR that makes the change fires G2 and `policy-loosening`, so a human reviews it with the loosening named in the verdict, and every later evaluation's evidence lists it.
 - Narrowing, lowering a cap, or moving to `off` is a tightening and needs nothing extra.
+- Path direction is the reverse of ADR 0010's rule for `triggers.*.paths`. There, adding paths tightens because more files need a human. Here, a class's `paths` say which files may skip a human, so adding to `paths` loosens, and adding to `exclude_paths` or removing from `paths` tightens. The policy layer compares `standard_changes` fields with these semantics, not the trigger ones.
 
 ### Enabling a class
 
