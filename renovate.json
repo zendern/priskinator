@@ -11,9 +11,19 @@
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
   "packageRules": [
     {
-      "description": "One PR for every GitHub Actions update (action SHAs, runner images, prek-action's prek-version) instead of one per action.",
+      "description": "One PR for every GitHub Actions update (action SHAs and runner images) instead of one per action.",
       "matchManagers": ["github-actions"],
       "groupName": "github actions"
+    },
+    {
+      "description": "One PR for the dev tools: the versions pinned in Taskfile.yml (Task, prek, the Go tools) and the prek hook revs, whose hooks install their own tools.",
+      "matchFileNames": ["Taskfile.yml", ".pre-commit-config.yaml"],
+      "groupName": "dev tools"
+    },
+    {
+      "description": "One PR for the application's dependencies: the modules and go directive in go.mod.",
+      "matchManagers": ["gomod"],
+      "groupName": "app dependencies"
     }
   ],
   "customManagers": [
