@@ -14,7 +14,7 @@ Everything runs through [Task](https://taskfile.dev). The Go tools (golangci-lin
 
 ```sh
 task check                                          # fmt-check, lint, tests with the coverage gate: run before calling work done
-task test                                           # go test -race ./...
+task test                                           # go test -race -count=1 ./...
 go test -race -count=1 -run TestMergeMixed ./internal/policy/   # a single test
 task lint                                           # golangci-lint, including the import boundaries and the ruleguard rule
 task fmt                                            # gofumpt -w .
