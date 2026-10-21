@@ -157,8 +157,8 @@ func (e *evaluator) matchShape(f changeset.File) {
 	if e.enabled(RuleLFS) && f.LFS {
 		e.fire(RuleLFS, f, "Git LFS pointer")
 	}
-	if limit := e.policy.Limits.MaxFileBytes; e.enabled(RuleOversizeFile) && limit != nil && f.NewSize > *limit {
-		e.fire(RuleOversizeFile, f, "%d bytes, over the %d-byte limit", f.NewSize, *limit)
+	if limit := e.policy.Limits.MaxFileBytes; e.enabled(RuleOversizeFile) && limit != nil && f.Size > *limit {
+		e.fire(RuleOversizeFile, f, "%d bytes, over the %d-byte limit", f.Size, *limit)
 	}
 	if e.enabled(RuleWatchedPathMove) {
 		e.matchMove(f)

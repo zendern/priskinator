@@ -24,7 +24,7 @@ func changeSet(c fixture.Change) changeset.ChangeSet {
 			Status:  status,
 			OldMode: f.OldMode,
 			NewMode: f.NewMode,
-			NewSize: f.Size,
+			Size:    f.Size,
 			Binary:  f.Binary,
 			LFS:     f.LFS,
 			Hunks:   hunks,

@@ -109,7 +109,7 @@ func TestEvaluateSkipsDisabledRules(t *testing.T) {
 			RuleWatchedPathMove: {Enabled: ptr(false)},
 		},
 	}
-	cs := changeset.ChangeSet{Files: []changeset.File{{Path: "a", Status: changeset.StatusDeleted, Binary: true, NewSize: 5}}}
+	cs := changeset.ChangeSet{Files: []changeset.File{{Path: "a", Status: changeset.StatusDeleted, Binary: true, Size: 5}}}
 	if got := Evaluate(p, cs); len(got) != 0 {
 		t.Errorf("Evaluate = %+v, want no hits", got)
 	}
@@ -172,7 +172,7 @@ func TestShapeEvidence(t *testing.T) {
 		{"executable", changeset.File{Path: "s", OldMode: changeset.ModeRegular, NewMode: changeset.ModeExecutable}, RuleExecutableMode, "mode 100644 to 100755"},
 		{"binary", changeset.File{Path: "b", Binary: true}, RuleBinary, "binary content"},
 		{"lfs", changeset.File{Path: "w", LFS: true}, RuleLFS, "Git LFS pointer"},
-		{"oversize", changeset.File{Path: "big", NewSize: 11}, RuleOversizeFile, "11 bytes, over the 10-byte limit"},
+		{"oversize", changeset.File{Path: "big", Size: 11}, RuleOversizeFile, "11 bytes, over the 10-byte limit"},
 		{"deleted", changeset.File{Path: ".github/workflows/ci.yml", Status: changeset.StatusDeleted}, RuleWatchedPathMove, "deleted from G1.ci-workflows"},
 		{"moved", changeset.File{Path: "docs/Makefile.txt", OldPath: "Makefile", Status: changeset.StatusRenamed}, RuleWatchedPathMove, "moved out of G6.build-scripts"},
 		{
@@ -204,7 +204,7 @@ func TestShapeRulesStayQuietOnPlainFiles(t *testing.T) {
 	p := &policy.Policy{Limits: policy.Limits{MaxFileBytes: ptr(int64(10))}, Triggers: all}
 
 	files := []changeset.File{
-		{Path: "a.go", OldMode: changeset.ModeRegular, NewMode: changeset.ModeRegular, NewSize: 10},
+		{Path: "a.go", OldMode: changeset.ModeRegular, NewMode: changeset.ModeRegular, Size: 10},
 		{Path: "new.sh", Status: changeset.StatusAdded, NewMode: changeset.ModeExecutable},
 		{Path: "old.sh", Status: changeset.StatusModified, OldMode: changeset.ModeExecutable, NewMode: changeset.ModeExecutable},
 		{Path: "gone", Status: changeset.StatusDeleted, OldMode: changeset.ModeSymlink},
@@ -224,7 +224,7 @@ func TestShapeRulesStayQuietOnPlainFiles(t *testing.T) {
 
 func TestOversizeNeedsALimit(t *testing.T) {
 	p := &policy.Policy{Triggers: map[string]*policy.Trigger{RuleOversizeFile: {}}}
-	cs := changeset.ChangeSet{Files: []changeset.File{{Path: "big", NewSize: 1 << 40}}}
+	cs := changeset.ChangeSet{Files: []changeset.File{{Path: "big", Size: 1 << 40}}}
 	if got := Evaluate(p, cs); len(got) != 0 {
 		t.Errorf("Evaluate = %+v, want no hits without a limit", got)
 	}
