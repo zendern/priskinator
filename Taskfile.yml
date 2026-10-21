@@ -9,7 +9,7 @@ vars:
   # Pinned tool versions, bumped by Renovate (see renovate.json). Check for the
   # latest release before bumping by hand. TASK_VERSION is the one source for
   # Task: CI installs it through .github/actions/setup-task. ZIZMOR_VERSION is
-  # installed by hand (see CONTRIBUTING); scripts/local-ci.sh checks both.
+  # installed by hand (see CONTRIBUTING); `task zizmor` refuses any other version.
   # renovate: datasource=github-releases depName=go-task/task extractVersion=^v(?<version>.+)$
   TASK_VERSION: 3.54.0
   # renovate: datasource=pypi depName=zizmor
@@ -139,11 +139,6 @@ tasks:
       - task: fmt-check
       - task: lint
       - task: cover
-
-  ci-local:
-    desc: Run every CI job locally and write a provenance record
-    cmds:
-      - scripts/local-ci.sh
 
   tools:
     desc: Install the pinned Go tools into ./bin
