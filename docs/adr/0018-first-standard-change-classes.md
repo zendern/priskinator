@@ -81,6 +81,7 @@ standard_changes:
 - Moving a class toward `on`, widening its globs, raising its cap, or adding an author or ecosystem is a loosening, and follows ADR 0010 as amended on 2026-10-15:
   - Where the org baseline sets the field, it is a floor. A repo policy that loosens it is rejected for that field, the baseline value stays, and `policy-weakening-attempt` fires. So an org that leaves a class `off` or `shadow` cannot be overridden by a repo.
   - Where only the built-in defaults set it, the repo's value takes effect. The PR that makes the change fires G2 and `policy-loosening`, so a human reviews it with the loosening named in the verdict, and every later evaluation's evidence lists it.
+- Widening a class that is `on` (wider globs, a higher cap, a new author or ecosystem) also moves it back to `shadow`. The shadow evidence only covers the narrower definition, so the widened class goes through "Enabling a class" again before the App approves anything new under it.
 - Narrowing, lowering a cap, or moving to `off` is a tightening and needs nothing extra.
 - Path direction is the reverse of ADR 0010's rule for `triggers.*.paths`. There, adding paths tightens because more files need a human. Here, a class's `paths` say which files may skip a human, so adding to `paths` loosens, and adding to `exclude_paths` or removing from `paths` tightens. The policy layer compares `standard_changes` fields with these semantics, not the trigger ones.
 
