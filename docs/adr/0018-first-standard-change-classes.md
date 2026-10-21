@@ -78,7 +78,9 @@ standard_changes:
 ```
 
 - Built-in defaults ship every class in `shadow`, so `bot_eligible` and `change_class` start accumulating evidence on every PR from phase 1.
-- Moving a class to `on`, widening its globs, raising its cap, or adding an author is a loosening. The PR that does it fires `policy-loosening` and needs a human (ADR 0010).
+- Moving a class toward `on`, widening its globs, raising its cap, or adding an author or ecosystem is a loosening, and follows ADR 0010 as amended on 2026-10-15:
+  - Where the org baseline sets the field, it is a floor. A repo policy that loosens it is rejected for that field, the baseline value stays, and `policy-weakening-attempt` fires. So an org that leaves a class `off` or `shadow` cannot be overridden by a repo.
+  - Where only the built-in defaults set it, the repo's value takes effect. The PR that makes the change fires G2 and `policy-loosening`, so a human reviews it with the loosening named in the verdict, and every later evaluation's evidence lists it.
 - Narrowing, lowering a cap, or moving to `off` is a tightening and needs nothing extra.
 
 ### Enabling a class
@@ -93,7 +95,7 @@ Replaces the ADR 0004 preconditions and the ADR 0013 phase 4 exit criteria:
 
 - **Retrospective sampling.** The policy owner reviews at least 10% of bot-approved PRs per class, and at least one a week when there are any, and records the result in the evidence store. A finding counts as an escape.
 - **Automatic fallback.** An escape on a bot-approved PR moves that class back to `shadow`, as does a failing canary for every class. Falling back is the fail-safe direction, so it happens without a human. Turning the class back on goes through "Enabling a class" again.
-- **Withdrawing outstanding approvals.** Whenever a class leaves `on` (fallback, kill switch, or a policy change), the App dismisses its approving reviews on every open PR it approved under that class and evaluates those PRs again, so none can merge on an approval given before the class was turned off. Until the dismissals finish, the gate's required check reports pending for those PRs.
+- **Withdrawing outstanding approvals.** Whenever a class leaves `on` (fallback, kill switch, or a policy change), the gate first sets its required check to pending on every open PR it approved under that class. It then dismisses its approving reviews on those PRs and evaluates them again. The check stays pending until both the dismissal and the new evaluation succeed for that PR, and if either fails it stays pending, so no PR can merge on an approval given before the class was turned off.
 - **Kill switch.** Unchanged from ADR 0004: one setting moves every class in every repo back to option A.
 
 ### Consequences
@@ -109,9 +111,9 @@ Replaces the ADR 0004 preconditions and the ADR 0013 phase 4 exit criteria:
 
 - Golden fixtures per class: a matching PR, a PR that fails each class condition, and a PR that matches the class but fires a trigger (not eligible).
 - A test that a class in `shadow` sets `change_class` and `bot_eligible` but never produces an approving review.
-- A policy-layer test that moving a class to `on` or widening it is reported as a loosening.
+- Policy-layer tests: a repo cannot move a class the org baseline sets to `off` or `shadow` toward `on`, widen its paths, raise its cap, or add authors (rejected, `policy-weakening-attempt`); the same changes to a class only the defaults set are applied and reported as weakenings.
 - A test that an escape label on a bot-approved PR moves its class back to `shadow`.
-- A test that turning a class off dismisses the App's approvals on open PRs in that class and re-evaluates them.
+- A test that turning a class off sets the check to pending before dismissing the App's approvals on open PRs in that class, and that a failed dismissal or re-evaluation leaves the check pending.
 
 ## Pros and Cons of the Options
 
