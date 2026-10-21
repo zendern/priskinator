@@ -25,7 +25,7 @@ task licenses                                       # go-licenses against the al
 task build                                          # ./bin/priskinator
 ```
 
-Hooks run through [prek](https://prek.j178.dev) (`prek install` once): gofumpt, golangci-lint and zizmor before a commit, Conventional Commits on the message, and `task cover` before a push. CI runs every hook with `--all-files`, plus `task vuln`, `task licenses`, `task cover`, and mutation testing on PRs that target `main`.
+Hooks run through [prek](https://prek.j178.dev) (`prek install` once): gofumpt, golangci-lint and zizmor before a commit, Conventional Commits on the message, and `task cover` before a push. CI runs the pre-commit-stage hooks with `--all-files`, plus `task vuln`, `task licenses`, `task cover`, and mutation testing on non-draft PRs that target `main` (skipped when every changed file is under `docs/` or is Markdown).
 
 ## Architecture
 
