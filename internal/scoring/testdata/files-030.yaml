@@ -1,0 +1,67 @@
+name: 30 files score 5
+description: 30 changed files fall in the band worth 5 points.
+change:
+  files:
+  - path: pkg/f000.md
+    added: 1
+  - path: pkg/f001.md
+    added: 1
+  - path: pkg/f002.md
+    added: 1
+  - path: pkg/f003.md
+    added: 1
+  - path: pkg/f004.md
+    added: 1
+  - path: pkg/f005.md
+    added: 1
+  - path: pkg/f006.md
+    added: 1
+  - path: pkg/f007.md
+    added: 1
+  - path: pkg/f008.md
+    added: 1
+  - path: pkg/f009.md
+    added: 1
+  - path: pkg/f010.md
+    added: 1
+  - path: pkg/f011.md
+    added: 1
+  - path: pkg/f012.md
+    added: 1
+  - path: pkg/f013.md
+    added: 1
+  - path: pkg/f014.md
+    added: 1
+  - path: pkg/f015.md
+    added: 1
+  - path: pkg/f016.md
+    added: 1
+  - path: pkg/f017.md
+    added: 1
+  - path: pkg/f018.md
+    added: 1
+  - path: pkg/f019.md
+    added: 1
+  - path: pkg/f020.md
+    added: 1
+  - path: pkg/f021.md
+    added: 1
+  - path: pkg/f022.md
+    added: 1
+  - path: pkg/f023.md
+    added: 1
+  - path: pkg/f024.md
+    added: 1
+  - path: pkg/f025.md
+    added: 1
+  - path: pkg/f026.md
+    added: 1
+  - path: pkg/f027.md
+    added: 1
+  - path: pkg/f028.md
+    added: 1
+  - path: pkg/f029.md
+    added: 1
+expect:
+  points:
+    files: 5

@@ -1,0 +1,27 @@
+name: 10 files score 0
+description: 10 changed files fall in the band worth 0 points.
+change:
+  files:
+  - path: pkg/f000.md
+    added: 1
+  - path: pkg/f001.md
+    added: 1
+  - path: pkg/f002.md
+    added: 1
+  - path: pkg/f003.md
+    added: 1
+  - path: pkg/f004.md
+    added: 1
+  - path: pkg/f005.md
+    added: 1
+  - path: pkg/f006.md
+    added: 1
+  - path: pkg/f007.md
+    added: 1
+  - path: pkg/f008.md
+    added: 1
+  - path: pkg/f009.md
+    added: 1
+expect:
+  points:
+    files: 0

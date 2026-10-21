@@ -1,0 +1,23 @@
+name: files in one directory count once
+description: Diffusion counts directories, not files.
+change:
+  files:
+  - path: internal/app/f0.go
+    added: 1
+  - path: internal/app/f1.go
+    added: 1
+  - path: internal/app/f2.go
+    added: 1
+  - path: internal/app/f3.go
+    added: 1
+  - path: internal/app/f4.go
+    added: 1
+  - path: internal/app/f5.go
+    added: 1
+  - path: internal/app/f6.go
+    added: 1
+  - path: internal/app/f7.go
+    added: 1
+expect:
+  points:
+    diffusion: 0

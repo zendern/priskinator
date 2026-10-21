@@ -1,0 +1,11 @@
+name: a test change clears the test signal
+description: Changing a test alongside the source scores no test-signal points.
+change:
+  files:
+  - path: internal/app/app.go
+    added: 300
+  - path: internal/app/app_test.go
+    added: 5
+expect:
+  points:
+    test_signal: 0

@@ -1,0 +1,13 @@
+name: 3 directories score 5
+description: Changes spread over 3 directories fall in the band worth 5 points.
+change:
+  files:
+  - path: d00/README.md
+    added: 1
+  - path: d01/README.md
+    added: 1
+  - path: d02/README.md
+    added: 1
+expect:
+  points:
+    diffusion: 5

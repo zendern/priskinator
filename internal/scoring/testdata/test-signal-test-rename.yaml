@@ -1,0 +1,12 @@
+name: renaming a test file does not clear the test signal
+description: A test file moved with no changed lines is not a test change, so 21 untested source lines still score.
+change:
+  files:
+  - path: internal/app/app.go
+    added: 21
+  - path: internal/app/app_old_test.go
+    old_path: internal/app/app_test.go
+    status: renamed
+expect:
+  points:
+    test_signal: 5
