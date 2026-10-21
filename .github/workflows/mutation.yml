@@ -1,10 +1,21 @@
 name: mutation
 
 # Mutation testing is slower than the rest of CI, so it has its own workflow:
-# pull requests mutate only the lines they change, and a weekly run covers the
-# whole module so thresholds in .gremlins.yaml hold for code nobody touched.
+# pull requests mutate only the packages they change, and a weekly run covers
+# the whole module so thresholds in .gremlins.yaml hold for code nobody touched.
+#
+# It is also the most expensive job to repeat, and stacked PRs re-run on every
+# rebase of the stack. So only non-draft PRs that target main are mutated.
+# Stacked PRs (whose base is another PR branch) skip it until GitHub retargets
+# them to main when the PR below merges, which fires `edited` with a base
+# change. Docs-only changes never run it.
 on:
   pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
   schedule:
     - cron: "17 6 * * 1"
   workflow_dispatch:
@@ -12,12 +23,23 @@ on:
 permissions: {}
 
 concurrency:
-  group: mutation-${{ github.ref }}
+  # A new push cancels the run in flight for the same ref. A title or body edit
+  # skips the job anyway, so it gets a unique group via run_id: sharing the
+  # ref's group would let it cancel a real run in progress.
+  group: mutation-${{ github.ref }}${{ github.event.action == 'edited' && !github.event.changes.base && format('-skip-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 jobs:
   mutation:
     name: mutation testing
+    # Schedule and manual runs always go. Pull requests (to main, per the
+    # trigger): not a draft, and an `edited` event only when the base changed
+    # (a retarget, not a title edit).
+    if: >-
+      ${{ github.event_name != 'pull_request' || (
+      !github.event.pull_request.draft &&
+      (github.event.action != 'edited' || github.event.changes.base)
+      ) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:

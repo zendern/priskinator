@@ -1,0 +1,63 @@
+name: merged
+
+# Runs when a PR merges into main. ci.yml no longer runs on push to main (every
+# job bills a rounded-up minute), so this decides whether the merge needs
+# testing. If the merge commit's tree is identical to the PR head's tree and the
+# ci.yml gate (workflow-summary) passed on that head, main holds exactly the
+# content that was tested and the suite is skipped. Otherwise (main moved under
+# the PR) the merge commit is re-tested through ci.yml. A release job will be
+# attached here later, after the test job. Branch protection isn't available on
+# this plan, so a direct push to main gets neither tests nor this workflow.
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  tree-check:
+    if: ${{ github.event.pull_request.merged }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      checks: read
+    outputs:
+      tested: ${{ steps.compare.outputs.tested }}
+    steps:
+      - name: Compare merged tree with the tested PR head
+        id: compare
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          tree() {
+            gh api "repos/$REPO/git/commits/$1" --jq '.tree.sha'
+          }
+          # Successful ci.yml gate (workflow-summary) on the PR head. Filtered
+          # to the Actions app so another integration's check with the same
+          # name can't count.
+          passed() {
+            gh api "repos/$REPO/commits/$HEAD_SHA/check-runs?check_name=workflow-summary" \
+              --jq '[.check_runs[] | select(.app.slug == "github-actions" and .conclusion == "success")] | length'
+          }
+          merge_tree="$(tree "$MERGE_SHA")"
+          head_tree="$(tree "$HEAD_SHA")"
+          tested=false
+          if [ "$merge_tree" = "$head_tree" ] && [ "$(passed)" -gt 0 ]; then
+            tested=true
+          fi
+          echo "merge tree $merge_tree, head tree $head_tree, tested=$tested"
+          echo "tested=$tested" >> "$GITHUB_OUTPUT"
+
+  test:
+    needs:
+      - tree-check
+    if: ${{ needs.tree-check.outputs.tested == 'false' }}
+    permissions:
+      contents: read
+    uses: $/.github/workflows/ci.yml
+    with:
+      ref: ${{ github.event.pull_request.merge_commit_sha }}
