@@ -213,8 +213,8 @@ func testSignalOf(files []changeset.File) measurement {
 	for _, f := range files {
 		if isTest(f.Path) {
 			// A rename, mode change or empty file changes no test content, so
-			// only changed lines, a deletion or a binary test asset count.
-			tests = tests || f.AddedLines()+f.RemovedLines() > 0 || f.Status == changeset.StatusDeleted || f.Binary
+			// only changed lines, a deletion or new binary test content count.
+			tests = tests || f.AddedLines()+f.RemovedLines() > 0 || f.Status == changeset.StatusDeleted || (f.Binary && f.OldOID != f.NewOID)
 			continue
 		}
 		if isSource(f) {
