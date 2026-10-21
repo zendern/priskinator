@@ -27,13 +27,19 @@ vars:
   # renovate: datasource=github-releases depName=go-gremlins/gremlins
   GREMLINS_VERSION: v0.6.0
 
-  # Build tools with the toolchain go.mod targets. `go install pkg@version`
-  # otherwise picks the tool's own minimum Go, and tools built with an older Go
-  # refuse to analyze this module.
+  # The Go toolchain go.mod targets. Every go command below runs it (see env).
   GO_TOOLCHAIN:
     sh: echo "go$(sed -n 's/^go //p' go.mod)"
 
   ALLOWED_LICENSES: Apache-2.0,MIT,BSD-2-Clause,BSD-3-Clause,ISC
+
+env:
+  # Run exactly the go.mod toolchain, downloading it when the installed Go is a
+  # different version (older or newer), so local runs match CI. Tools are built
+  # with it too: `go install pkg@version` otherwise picks the tool's own minimum
+  # Go, and tools built with an older Go refuse to analyze this module. Go
+  # before 1.21 ignores GOTOOLCHAIN.
+  GOTOOLCHAIN: "{{.GO_TOOLCHAIN}}"
 
 tasks:
   default:
@@ -202,7 +208,7 @@ tasks:
       - |
         go version -m "{{.BIN}}/{{.NAME}}" 2>/dev/null | awk '$1 == "mod" && $2 == "{{.MOD}}" && $3 == "{{.VER}}" {found = 1} END {exit !found}'
     cmds:
-      - GOTOOLCHAIN={{.GO_TOOLCHAIN}} GOBIN={{.BIN}} go install {{.PKG}}@{{.VER}}
+      - GOBIN={{.BIN}} go install {{.PKG}}@{{.VER}}
 
   clean:
     desc: Remove ./bin
