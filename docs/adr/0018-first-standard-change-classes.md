@@ -30,7 +30,7 @@ Which changes are the first standard-change classes, and what evidence is enough
 
 Chosen option: "Define the first classes, policy-owner sign-off backed by shadow data", because it lets simple changes through within weeks while keeping every mechanism that fails safe: shadow evidence first, a canary, a kill switch, retrospective sampling, and automatic fallback on an escape.
 
-This amends the preconditions in ADR 0004 option B and the exit criteria of phase 4 in ADR 0013. Everything else in ADR 0004 stands, including the eligibility conditions every class shares.
+This amends the preconditions in ADR 0004 option B and the exit criteria of phase 4 in ADR 0013. It also replaces ADR 0004's condition that the AI ran and agreed on low with the per-class "AI must agree" column below. Everything else in ADR 0004 stands, including the other eligibility conditions every class shares.
 
 ### Conditions every class shares (unchanged from ADR 0004)
 
@@ -93,6 +93,7 @@ Replaces the ADR 0004 preconditions and the ADR 0013 phase 4 exit criteria:
 
 - **Retrospective sampling.** The policy owner reviews at least 10% of bot-approved PRs per class, and at least one a week when there are any, and records the result in the evidence store. A finding counts as an escape.
 - **Automatic fallback.** An escape on a bot-approved PR moves that class back to `shadow`, as does a failing canary for every class. Falling back is the fail-safe direction, so it happens without a human. Turning the class back on goes through "Enabling a class" again.
+- **Withdrawing outstanding approvals.** Whenever a class leaves `on` (fallback, kill switch, or a policy change), the App dismisses its approving reviews on every open PR it approved under that class and evaluates those PRs again, so none can merge on an approval given before the class was turned off. Until the dismissals finish, the gate's required check reports pending for those PRs.
 - **Kill switch.** Unchanged from ADR 0004: one setting moves every class in every repo back to option A.
 
 ### Consequences
@@ -110,6 +111,7 @@ Replaces the ADR 0004 preconditions and the ADR 0013 phase 4 exit criteria:
 - A test that a class in `shadow` sets `change_class` and `bot_eligible` but never produces an approving review.
 - A policy-layer test that moving a class to `on` or widening it is reported as a loosening.
 - A test that an escape label on a bot-approved PR moves its class back to `shadow`.
+- A test that turning a class off dismisses the App's approvals on open PRs in that class and re-evaluates them.
 
 ## Pros and Cons of the Options
 
