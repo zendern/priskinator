@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/zendern/priskinator/internal/changeset"
@@ -59,11 +60,11 @@ func runEvaluate(args []string, stdout, stderr io.Writer) int {
 	fs.StringVar(&opts.head, "head", "", "head revision (required)")
 	fs.StringVar(&opts.repo, "repo", ".", "path to the git repository")
 	fs.StringVar(&opts.orgPolicy, "org-policy", "", "org baseline policy file")
-	fs.StringVar(&opts.format, "format", "human", "output format: human or json")
+	fs.StringVar(&opts.format, "format", "human", "output format: human, json or markdown")
 	if err := fs.Parse(args); err != nil {
 		return exitUsage
 	}
-	if fs.NArg() > 0 || opts.base == "" || opts.head == "" || (opts.format != "human" && opts.format != "json") {
+	if fs.NArg() > 0 || opts.base == "" || opts.head == "" || !slices.Contains([]string{"human", "json", "markdown"}, opts.format) {
 		fs.Usage()
 		return exitUsage
 	}
@@ -177,7 +178,11 @@ func write(w io.Writer, format string, v verdict.Verdict) error {
 		enc.SetIndent("", "  ")
 		return enc.Encode(v)
 	}
-	_, err := io.WriteString(w, human(v))
+	out := human(v)
+	if format == "markdown" {
+		out = markdown(v)
+	}
+	_, err := io.WriteString(w, out)
 	return err
 }
 

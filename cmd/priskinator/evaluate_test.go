@@ -139,6 +139,9 @@ func TestEvaluateGolden(t *testing.T) {
 		{"loosening.json", []string{"--repo", loose.dir, "--base", looseBase, "--head", looseHead, "--format", "json"}, exitOK},
 		{"org-invalid.txt", []string{"--repo", docs.dir, "--base", docsBase, "--head", docsHead, "--org-policy", org}, exitError},
 		{"org-invalid.json", []string{"--repo", docs.dir, "--base", docsBase, "--head", docsHead, "--org-policy", org, "--format", "json"}, exitError},
+		{"docs.md", []string{"--repo", docs.dir, "--base", docsBase, "--head", docsHead, "--format", "markdown"}, exitOK},
+		{"loosening.md", []string{"--repo", loose.dir, "--base", looseBase, "--head", looseHead, "--format", "markdown"}, exitOK},
+		{"org-invalid.md", []string{"--repo", docs.dir, "--base", docsBase, "--head", docsHead, "--org-policy", org, "--format", "markdown"}, exitError},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -264,7 +267,7 @@ func (failingWriter) Write([]byte) (int, error) { return 0, errors.New("disk ful
 func TestEvaluateWriteFailure(t *testing.T) {
 	r := newRepo(t)
 	head := r.commit("head")
-	for _, format := range []string{"human", "json"} {
+	for _, format := range []string{"human", "json", "markdown"} {
 		var stderr bytes.Buffer
 		code := run([]string{"evaluate", "--repo", r.dir, "--base", head, "--head", head, "--format", format}, failingWriter{}, &stderr)
 		if code != exitError || !strings.Contains(stderr.String(), "write verdict: disk full") {

@@ -104,8 +104,8 @@ type Scoring struct {
 
 // Thresholds are the total points at which the score tier becomes medium and high.
 type Thresholds struct {
-	Medium int `yaml:"medium"`
-	High   int `yaml:"high"`
+	Medium int `yaml:"medium" json:"medium"`
+	High   int `yaml:"high" json:"high"`
 }
 
 // Factors map each scoring factor's raw value to points (ADR 0007).

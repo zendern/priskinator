@@ -11,8 +11,9 @@
 # PR can't change the code that judges it; otherwise it is built from HEAD and
 # engine.json says so.
 #
-# Writes to OUT: verdict.json, verdict.txt, and engine.json (which commit built
-# the engine, the merge base, and evaluate's exit code).
+# Writes to OUT: verdict.json, verdict.txt, verdict.md (when the engine has the
+# markdown format), and engine.json (which commit built the engine, the merge
+# base, and evaluate's exit code).
 set -euo pipefail
 
 base=${1:?usage: priskinator-verdict.sh <base> <out-dir>}
@@ -22,7 +23,7 @@ cd "$(git rev-parse --show-toplevel)"
 mkdir -p "$out"
 out=$(cd "$out" && pwd)
 # Clear the previous run first, so a failure below leaves no stale verdict.
-rm -f "$out/verdict.json" "$out/verdict.txt" "$out/engine.json"
+rm -f "$out/verdict.json" "$out/verdict.txt" "$out/verdict.md" "$out/engine.json"
 
 head=$(git rev-parse HEAD)
 merge_base=$(git merge-base "$base" HEAD)
@@ -42,6 +43,12 @@ git worktree add --quiet --detach "$work/src" "$engine_commit"
 code=0
 "$work/priskinator" evaluate --base "$merge_base" --head "$head" --format json >"$out/verdict.json" || code=$?
 "$work/priskinator" evaluate --base "$merge_base" --head "$head" >"$out/verdict.txt" || true
+# An engine older than the markdown format exits 2 (usage); leave no file then.
+md=0
+"$work/priskinator" evaluate --base "$merge_base" --head "$head" --format markdown >"$out/verdict.md" 2>/dev/null || md=$?
+if [ "$md" = 2 ]; then
+  rm -f "$out/verdict.md"
+fi
 
 jq -n --arg from "$engine_from" --arg commit "$engine_commit" \
   --arg mergeBase "$merge_base" --arg head "$head" --argjson code "$code" \
