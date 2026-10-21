@@ -36,4 +36,5 @@ The other Go tools (golangci-lint, gofumpt, govulncheck, go-licenses, go-test-co
 - Use the PR template and link the issue.
 - Run `task ci-local` on the final commit and paste `.local-ci/<commit>/summary.md` into the PR. It runs every CI job locally and records which commit, tools, and results it saw, so reviewers have proof the checks ran even when hosted CI does not. Re-run it after every push. Set `LOCAL_CI_BASE` to the PR's base branch (default `origin/main`) so its mutation step covers what the PR changes.
 - Stacked PRs are fine: base the PR on the branch it builds on.
+- The `priskinator` workflow posts priskinator's own report-only verdict on every PR to its job summary (risk, triggers and reasons). It never fails on the verdict. `task verdict BASE=<base>` runs it locally.
 - Changes under `.github/`, policy files, or `docs/adr/` require review from a code owner.

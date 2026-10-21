@@ -1,0 +1,87 @@
+name: priskinator
+
+# priskinator judges its own pull requests (ADR 0013 phase 1, shadow). The job
+# reports neutral: it passes whatever the verdict, posts nothing to the PR, and
+# fails only when the engine can't be built. The verdict goes to the job
+# summary, and verdict.json is kept as an artifact for calibration.
+#
+# The engine is built from the PR's merge base when that commit has the
+# evaluate command, so a PR can't change the code that judges it. The verdict
+# script is taken from the merge base the same way. The workflow file itself
+# comes from the PR (pull_request runs the PR's copy); with a read-only token,
+# no secrets and no verdict that gates anything, that is acceptable until the
+# check is moved to the GitHub App in phase 3 (ADR 0005).
+on:
+  pull_request:
+    # `edited` covers the retarget of a stacked PR when the PR below merges.
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+
+permissions: {}
+
+concurrency:
+  # A title or body edit skips the job, so it gets a unique group and can't
+  # cancel a real run in progress.
+  group: priskinator-${{ github.event.pull_request.number }}${{ github.event.action == 'edited' && !github.event.changes.base && format('-edit-{0}', github.run_id) || '' }}
+  cancel-in-progress: true
+
+jobs:
+  verdict:
+    name: priskinator verdict
+    # Skip drafts, and `edited` events that did not retarget the PR.
+    if: ${{ !github.event.pull_request.draft && (github.event.action != 'edited' || github.event.changes.base) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Judge the commit that was pushed, not GitHub's merge ref.
+          ref: ${{ github.event.pull_request.head.sha }}
+          # The merge base and the base-side engine need the history.
+          fetch-depth: 0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Evaluate the pull request
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          script=$RUNNER_TEMP/priskinator-verdict.sh
+          merge_base=$(git merge-base "$BASE_SHA" HEAD)
+          if ! git show "$merge_base:scripts/priskinator-verdict.sh" >"$script" 2>/dev/null; then
+            cp scripts/priskinator-verdict.sh "$script"
+          fi
+          bash "$script" "$BASE_SHA" "$RUNNER_TEMP/verdict"
+      - name: Report the verdict
+        if: ${{ !cancelled() }}
+        run: |
+          out=$RUNNER_TEMP/verdict
+          [ -f "$out/engine.json" ] || { echo "::error::the engine did not run"; exit 1; }
+          from=$(jq -r .engineFrom "$out/engine.json")
+          commit=$(jq -r .engineCommit "$out/engine.json")
+          code=$(jq -r .exitCode "$out/engine.json")
+          {
+            echo "## priskinator verdict (report-only)"
+            echo
+            echo "Engine built from the $from commit \`${commit:0:12}\`. Evaluate exited $code."
+            echo
+            echo '```text'
+            cat "$out/verdict.txt"
+            echo '```'
+          } >>"$GITHUB_STEP_SUMMARY"
+          cat "$out/verdict.txt"
+          if [ "$code" != 0 ]; then
+            echo "::warning::priskinator could not evaluate this PR (exit $code); see the job summary"
+          fi
+          if [ "$from" = head ]; then
+            echo "::notice::the merge base has no evaluate command, so the engine was built from this PR"
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: priskinator-verdict
+          path: ${{ runner.temp }}/verdict/
+          if-no-files-found: ignore
+          retention-days: 90
