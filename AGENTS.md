@@ -48,7 +48,7 @@ Fail closed: an unknown or invalid value must make a verdict stricter, never loo
 
 ## Working conventions
 
-- Write the test or golden fixture before the implementation.
+- Write the test or golden fixture before the implementation (aka use Mutation Test Driven Development MTDD, so RED test, GREEN test, MUTATE code, REFACTOR test and code).
 - A change that alters a design decision adds or supersedes an ADR in the same PR (start from `docs/adr/template.md` and update the index in `docs/adr/README.md`).
 - Commits are signed, follow Conventional Commits, and hold one logical change each.
 - Pin everything: actions by full commit SHA with a `# vX.Y.Z` comment, runners by version (never `*-latest`), remote prek hooks by frozen SHA, and tool versions as `Taskfile.yml` vars with a `# renovate:` comment so Renovate bumps them. Check for the latest release before adding or bumping a dependency.
