@@ -52,7 +52,7 @@ None.
 
 ## Compliance scope
 
-SOC 2 and ISO 27001. No GRC function or auditor is engaged yet. The control mapping in [0009](0009-compliance-evidence-and-segregation-of-duties.md) is a best-effort assumption and must be validated before the tool is relied on in an audit period. GRC sign-off is a hard gate for enabling option B of [0004](0004-what-a-low-risk-verdict-permits.md) until [0018](0018-first-standard-change-classes.md) is accepted, which replaces it with policy-owner sign-off on shadow data.
+SOC 2 and ISO 27001. No GRC function or auditor is engaged yet. The control mapping in [0009](0009-compliance-evidence-and-segregation-of-duties.md) is a best-effort assumption and must be validated before the tool is relied on in an audit period. GRC sign-off is a hard gate for enabling option B of [0004](0004-what-a-low-risk-verdict-permits.md) until [0018](0018-first-standard-change-classes.md) is accepted. 0018 replaces it with policy-owner sign-off on shadow data only where no GRC function exists; an organization with one still requires GRC approval of the enabling policy change.
 
 ## Known data gaps
 
