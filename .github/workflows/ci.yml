@@ -69,7 +69,8 @@ jobs:
       # Same prek as `task setup` installs locally.
       - name: Read the prek version pinned in Taskfile.yml
         id: prek
-        run: echo "version=$(sed -n 's/^  PREK_VERSION: *//p' Taskfile.yml)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "version=$(sed -n 's/^  PREK_VERSION: *//p' Taskfile.yml)" >> "$GITHUB_OUTPUT"
       # Every pre-commit hook, exactly as it runs locally: file hygiene,
       # gofumpt, golangci-lint and go mod tidy (via Task), zizmor, the Renovate
       # config validator, and the shared no-latest-runners hook. The token
