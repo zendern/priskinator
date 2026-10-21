@@ -69,7 +69,9 @@ repos:
 
   # Shared hooks, same block in every repo (https://github.com/zendern/pre-commit-hooks).
   - repo: https://github.com/zendern/pre-commit-hooks
-    rev: 8a9cb278d816e7ea06031a98aa3d357d6d4c6705  # frozen: v1.0.0
+    rev: 8faf55d31915d557d11d65792f80167049af66bd  # frozen: v1.1.0
     hooks:
       - id: no-latest-runners
+        priority: checks
+      - id: require-timeouts
         priority: checks
