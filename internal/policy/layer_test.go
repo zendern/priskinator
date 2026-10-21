@@ -751,6 +751,24 @@ func TestResolve(t *testing.T) {
 		}
 	})
 
+	t.Run("a repo can't disable a rule the org configures", func(t *testing.T) {
+		org := []byte("version: 1\ntriggers:\n  G7.security-paths: {add_paths: [\"billing/**\"]}\n")
+		repo := []byte("version: 1\ntriggers:\n  G7.security-paths: {enabled: false}\n")
+		res, err := Resolve(org, repo)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(res.Weakenings) != 1 || res.Weakenings[0].Path != "/triggers/G7.security-paths/enabled" || res.Weakenings[0].Applied {
+			t.Errorf("weakenings %+v", res.Weakenings)
+		}
+		if !slices.Equal(res.Triggers, []string{TriggerPolicyWeakeningAttempt}) {
+			t.Errorf("triggers %v", res.Triggers)
+		}
+		if !trigger(t, res.Policy, "G7.security-paths").IsEnabled() {
+			t.Error("the repo disabled an org-configured rule")
+		}
+	})
+
 	t.Run("an invalid repo policy falls back to the baseline and fires config-invalid", func(t *testing.T) {
 		org := "version: 1\nlimits: {max_changed_lines: 9000}\n"
 		for name, repo := range map[string]string{
@@ -875,7 +893,7 @@ ai: {enabled: true, required: true, provider: bedrock, model: m, endpoint: "http
 		"/scoring/factors/complexity_delta", "/scoring/factors/diffusion", "/scoring/factors/files", "/scoring/factors/size", "/scoring/factors/test_signal",
 		"/scoring/thresholds/high", "/scoring/thresholds/medium",
 		"/triggers/G1.ci-workflows/enabled", "/triggers/G1.ci-workflows/paths", "/triggers/G1.ci-workflows/reviewers", "/triggers/G1.ci-workflows/risk",
-		"/triggers/G2.gate-governance/paths",
+		"/triggers/G2.gate-governance/enabled", "/triggers/G2.gate-governance/paths",
 	}
 	if !slices.Equal(paths, want) {
 		t.Errorf("setBy =\n%v\nwant\n%v", paths, want)

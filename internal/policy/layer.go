@@ -84,7 +84,8 @@ func setBy(p *Policy) map[string]bool {
 	mark("/limits/max_changed_lines", p.Limits.MaxChangedLines != nil)
 	for id, t := range p.Triggers {
 		at := "/triggers/" + id
-		mark(at+"/enabled", t.Enabled != nil)
+		// A rule the org configures can't be switched off by a repo.
+		mark(at+"/enabled", t.Enabled != nil || t.Paths != nil || len(t.AddPaths) > 0 || t.Reviewers != nil || t.Risk != "")
 		mark(at+"/paths", t.Paths != nil || len(t.AddPaths) > 0)
 		mark(at+"/reviewers", t.Reviewers != nil)
 		mark(at+"/risk", t.Risk != "")
