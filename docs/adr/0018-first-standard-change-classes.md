@@ -60,6 +60,7 @@ What keeps each class narrow:
 Classes live in policy, so the org baseline can turn them off and a repo can narrow them.
 
 ```yaml
+version: 1
 standard_changes:
   docs-only:
     mode: shadow          # off | shadow | on
