@@ -19,6 +19,7 @@ task imports    # import boundary rules only (also part of lint)
 task mutate     # mutation testing with gremlins (slow; mutate-diff BASE=<ref> for changed packages)
 task vuln       # govulncheck
 task licenses   # dependency license check
+task pin        # pin new or changed GitHub Actions to a commit SHA (ratchet)
 task build      # ./bin/priskinator
 ```
 
