@@ -9,7 +9,7 @@ Decisions for priskinator, recorded per [ADR 0001](0001-record-architecture-deci
 | [0001](0001-record-architecture-decisions.md) | Record architecture decisions as MADR files | accepted |
 | [0002](0002-scope-and-threat-model.md) | Scope and threat model | accepted |
 | [0003](0003-verdict-model.md) | Verdict model: deterministic floor, AI may only escalate, fail closed | accepted |
-| [0004](0004-what-a-low-risk-verdict-permits.md) | What a low-risk verdict permits: human approval now, standard-change bot approval per class as the goal | accepted |
+| [0004](0004-what-a-low-risk-verdict-permits.md) | What a low-risk verdict permits: human approval now, standard-change bot approval per class as the goal | accepted; option B preconditions amended by 0018 (proposed) |
 | [0005](0005-trust-boundary-and-enforcement.md) | Trust boundary and enforcement | accepted; decision 4 superseded by 0017 |
 | [0006](0006-mandatory-human-review-triggers.md) | Mandatory human-review triggers: path plus content rules | accepted |
 | [0007](0007-risk-and-complexity-scoring.md) | Risk and complexity scoring: transparent additive points | accepted |
@@ -23,6 +23,7 @@ Decisions for priskinator, recorded per [ADR 0001](0001-record-architecture-deci
 | [0015](0015-responsible-user-for-automated-prs.md) | Responsible user for automated PRs: forge rules in v1, close the gap in v2 | accepted (v1), v2 deferred |
 | [0016](0016-license.md) | License: Apache-2.0 | accepted |
 | [0017](0017-actions-gate-with-oidc-token-broker.md) | Run the gate in GitHub Actions with a pinned reusable workflow and an OIDC token broker | accepted; confirmation by spike S4 pending |
+| [0018](0018-first-standard-change-classes.md) | First standard-change classes (docs-only, dependency-patch, tests-only), and policy-owner sign-off on shadow data to enable them | proposed |
 
 ## Open decisions
 
@@ -51,7 +52,7 @@ None.
 
 ## Compliance scope
 
-SOC 2 and ISO 27001. No GRC function or auditor is engaged yet. The control mapping in [0009](0009-compliance-evidence-and-segregation-of-duties.md) is a best-effort assumption and must be validated before the tool is relied on in an audit period. GRC sign-off is a hard gate for enabling option B of [0004](0004-what-a-low-risk-verdict-permits.md).
+SOC 2 and ISO 27001. No GRC function or auditor is engaged yet. The control mapping in [0009](0009-compliance-evidence-and-segregation-of-duties.md) is a best-effort assumption and must be validated before the tool is relied on in an audit period. GRC sign-off is a hard gate for enabling option B of [0004](0004-what-a-low-risk-verdict-permits.md) until [0018](0018-first-standard-change-classes.md) is accepted. 0018 replaces it with policy-owner sign-off on shadow data only where no GRC function exists; an organization with one still requires GRC approval of the enabling policy change.
 
 ## Known data gaps
 
