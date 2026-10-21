@@ -1,6 +1,7 @@
 package triggers
 
 import (
+	"fmt"
 	"reflect"
 	"slices"
 	"testing"
@@ -20,7 +21,7 @@ func TestFixtures(t *testing.T) {
 			return fixture.Result{}, err
 		}
 		if len(res.Triggers) > 0 {
-			t.Fatalf("fixture policy fired %v: %v %v", res.Triggers, res.ConfigErr, res.Weakenings)
+			return fixture.Result{}, fmt.Errorf("fixture policy fired %v: %w %v", res.Triggers, res.ConfigErr, res.Weakenings)
 		}
 		var got fixture.Result
 		for _, h := range Evaluate(res.Policy, changes.Build(f.Change)) {

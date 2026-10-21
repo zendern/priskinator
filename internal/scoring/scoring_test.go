@@ -1,6 +1,7 @@
 package scoring
 
 import (
+	"fmt"
 	"reflect"
 	"slices"
 	"testing"
@@ -21,7 +22,7 @@ func TestFixtures(t *testing.T) {
 			return fixture.Result{}, err
 		}
 		if len(res.Triggers) > 0 {
-			t.Fatalf("fixture policy fired %v: %v %v", res.Triggers, res.ConfigErr, res.Weakenings)
+			return fixture.Result{}, fmt.Errorf("fixture policy fired %v: %w %v", res.Triggers, res.ConfigErr, res.Weakenings)
 		}
 		r := Score(res.Policy, changes.Build(f.Change), Generated{})
 		got := fixture.Result{Risk: string(r.Risk), Points: map[string]int{}}
@@ -282,6 +283,8 @@ func TestTestSignal(t *testing.T) {
 		{"source only", []changeset.File{file("a.go", 30, 5)}, 35, "35 source lines changed with no test change"},
 		{"with a test", []changeset.File{file("a.go", 30, 0), file("a_test.go", 1, 0)}, 0, "tests changed alongside 30 source lines"},
 		{"deleted test", []changeset.File{file("a.go", 30, 0), {Path: "old_test.go", Status: changeset.StatusDeleted}}, 0, "tests changed alongside 30 source lines"},
+		{"renamed test", []changeset.File{file("a.go", 30, 0), {Path: "b_test.go", OldPath: "a_test.go", Status: changeset.StatusRenamed}}, 30, "30 source lines changed with no test change"},
+		{"renamed and edited test", []changeset.File{file("a.go", 30, 0), {Path: "b_test.go", OldPath: "a_test.go", Status: changeset.StatusRenamed, Hunks: []changeset.Hunk{{Added: []changeset.Line{{Line: 1, Text: "x"}}, Removed: []changeset.Line{{Line: 1, Text: "y"}}}}}}, 0, "tests changed alongside 30 source lines"},
 		{"test listed first", []changeset.File{file("a_test.go", 1, 0), file("a.go", 30, 0)}, 0, "tests changed alongside 30 source lines"},
 		{"test only", []changeset.File{file("a_test.go", 30, 0)}, 0, "no source lines changed"},
 	}

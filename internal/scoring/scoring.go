@@ -212,7 +212,8 @@ func testSignalOf(files []changeset.File) measurement {
 	source, tests := 0, false
 	for _, f := range files {
 		if isTest(f.Path) {
-			tests = true
+			// A rename with no changed lines moves a test without changing it.
+			tests = tests || f.Status != changeset.StatusRenamed || f.AddedLines()+f.RemovedLines() > 0
 			continue
 		}
 		if isSource(f) {
