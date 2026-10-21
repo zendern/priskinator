@@ -6,7 +6,7 @@
 - **Tests first.** Write the test or golden fixture (`internal/fixture`) before the implementation.
 - **Signed, conventional commits.** Every commit is signed and follows [Conventional Commits](https://www.conventionalcommits.org/) (`feat(policy): add layering`). The `commit-msg` hook ([conventional-pre-commit](https://github.com/compilerla/conventional-pre-commit)) checks the format.
 - **Small, atomic commits.** One logical change per commit.
-- **Pinned dependencies.** Check for the latest release before adding or bumping a dependency. Pin GitHub Actions by full commit SHA, and pin runner images to a specific version (`ubuntu-24.04`), never `ubuntu-latest`. Give every workflow job a `timeout-minutes`, so a hung run is cancelled long before GitHub's 6-hour default. The shared `no-latest-runners` and `require-timeouts` hooks check both.
+- **Pinned dependencies.** Check for the latest release before adding or bumping a dependency. Pin GitHub Actions by full commit SHA, and pin runner images to a specific version (`ubuntu-24.04`), never `ubuntu-latest`. Give every workflow job a `timeout-minutes`, so a hung run is cancelled long before GitHub's 6-hour default. A job that calls a reusable workflow (`uses:`) can't set one; the called workflow's jobs carry the limits instead. The shared `no-latest-runners` and `require-timeouts` hooks check both.
 
 ## Setup
 
