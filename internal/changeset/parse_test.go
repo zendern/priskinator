@@ -487,3 +487,17 @@ func TestIsBinary(t *testing.T) {
 		}
 	}
 }
+
+// Attributes are read from the empty tree once it is known, so a
+// .gitattributes in the checkout cannot steer git. The first call, which
+// computes the empty tree, has nothing to point at yet.
+func TestCommandAttrSource(t *testing.T) {
+	g := &gitRunner{bin: "git", dir: "/repo"}
+	if args := g.command(context.Background(), nil, "x").Args; slices.ContainsFunc(args, func(a string) bool { return strings.HasPrefix(a, "--attr-source") }) {
+		t.Errorf("args before the empty tree is known = %q", args)
+	}
+	g.emptyTree = oidA
+	if args := g.command(context.Background(), nil, "x").Args; !slices.Contains(args, "--attr-source="+oidA) {
+		t.Errorf("args = %q, want --attr-source=%s", args, oidA)
+	}
+}
