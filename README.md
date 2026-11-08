@@ -1,5 +1,8 @@
 # priskinator
 
+[![merged](https://github.com/zendern/priskinator/actions/workflows/merged.yml/badge.svg)](https://github.com/zendern/priskinator/actions/workflows/merged.yml)
+[![prek](https://img.shields.io/badge/prek-enabled-DE611A?logo=precommit&logoColor=white)](https://github.com/j178/prek)
+
 priskinator runs in CI against pull requests. It decides, deterministically, when a human must review a change: changes to CI, linters, hooks, tests, auth, or the gate itself always require review, and everything else is tiered by a transparent risk score. An optional AI pass can raise the risk level but never lower it. Every decision is recorded as evidence for SOC 2 and ISO 27001.
 
 Design decisions live in [`docs/adr/`](docs/adr/README.md).
