@@ -68,7 +68,7 @@ jobs:
       - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
           path: bin
-          key: tools-checks-${{ runner.os }}-go${{ steps.setup-go.outputs.go-version }}-${{ hashFiles('go.mod', 'Taskfile.yml') }}
+          key: tools-checks-${{ runner.os }}-${{ runner.arch }}-go${{ steps.setup-go.outputs.go-version }}-${{ hashFiles('go.mod', 'Taskfile.yml') }}
       # The zizmor hook runs `task zizmor`, which requires the version pinned in
       # Taskfile.yml.
       - name: Install zizmor (version pinned in Taskfile.yml)
@@ -113,7 +113,7 @@ jobs:
       - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
           path: bin
-          key: tools-test-${{ runner.os }}-go${{ steps.setup-go.outputs.go-version }}-${{ hashFiles('go.mod', 'Taskfile.yml') }}
+          key: tools-test-${{ runner.os }}-${{ runner.arch }}-go${{ steps.setup-go.outputs.go-version }}-${{ hashFiles('go.mod', 'Taskfile.yml') }}
       # Race tests with a coverage profile, gated by .testcoverage.yml.
       - run: task cover
 
