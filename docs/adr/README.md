@@ -6,11 +6,11 @@ Decisions for priskinator, recorded per [ADR 0001](0001-record-architecture-deci
 
 | ADR | Title | Status |
 |---|---|---|
-| [0001](0001-record-architecture-decisions.md) | Record architecture decisions as MADR files | accepted |
+| [0001](0001-record-architecture-decisions.md) | Record architecture decisions as MADR files | accepted; amended by 0018 |
 | [0002](0002-scope-and-threat-model.md) | Scope and threat model | accepted |
 | [0003](0003-verdict-model.md) | Verdict model: deterministic floor, AI may only escalate, fail closed | accepted |
 | [0004](0004-what-a-low-risk-verdict-permits.md) | What a low-risk verdict permits: human approval now, standard-change bot approval per class as the goal | accepted |
-| [0005](0005-trust-boundary-and-enforcement.md) | Trust boundary and enforcement | accepted; decision 4 superseded by 0017 |
+| [0005](0005-trust-boundary-and-enforcement.md) | Trust boundary and enforcement | accepted; amended by 0017 (decision 4) |
 | [0006](0006-mandatory-human-review-triggers.md) | Mandatory human-review triggers: path plus content rules | accepted |
 | [0007](0007-risk-and-complexity-scoring.md) | Risk and complexity scoring: transparent additive points | accepted |
 | [0008](0008-ai-assessment-layer.md) | AI assessment layer: optional, provider-agnostic, escalate-only, fully configurable | accepted |
@@ -23,7 +23,7 @@ Decisions for priskinator, recorded per [ADR 0001](0001-record-architecture-deci
 | [0015](0015-responsible-user-for-automated-prs.md) | Responsible user for automated PRs: forge rules in v1, close the gap in v2 | accepted (v1), v2 deferred |
 | [0016](0016-license.md) | License: Apache-2.0 | accepted |
 | [0017](0017-actions-gate-with-oidc-token-broker.md) | Run the gate in GitHub Actions with a pinned reusable workflow and an OIDC token broker | accepted; confirmation by spike S4 pending |
-
+| [0018](0018-amend-accepted-adrs.md) | Amend part of an accepted ADR with an `amended by NNNN` status | accepted |
 ## Open decisions
 
 None.
