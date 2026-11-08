@@ -44,7 +44,7 @@ jobs:
     name: checks
     # Skip drafts, and `edited` events that did not retarget the PR.
     if: ${{ !github.event.pull_request.draft && (github.event.action != 'edited' || github.event.changes.base) }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     # Under a minute with a warm ./bin cache; a cold one rebuilds every tool
     # from source. Well past either means the run hung.
     timeout-minutes: 15
@@ -93,7 +93,7 @@ jobs:
   test:
     name: test
     if: ${{ !github.event.pull_request.draft && (github.event.action != 'edited' || github.event.changes.base) }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     # Under a minute today (race tests plus the coverage gate).
     timeout-minutes: 10
     permissions:
@@ -127,7 +127,7 @@ jobs:
   workflow-summary:
     if: ${{ always() && !github.event.pull_request.draft && (github.event.action != 'edited' || github.event.changes.base) }}
     needs: [checks, test]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 5
     permissions: {}
     steps:
