@@ -9,7 +9,7 @@ Design decisions live in [`docs/adr/`](docs/adr/README.md).
 
 ## Development
 
-Requirements: Go (see `go.mod`), [Task](https://taskfile.dev), [prek](https://prek.j178.dev), and [zizmor](https://docs.zizmor.sh). See [CONTRIBUTING](CONTRIBUTING.md) for versions and setup. Linters and other Go tools are installed at pinned versions into `./bin` on first use.
+Requirements: Go (see `go.mod`), [Task](https://taskfile.dev), and [prek](https://prek.j178.dev). See [CONTRIBUTING](CONTRIBUTING.md) for versions and setup. Linters and other Go tools are installed at pinned versions into `./bin` on first use.
 
 ```sh
 task test       # go test with the race detector

@@ -8,12 +8,12 @@ vars:
 
   # Pinned tool versions, bumped by Renovate (see renovate.json). Check for the
   # latest release before bumping by hand. TASK_VERSION is the one source for
-  # Task: CI installs it through .github/actions/setup-task. ZIZMOR_VERSION is
-  # installed by hand (see CONTRIBUTING); `task zizmor` refuses any other version.
+  # Task: CI installs it through .github/actions/setup-task. PREK_VERSION is the
+  # one source for prek: CI reads it for j178/prek-action.
   # renovate: datasource=github-releases depName=go-task/task extractVersion=^v(?<version>.+)$
   TASK_VERSION: 3.54.0
-  # renovate: datasource=pypi depName=zizmor
-  ZIZMOR_VERSION: 1.31.0
+  # renovate: datasource=github-releases depName=j178/prek extractVersion=^v(?<version>.+)$
+  PREK_VERSION: 0.5.10
   # renovate: datasource=github-releases depName=golangci/golangci-lint
   GOLANGCI_LINT_VERSION: v2.14.0
   # renovate: datasource=github-releases depName=mvdan/gofumpt
@@ -124,14 +124,10 @@ tasks:
     cmds:
       - "{{.BIN}}/go-licenses check ./... --allowed_licenses={{.ALLOWED_LICENSES}}"
 
-  zizmor:
-    desc: Audit GitHub workflows with zizmor
-    preconditions:
-      - sh: '[ "$(zizmor --version 2>/dev/null)" = "zizmor {{.ZIZMOR_VERSION}}" ]'
-        msg: "zizmor {{.ZIZMOR_VERSION}} is required (uv tool install zizmor=={{.ZIZMOR_VERSION}})"
+  lock:
+    desc: Regenerate .github/workflows/actions.lock after editing a `uses:` line
     cmds:
-      # Online audits (they query GitHub) when a token is available, as in CI.
-      - zizmor {{if not .GH_TOKEN}}--offline {{end}}.github/workflows
+      - gh actions-lock
 
   check:
     desc: Format check, lint, and test with coverage thresholds
