@@ -1,7 +1,7 @@
 ## Link to Issue or Message thread
 
 <!-- AI INSERT -->
-<!-- Link the issue, message thread, or related pull request (e.g. Refs #14, Closes #17). -->
+<!-- Link the issue, message thread, or related pull request (e.g. Refs #14, Closes #17). On a public repo, never mention or link a private repo. -->
 <!-- AI INSERT END -->
 
 ## Why is this change necessary?
