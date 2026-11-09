@@ -35,7 +35,7 @@ only counts somewhere CI can't (a Raspberry Pi, a lab PC). Don't list test names
 
 <!-- AI INSERT -->
 <!--
-AI: add your section between this comment and the AI INSERT END marker, shaped like the example below, and leave this comment in place. If you have nothing to add, change nothing here: on GitHub this whole region renders as nothing, so an unfilled template shows no empty section.
+AI: add your section between this comment and the AI INSERT END marker, shaped like the example below, and leave this comment in place.
 
 ## AI generated additional details
 
