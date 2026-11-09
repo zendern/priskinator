@@ -1,12 +1,15 @@
 # priskinator
 
+[![merged](https://github.com/zendern/priskinator/actions/workflows/merged.yml/badge.svg)](https://github.com/zendern/priskinator/actions/workflows/merged.yml)
+[![prek](https://img.shields.io/badge/prek-enabled-DE611A?logo=precommit&logoColor=white)](https://github.com/j178/prek)
+
 priskinator runs in CI against pull requests. It decides, deterministically, when a human must review a change: changes to CI, linters, hooks, tests, auth, or the gate itself always require review, and everything else is tiered by a transparent risk score. An optional AI pass can raise the risk level but never lower it. Every decision is recorded as evidence for SOC 2 and ISO 27001.
 
 Design decisions live in [`docs/adr/`](docs/adr/README.md).
 
 ## Development
 
-Requirements: Go (see `go.mod`), [Task](https://taskfile.dev), [prek](https://prek.j178.dev), and [zizmor](https://docs.zizmor.sh). See [CONTRIBUTING](CONTRIBUTING.md) for versions and setup. Linters and other Go tools are installed at pinned versions into `./bin` on first use.
+Requirements: Go (see `go.mod`), [Task](https://taskfile.dev), and [prek](https://prek.j178.dev). See [CONTRIBUTING](CONTRIBUTING.md) for versions and setup. Linters and other Go tools are installed at pinned versions into `./bin` on first use.
 
 ```sh
 task test       # go test with the race detector

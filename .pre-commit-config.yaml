@@ -52,13 +52,6 @@ repos:
         types: [go]
         pass_filenames: false
         priority: 10
-      - id: zizmor
-        name: zizmor
-        entry: task zizmor
-        language: system
-        files: ^\.github/workflows/.*\.ya?ml$
-        pass_filenames: false
-        priority: 10
       - id: go-test
         name: go test with coverage thresholds
         entry: task cover
@@ -67,11 +60,26 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
+  # Audits the workflows. v1.32.0 is the first zizmor that reads the workflow
+  # lockfile (.github/workflows/actions.lock), so tag refs pass. GH_TOKEN turns
+  # on the online audits; without it zizmor runs the offline ones only.
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: 06a39750ec31860bb44f2acf67182c40016cd1e7 # frozen: v1.32.0
+    hooks:
+      - id: zizmor
+        priority: checks
+
   # Shared hooks, same block in every repo (https://github.com/zendern/pre-commit-hooks).
   - repo: https://github.com/zendern/pre-commit-hooks
-    rev: 8faf55d31915d557d11d65792f80167049af66bd  # frozen: v1.1.0
+    rev: cb3feef6aa5b1864d521e8bc84acc35391146974 # frozen: v1.3.0
     hooks:
+      - id: gh-actions-lock-verify-local
+        priority: checks
+      - id: gh-actions-lock-verify
       - id: no-latest-runners
         priority: checks
       - id: require-timeouts
         priority: checks
+      - id: require-runner-arch
+        priority: checks
+        args: [--arch=arm64]

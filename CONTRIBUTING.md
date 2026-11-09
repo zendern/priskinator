@@ -6,18 +6,18 @@
 - **Tests first.** Write the test or golden fixture (`internal/fixture`) before the implementation.
 - **Signed, conventional commits.** Every commit is signed and follows [Conventional Commits](https://www.conventionalcommits.org/) (`feat(policy): add layering`). The `commit-msg` hook ([conventional-pre-commit](https://github.com/compilerla/conventional-pre-commit)) checks the format.
 - **Small, atomic commits.** One logical change per commit.
-- **Pinned dependencies.** Check for the latest release before adding or bumping a dependency. Pin GitHub Actions by full commit SHA, and pin runner images to a specific version (`ubuntu-24.04`), never `ubuntu-latest`. Give every workflow job a `timeout-minutes`, so a hung run is cancelled long before GitHub's 6-hour default. A job that calls a reusable workflow (`uses:`) can't set one; the called workflow's jobs carry the limits instead. The shared `no-latest-runners` and `require-timeouts` hooks check both.
+- **Pinned dependencies.** Check for the latest release before adding or bumping a dependency. Workflows reference GitHub Actions by tag, and `.github/workflows/actions.lock` pins each tag to a commit SHA (a workflow lockfile that `gh actions-lock` writes). After editing a `uses:` line, run `task lock` and commit the lockfile; the `gh-actions-lock-verify-local` hook fails a commit that leaves it out of date, and CI also checks it against GitHub. Renovate updates tags and regenerates the lockfile. Pin runner images to a specific version (`ubuntu-24.04`), never `ubuntu-latest`. Give every workflow job a `timeout-minutes`, so a hung run is cancelled long before GitHub's 6-hour default. A job that calls a reusable workflow (`uses:`) can't set one; the called workflow's jobs carry the limits instead. The shared `no-latest-runners` and `require-timeouts` hooks check both.
 
 ## Setup
 
-1. Install Go (version in `go.mod`), [Task](https://taskfile.dev), [prek](https://prek.j178.dev), and [zizmor](https://docs.zizmor.sh). Task and zizmor must match `TASK_VERSION` and `ZIZMOR_VERSION` in `Taskfile.yml`:
+1. Install Go (version in `go.mod`), [Task](https://taskfile.dev), [prek](https://prek.j178.dev), and the [`gh` CLI](https://cli.github.com) with the `gh actions-lock` extension (`gh extension install github/gh-actions-lock`; `task lock` runs it). Task and prek should match `TASK_VERSION` and `PREK_VERSION` in `Taskfile.yml`:
    ```sh
    go install github.com/go-task/task/v3/cmd/task@v"$(sed -n 's/^  TASK_VERSION: *//p' Taskfile.yml)"
-   uv tool install prek
-   uv tool install zizmor==1.31.0
+   uv tool install prek=="$(sed -n 's/^  PREK_VERSION: *//p' Taskfile.yml)"
    ```
+   zizmor needs no install: prek builds the pinned `zizmor-pre-commit` hook itself.
 2. Run `prek install` to enable the hooks in `.pre-commit-config.yaml`:
-   - pre-commit: file hygiene checks built into prek, then `gofumpt`, `golangci-lint`, and `zizmor` on changed workflows, in parallel
+   - pre-commit: file hygiene checks built into prek, then `gofumpt`, `golangci-lint`, `zizmor` on changed workflows, and the offline workflow lockfile check, in parallel
    - commit-msg: Conventional Commits check
    - pre-push: `task cover` (tests plus the coverage gate)
 3. Run `task check` while you work. `task --list` shows every task.
