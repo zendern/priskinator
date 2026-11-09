@@ -27,12 +27,6 @@ only counts somewhere CI can't (a Raspberry Pi, a lab PC). Don't list test names
 ## Other
 
 
-## Checklist
-
-- [ ] Tests or golden fixtures written before the implementation
-- [ ] Commits are signed and follow Conventional Commits
-- [ ] ADRs and docs updated if a decision changed
-
 <!-- AI INSERT -->
 <!--
 AI: add your section between this comment and the AI INSERT END marker, shaped like the example below, and leave this comment in place.
