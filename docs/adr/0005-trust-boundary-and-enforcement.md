@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: accepted; amended by 0017
 date: 2026-10-13
 decision-makers: Nathan Zender
 ---

@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: accepted; amended by 0018
 date: 2026-10-13
 decision-makers: Nathan Zender
 ---
@@ -27,6 +27,8 @@ priskinator is a change-management control that gates pull requests. SOC 2 and I
 Chosen option: "Markdown ADRs in the repository using the MADR 4 structure", because decisions then live next to the code they constrain, change only through reviewed pull requests, and carry git history as an audit trail.
 
 Conventions:
+
+Amended by ADR 0018: part of an accepted ADR can be replaced with an `accepted; amended by NNNN` status and a note on each amended section. The original text is kept below for history.
 
 - Location: `docs/adr/NNNN-kebab-case-title.md`, numbered sequentially.
 - Template: `docs/adr/template.md`.
