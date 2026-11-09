@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: accepted; amended by 0019
 date: 2026-10-13
 decision-makers: Nathan Zender
 ---
@@ -34,6 +34,8 @@ Chosen option: "Layered, tighten-only", because it gives a central baseline and 
 3. **Repo policy**, at `.priskinator/policy.yaml`, read from the PR's base SHA.
 
 ### Merge semantics
+
+Amended by ADR 0019: a weakening is rejected per field, not per rule, and the repo's other changes to the same rule still apply. The original text is kept below for history.
 
 - A repo can add rules, add paths to existing rules, raise risk floors, lower score thresholds, add required reviewers, and enable stricter options.
 - A repo cannot remove or disable a baseline rule, remove paths, lower floors, raise thresholds, or disable the AI if the baseline requires it.
