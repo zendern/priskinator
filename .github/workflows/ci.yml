@@ -51,12 +51,12 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           # Empty on pull_request, which checks out the default ref.
           ref: ${{ inputs.ref }}
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: actions/setup-go@v7.0.0
         id: setup-go
         with:
           go-version-file: go.mod
@@ -65,25 +65,34 @@ jobs:
       # ./bin lets Task's status check in go-install see the right module
       # version and Go toolchain and skip the build. A bumped pin in
       # Taskfile.yml, go.mod or the Go version changes the key and rebuilds.
-      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+      - uses: actions/cache@v5.1.0
         with:
           path: bin
           key: tools-checks-${{ runner.os }}-${{ runner.arch }}-go${{ steps.setup-go.outputs.go-version }}-${{ hashFiles('go.mod', 'Taskfile.yml') }}
-      # The zizmor hook runs `task zizmor`, which requires the version pinned in
-      # Taskfile.yml.
-      - name: Install zizmor (version pinned in Taskfile.yml)
+      # PREK_VERSION in Taskfile.yml is the one source for the prek version.
+      - name: Read the prek version
+        id: prek-version
         run: |
-          version="$(sed -n 's/^  ZIZMOR_VERSION: *//p' Taskfile.yml)"
-          pipx install "zizmor==${version}"
+          version="$(sed -n 's/^  PREK_VERSION: *//p' Taskfile.yml)"
+          [ -n "$version" ] || { echo "PREK_VERSION not found in Taskfile.yml" >&2; exit 1; }
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
       # Every pre-commit hook, exactly as it runs locally: file hygiene,
-      # gofumpt and golangci-lint (via Task), zizmor, and the shared
-      # no-latest-runners hook. The token turns on zizmor's online audits.
+      # gofumpt and golangci-lint (via Task), zizmor, the workflow lockfile
+      # coverage check, and the shared no-latest-runners hook. The token turns
+      # on zizmor's online audits.
       - name: Run prek hooks
-        uses: j178/prek-action@af4d4fcb6922b8e6f65c0426947125fcc38794ce # v3.0.2
+        uses: j178/prek-action@v3.0.2
         env:
           GH_TOKEN: ${{ github.token }}
         with:
-          prek-version: "0.5.6"
+          prek-version: ${{ steps.prek-version.outputs.version }}
+      # Checks .github/workflows/actions.lock against GitHub, as the runner
+      # does. Manual-stage hook: it needs the token, so commits stay offline.
+      - name: Verify the workflow lockfile
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: prek run --hook-stage manual gh-actions-lock-verify --all-files
       # Not prek hooks: they check dependencies rather than changed files.
       - run: task vuln
       - run: task licenses
@@ -99,18 +108,18 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           ref: ${{ inputs.ref }}
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: actions/setup-go@v7.0.0
         id: setup-go
         with:
           go-version-file: go.mod
       - uses: $/.github/actions/setup-task
       # Separate key from the checks job: both save ./bin at the end, and a
       # shared key would keep only whichever job saved first.
-      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+      - uses: actions/cache@v5.1.0
         with:
           path: bin
           key: tools-test-${{ runner.os }}-${{ runner.arch }}-go${{ steps.setup-go.outputs.go-version }}-${{ hashFiles('go.mod', 'Taskfile.yml') }}
@@ -131,6 +140,6 @@ jobs:
     timeout-minutes: 5
     permissions: {}
     steps:
-      - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+      - uses: re-actors/alls-green@v1.3.0
         with:
           jobs: ${{ toJSON(needs) }}
