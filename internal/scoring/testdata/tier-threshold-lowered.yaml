@@ -1,0 +1,20 @@
+name: a repo can lower the thresholds
+description: With medium at 1, any points make the change medium.
+change:
+  files:
+  - path: d1/x.md
+    added: 1
+  - path: d2/x.md
+    added: 1
+  - path: d3/x.md
+    added: 1
+policy:
+  version: 1
+  scoring:
+    thresholds:
+      medium: 1
+      high: 50
+expect:
+  risk: medium
+  points:
+    diffusion: 5

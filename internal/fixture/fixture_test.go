@@ -3,6 +3,7 @@ package fixture
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -79,6 +80,14 @@ func TestLoadRejectsInvalidFixtures(t *testing.T) {
 		"rename without old path": {
 			yaml:    "name: x\nchange: {files: [{path: a, status: renamed}]}\nexpect: {risk: low}\n",
 			wantErr: "old_path is required",
+		},
+		"negative added lines": {
+			yaml:    "name: x\nchange: {files: [{path: a, added: -1}]}\nexpect: {risk: low}\n",
+			wantErr: "change.files[0]: added and removed must not be negative",
+		},
+		"negative removed lines": {
+			yaml:    "name: x\nchange: {files: [{path: a, removed: -1}]}\nexpect: {risk: low}\n",
+			wantErr: "change.files[0]: added and removed must not be negative",
 		},
 		"invalid risk": {
 			yaml:    "name: x\nexpect: {risk: severe}\n",
@@ -157,6 +166,19 @@ func TestCompare(t *testing.T) {
 		}
 	})
 
+	t.Run("points", func(t *testing.T) {
+		exp := Expect{Points: map[string]int{"size": 5, "files": 0, "diffusion": 15}}
+		got := Result{Points: map[string]int{"size": 4, "diffusion": 0, "extra": 3}}
+		want := []string{
+			`points[diffusion]: got 0, want 15`,
+			`points[files]: missing, want 0`,
+			`points[size]: got 4, want 5`,
+		}
+		if diffs := Compare(exp, got); !slices.Equal(diffs, want) {
+			t.Fatalf("diffs = %q\nwant  %q", diffs, want)
+		}
+	})
+
 	t.Run("unset expectations are not checked", func(t *testing.T) {
 		if diffs := Compare(Expect{Triggers: []string{"G1.ci-workflows"}}, Result{Risk: "low", Triggers: []string{"G1.ci-workflows"}}); len(diffs) != 0 {
 			t.Fatalf("diffs = %q, want none", diffs)
@@ -180,7 +202,7 @@ func TestRunEvaluatesEveryFixture(t *testing.T) {
 func expectEqual(a, b Expect) bool {
 	return a.Risk == b.Risk && a.HumanReview == b.HumanReview &&
 		slices.Equal(a.Triggers, b.Triggers) && slices.Equal(a.TriggersAbsent, b.TriggersAbsent) &&
-		slices.Equal(a.Reviewers, b.Reviewers)
+		slices.Equal(a.Reviewers, b.Reviewers) && maps.Equal(a.Points, b.Points)
 }
 
 // recorder is a testing.TB that records failures. Fatalf stops the calling
@@ -261,6 +283,7 @@ func TestValidateAcceptsAnySingleExpectation(t *testing.T) {
 		"triggers":        {Triggers: []string{"G1.ci-workflows"}},
 		"triggers_absent": {TriggersAbsent: []string{"G1.ci-workflows"}},
 		"reviewers":       {Reviewers: []string{"@org/team"}},
+		"points":          {Points: map[string]int{"size": 0}},
 	}
 	for name, e := range tests {
 		if err := validate(Fixture{Name: name, Expect: e}); err != nil {

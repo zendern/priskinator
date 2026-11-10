@@ -1,0 +1,35 @@
+name: a large, spread-out untested change is high risk
+description: "1200 lines over 12 directories with no tests: 40 + 5 + 25 + 15 = 85, over the high threshold of 50."
+change:
+  files:
+  - path: d00/x.go
+    added: 100
+  - path: d01/x.go
+    added: 100
+  - path: d02/x.go
+    added: 100
+  - path: d03/x.go
+    added: 100
+  - path: d04/x.go
+    added: 100
+  - path: d05/x.go
+    added: 100
+  - path: d06/x.go
+    added: 100
+  - path: d07/x.go
+    added: 100
+  - path: d08/x.go
+    added: 100
+  - path: d09/x.go
+    added: 100
+  - path: d10/x.go
+    added: 100
+  - path: d11/x.go
+    added: 100
+expect:
+  risk: high
+  points:
+    size: 40
+    files: 5
+    diffusion: 25
+    test_signal: 15

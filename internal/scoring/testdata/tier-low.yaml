@@ -1,0 +1,14 @@
+name: a small documented change is low risk
+description: A 10-line doc fix earns no points.
+change:
+  files:
+  - path: README.md
+    added: 6
+    removed: 4
+expect:
+  risk: low
+  points:
+    size: 0
+    files: 0
+    diffusion: 0
+    test_signal: 0

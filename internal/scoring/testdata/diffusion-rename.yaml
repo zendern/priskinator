@@ -1,0 +1,12 @@
+name: a move across directories touches both
+description: A rename from one directory to another changes two places.
+change:
+  files:
+  - path: b/x.go
+    old_path: a/x.go
+    status: renamed
+  - path: c/y.go
+    added: 1
+expect:
+  points:
+    diffusion: 5

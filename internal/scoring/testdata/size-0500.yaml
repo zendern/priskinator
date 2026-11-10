@@ -1,0 +1,10 @@
+name: size of 500 lines scores 15
+description: 500 changed lines fall in the band worth 15 points.
+change:
+  files:
+  - path: internal/app/app.go
+    added: 334
+    removed: 166
+expect:
+  points:
+    size: 15

@@ -1,0 +1,9 @@
+name: docs are not source
+description: Markdown and other non-code files never count toward the test signal.
+change:
+  files:
+  - path: docs/guide.md
+    added: 300
+expect:
+  points:
+    test_signal: 0

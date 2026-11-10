@@ -1,0 +1,9 @@
+name: 100 source lines without tests score 5
+description: 100 non-test source lines changed with no test change.
+change:
+  files:
+  - path: internal/app/app.go
+    added: 100
+expect:
+  points:
+    test_signal: 5

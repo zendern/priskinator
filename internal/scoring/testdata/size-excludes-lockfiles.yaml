@@ -1,0 +1,14 @@
+name: lockfiles and vendored code do not count toward size
+description: go.sum and vendor/ match the default exclude_paths.
+change:
+  files:
+  - path: go.sum
+    added: 4000
+  - path: vendor/x/y.go
+    added: 900
+  - path: main.go
+    added: 10
+expect:
+  points:
+    size: 0
+    files: 0

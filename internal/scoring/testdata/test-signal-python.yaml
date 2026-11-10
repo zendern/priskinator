@@ -1,0 +1,11 @@
+name: Python tests count as tests
+description: tests/test_api.py is a test file.
+change:
+  files:
+  - path: api/views.py
+    added: 300
+  - path: tests/test_api.py
+    added: 3
+expect:
+  points:
+    test_signal: 0

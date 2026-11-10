@@ -1,0 +1,11 @@
+name: TypeScript spec files count as tests
+description: src/app.spec.ts is a test file.
+change:
+  files:
+  - path: src/app.ts
+    added: 300
+  - path: src/app.spec.ts
+    added: 3
+expect:
+  points:
+    test_signal: 0

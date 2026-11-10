@@ -1,0 +1,209 @@
+name: 101 files score 25
+description: 101 changed files fall in the band worth 25 points.
+change:
+  files:
+  - path: pkg/f000.md
+    added: 1
+  - path: pkg/f001.md
+    added: 1
+  - path: pkg/f002.md
+    added: 1
+  - path: pkg/f003.md
+    added: 1
+  - path: pkg/f004.md
+    added: 1
+  - path: pkg/f005.md
+    added: 1
+  - path: pkg/f006.md
+    added: 1
+  - path: pkg/f007.md
+    added: 1
+  - path: pkg/f008.md
+    added: 1
+  - path: pkg/f009.md
+    added: 1
+  - path: pkg/f010.md
+    added: 1
+  - path: pkg/f011.md
+    added: 1
+  - path: pkg/f012.md
+    added: 1
+  - path: pkg/f013.md
+    added: 1
+  - path: pkg/f014.md
+    added: 1
+  - path: pkg/f015.md
+    added: 1
+  - path: pkg/f016.md
+    added: 1
+  - path: pkg/f017.md
+    added: 1
+  - path: pkg/f018.md
+    added: 1
+  - path: pkg/f019.md
+    added: 1
+  - path: pkg/f020.md
+    added: 1
+  - path: pkg/f021.md
+    added: 1
+  - path: pkg/f022.md
+    added: 1
+  - path: pkg/f023.md
+    added: 1
+  - path: pkg/f024.md
+    added: 1
+  - path: pkg/f025.md
+    added: 1
+  - path: pkg/f026.md
+    added: 1
+  - path: pkg/f027.md
+    added: 1
+  - path: pkg/f028.md
+    added: 1
+  - path: pkg/f029.md
+    added: 1
+  - path: pkg/f030.md
+    added: 1
+  - path: pkg/f031.md
+    added: 1
+  - path: pkg/f032.md
+    added: 1
+  - path: pkg/f033.md
+    added: 1
+  - path: pkg/f034.md
+    added: 1
+  - path: pkg/f035.md
+    added: 1
+  - path: pkg/f036.md
+    added: 1
+  - path: pkg/f037.md
+    added: 1
+  - path: pkg/f038.md
+    added: 1
+  - path: pkg/f039.md
+    added: 1
+  - path: pkg/f040.md
+    added: 1
+  - path: pkg/f041.md
+    added: 1
+  - path: pkg/f042.md
+    added: 1
+  - path: pkg/f043.md
+    added: 1
+  - path: pkg/f044.md
+    added: 1
+  - path: pkg/f045.md
+    added: 1
+  - path: pkg/f046.md
+    added: 1
+  - path: pkg/f047.md
+    added: 1
+  - path: pkg/f048.md
+    added: 1
+  - path: pkg/f049.md
+    added: 1
+  - path: pkg/f050.md
+    added: 1
+  - path: pkg/f051.md
+    added: 1
+  - path: pkg/f052.md
+    added: 1
+  - path: pkg/f053.md
+    added: 1
+  - path: pkg/f054.md
+    added: 1
+  - path: pkg/f055.md
+    added: 1
+  - path: pkg/f056.md
+    added: 1
+  - path: pkg/f057.md
+    added: 1
+  - path: pkg/f058.md
+    added: 1
+  - path: pkg/f059.md
+    added: 1
+  - path: pkg/f060.md
+    added: 1
+  - path: pkg/f061.md
+    added: 1
+  - path: pkg/f062.md
+    added: 1
+  - path: pkg/f063.md
+    added: 1
+  - path: pkg/f064.md
+    added: 1
+  - path: pkg/f065.md
+    added: 1
+  - path: pkg/f066.md
+    added: 1
+  - path: pkg/f067.md
+    added: 1
+  - path: pkg/f068.md
+    added: 1
+  - path: pkg/f069.md
+    added: 1
+  - path: pkg/f070.md
+    added: 1
+  - path: pkg/f071.md
+    added: 1
+  - path: pkg/f072.md
+    added: 1
+  - path: pkg/f073.md
+    added: 1
+  - path: pkg/f074.md
+    added: 1
+  - path: pkg/f075.md
+    added: 1
+  - path: pkg/f076.md
+    added: 1
+  - path: pkg/f077.md
+    added: 1
+  - path: pkg/f078.md
+    added: 1
+  - path: pkg/f079.md
+    added: 1
+  - path: pkg/f080.md
+    added: 1
+  - path: pkg/f081.md
+    added: 1
+  - path: pkg/f082.md
+    added: 1
+  - path: pkg/f083.md
+    added: 1
+  - path: pkg/f084.md
+    added: 1
+  - path: pkg/f085.md
+    added: 1
+  - path: pkg/f086.md
+    added: 1
+  - path: pkg/f087.md
+    added: 1
+  - path: pkg/f088.md
+    added: 1
+  - path: pkg/f089.md
+    added: 1
+  - path: pkg/f090.md
+    added: 1
+  - path: pkg/f091.md
+    added: 1
+  - path: pkg/f092.md
+    added: 1
+  - path: pkg/f093.md
+    added: 1
+  - path: pkg/f094.md
+    added: 1
+  - path: pkg/f095.md
+    added: 1
+  - path: pkg/f096.md
+    added: 1
+  - path: pkg/f097.md
+    added: 1
+  - path: pkg/f098.md
+    added: 1
+  - path: pkg/f099.md
+    added: 1
+  - path: pkg/f100.md
+    added: 1
+expect:
+  points:
+    files: 25
