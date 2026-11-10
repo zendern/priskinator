@@ -1,0 +1,11 @@
+name: G5.test-harness fires when jest.config.js moves out
+description: Rules match the old path of a rename too, so moving a file out of a watched path still fires.
+change:
+  files:
+  - path: config/jest.js
+    old_path: jest.config.js
+    status: renamed
+expect:
+  triggers:
+  - G5.test-harness
+  - G10.watched-path-moved

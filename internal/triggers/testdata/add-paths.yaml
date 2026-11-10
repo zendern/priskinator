@@ -1,0 +1,15 @@
+name: add_paths extends a baseline rule
+description: A repo can watch more paths under a baseline rule.
+change:
+  files:
+  - path: ci/deploy.sh
+    status: modified
+policy:
+  version: 1
+  triggers:
+    G1.ci-workflows:
+      add_paths:
+      - "ci/**"
+expect:
+  triggers:
+  - G1.ci-workflows

@@ -1,0 +1,9 @@
+name: G8.registry-config ignores docs/npmrc.md
+description: docs/npmrc.md only looks like a watched path.
+change:
+  files:
+  - path: docs/npmrc.md
+    status: modified
+expect:
+  triggers_absent:
+  - G8.registry-config

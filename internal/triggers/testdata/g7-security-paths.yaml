@@ -1,0 +1,11 @@
+name: G7.security-paths fires on internal/auth/token.go
+description: A change to internal/auth/token.go needs security review.
+change:
+  files:
+  - path: internal/auth/token.go
+    status: modified
+expect:
+  triggers:
+  - G7.security-paths
+  reviewers:
+  - security

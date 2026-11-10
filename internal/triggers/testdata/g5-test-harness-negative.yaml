@@ -1,0 +1,9 @@
+name: G5.test-harness ignores api/test_users.py
+description: api/test_users.py only looks like a watched path.
+change:
+  files:
+  - path: api/test_users.py
+    status: modified
+expect:
+  triggers_absent:
+  - G5.test-harness

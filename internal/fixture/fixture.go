@@ -57,6 +57,7 @@ type File struct {
 	OldMode string `yaml:"old_mode"`
 	NewMode string `yaml:"new_mode"`
 	Binary  bool   `yaml:"binary"`
+	LFS     bool   `yaml:"lfs"`
 	Size    int64  `yaml:"size"`
 	Hunks   []Hunk `yaml:"hunks"`
 }

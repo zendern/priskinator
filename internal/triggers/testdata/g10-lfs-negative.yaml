@@ -1,0 +1,9 @@
+name: G10.lfs ignores a file outside LFS
+description: A file outside LFS is not a hidden-change vector.
+change:
+  files:
+  - path: models/README.md
+    status: modified
+expect:
+  triggers_absent:
+  - G10.lfs

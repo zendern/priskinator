@@ -1,0 +1,10 @@
+name: G10.executable-mode ignores a new executable file
+description: A file added as executable has no mode change.
+change:
+  files:
+  - path: scripts/new.sh
+    status: added
+    new_mode: "100755"
+expect:
+  triggers_absent:
+  - G10.executable-mode

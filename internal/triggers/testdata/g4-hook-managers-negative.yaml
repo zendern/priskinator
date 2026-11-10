@@ -1,0 +1,9 @@
+name: G4.hook-managers ignores docs/pre-commit.md
+description: docs/pre-commit.md only looks like a watched path.
+change:
+  files:
+  - path: docs/pre-commit.md
+    status: modified
+expect:
+  triggers_absent:
+  - G4.hook-managers

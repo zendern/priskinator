@@ -1,0 +1,10 @@
+name: G10.watched-path-moved fires on a rename out of a watched path
+description: The new path is not watched, so the move hides the file from G1.
+change:
+  files:
+  - path: docs/ci.yml
+    old_path: .github/workflows/ci.yml
+    status: renamed
+expect:
+  triggers:
+  - G10.watched-path-moved

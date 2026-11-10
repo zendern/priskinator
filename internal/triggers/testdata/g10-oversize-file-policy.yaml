@@ -1,0 +1,14 @@
+name: G10.oversize-file follows a lowered limit
+description: A repo can lower limits.max_file_bytes; files above it fire.
+change:
+  files:
+  - path: notes.txt
+    status: added
+    size: 101
+policy:
+  version: 1
+  limits:
+    max_file_bytes: 100
+expect:
+  triggers:
+  - G10.oversize-file

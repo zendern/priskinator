@@ -1,0 +1,9 @@
+name: G1.ci-workflows ignores docs/workflows.md
+description: docs/workflows.md only looks like a watched path.
+change:
+  files:
+  - path: docs/workflows.md
+    status: modified
+expect:
+  triggers_absent:
+  - G1.ci-workflows

@@ -1,0 +1,9 @@
+name: G6.build-scripts ignores scripts/run.sh
+description: scripts/run.sh only looks like a watched path.
+change:
+  files:
+  - path: scripts/run.sh
+    status: modified
+expect:
+  triggers_absent:
+  - G6.build-scripts

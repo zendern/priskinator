@@ -1,0 +1,13 @@
+name: G10.executable-mode fires on a file made executable
+description: A file made executable is a hidden-change vector (ADR 0006, G10).
+change:
+  files:
+  - path: scripts/release.sh
+    status: modified
+    old_mode: "100644"
+    new_mode: "100755"
+expect:
+  triggers:
+  - G10.executable-mode
+  reviewers:
+  - platform

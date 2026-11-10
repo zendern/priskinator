@@ -1,0 +1,21 @@
+name: a repo rule fires with its own reviewers
+description: Repos can add rules with paths; they route like baseline rules.
+change:
+  files:
+  - path: db/migrations/0042_drop_users.sql
+    status: added
+policy:
+  version: 1
+  triggers:
+    repo.migrations:
+      description: Database migrations
+      paths:
+      - "db/migrations/**"
+      reviewers:
+      - dba
+      risk: high
+expect:
+  triggers:
+  - repo.migrations
+  reviewers:
+  - dba

@@ -1,0 +1,9 @@
+name: G7.security-paths ignores internal/author/name.go
+description: internal/author/name.go only looks like a watched path.
+change:
+  files:
+  - path: internal/author/name.go
+    status: modified
+expect:
+  triggers_absent:
+  - G7.security-paths

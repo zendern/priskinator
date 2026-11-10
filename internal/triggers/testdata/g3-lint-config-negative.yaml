@@ -1,0 +1,9 @@
+name: G3.lint-config ignores tools/golangci.md
+description: tools/golangci.md only looks like a watched path.
+change:
+  files:
+  - path: tools/golangci.md
+    status: modified
+expect:
+  triggers_absent:
+  - G3.lint-config

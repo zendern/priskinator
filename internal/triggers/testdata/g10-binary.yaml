@@ -1,0 +1,12 @@
+name: G10.binary fires on an added binary
+description: An added binary is a hidden-change vector (ADR 0006, G10).
+change:
+  files:
+  - path: assets/logo.png
+    status: added
+    binary: true
+expect:
+  triggers:
+  - G10.binary
+  reviewers:
+  - platform

@@ -1,0 +1,9 @@
+name: G10.binary ignores a text file
+description: A text file is not a hidden-change vector.
+change:
+  files:
+  - path: assets/logo.svg
+    status: added
+expect:
+  triggers_absent:
+  - G10.binary

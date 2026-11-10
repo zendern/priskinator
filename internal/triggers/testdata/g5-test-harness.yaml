@@ -1,0 +1,11 @@
+name: G5.test-harness fires on api/conftest.py
+description: A change to api/conftest.py needs platform review.
+change:
+  files:
+  - path: api/conftest.py
+    status: modified
+expect:
+  triggers:
+  - G5.test-harness
+  reviewers:
+  - platform

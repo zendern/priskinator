@@ -1,0 +1,12 @@
+name: G10.oversize-file fires on a file one byte over the 1 MiB default
+description: A file one byte over the 1 MiB default is a hidden-change vector (ADR 0006, G10).
+change:
+  files:
+  - path: data/dump.json
+    status: added
+    size: 1048577
+expect:
+  triggers:
+  - G10.oversize-file
+  reviewers:
+  - platform

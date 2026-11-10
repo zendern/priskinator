@@ -1,0 +1,9 @@
+name: G2.gate-governance ignores docs/codeowners-guide.md
+description: docs/codeowners-guide.md only looks like a watched path.
+change:
+  files:
+  - path: docs/codeowners-guide.md
+    status: modified
+expect:
+  triggers_absent:
+  - G2.gate-governance
