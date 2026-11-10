@@ -1,0 +1,12 @@
+name: a lint config change takes the trigger risk
+description: G3 is medium, above the low score.
+change:
+  files:
+  - path: .golangci.yml
+    added: 2
+expect:
+  risk: medium
+  triggers:
+  - G3.lint-config
+  reviewers:
+  - platform

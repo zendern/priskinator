@@ -1,0 +1,12 @@
+name: lockfile lines do not count toward the cap
+description: A big go.sum change is excluded from scoring, so it is not oversize.
+change:
+  files:
+  - path: go.sum
+    added: 8000
+  - path: go.mod
+    added: 1
+    removed: 1
+expect:
+  triggers_absent:
+  - oversize

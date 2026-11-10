@@ -1,0 +1,13 @@
+name: a workflow change is high risk and routes to platform
+description: G1 fires with its high risk floor.
+change:
+  files:
+  - path: .github/workflows/ci.yml
+    added: 3
+expect:
+  risk: high
+  human_review: required
+  triggers:
+  - G1.ci-workflows
+  reviewers:
+  - platform
