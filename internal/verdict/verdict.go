@@ -44,27 +44,27 @@ const (
 
 // Verdict is the outcome of one evaluation, in the shape of ADR 0003.
 type Verdict struct {
-	Risk        policy.Risk
-	HumanReview string
+	Risk        policy.Risk `json:"risk"`
+	HumanReview string      `json:"human_review"`
 	// BotEligible and ChangeClass are computed and recorded but never acted on
 	// under ADR 0004 option A.
-	BotEligible       bool
-	ChangeClass       string
-	Triggers          []string
-	RequiredReviewers []string
-	Reasons           []Reason
-	Evaluation        Evaluation
+	BotEligible       bool       `json:"bot_eligible"`
+	ChangeClass       string     `json:"change_class,omitempty"`
+	Triggers          []string   `json:"triggers"`
+	RequiredReviewers []string   `json:"required_reviewers"`
+	Reasons           []Reason   `json:"reasons"`
+	Evaluation        Evaluation `json:"evaluation"`
 	// Score is the scoring breakdown, nil when evaluation failed.
-	Score *scoring.Result
+	Score *scoring.Result `json:"score,omitempty"`
 	// Error says why evaluation failed or was degraded.
-	Error string
+	Error string `json:"error,omitempty"`
 }
 
 // Reason is one thing that contributed to the verdict, with its evidence.
 type Reason struct {
-	Rule   string
-	File   string
-	Detail string
+	Rule   string `json:"rule"`
+	File   string `json:"file,omitempty"`
+	Detail string `json:"detail"`
 }
 
 // AI is the optional AI assessment as data (ADR 0008). Runs holds every

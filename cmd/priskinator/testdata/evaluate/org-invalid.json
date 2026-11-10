@@ -1,0 +1,17 @@
+{
+  "risk": "high",
+  "human_review": "required",
+  "bot_eligible": false,
+  "triggers": [
+    "evaluation-error"
+  ],
+  "required_reviewers": [],
+  "reasons": [
+    {
+      "rule": "evaluation-error",
+      "detail": "org baseline: unsupported policy version 99 (this build reads version 1)"
+    }
+  ],
+  "evaluation": "error",
+  "error": "org baseline: unsupported policy version 99 (this build reads version 1)"
+}

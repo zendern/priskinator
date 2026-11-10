@@ -27,33 +27,33 @@ const (
 // the verdict can show the author why a change got its tier (ADR 0007).
 type Result struct {
 	// Points is the sum of every factor's points.
-	Points int
+	Points int `json:"points"`
 	// Tier is what Points reaches against the policy thresholds.
-	Tier policy.Risk
+	Tier policy.Risk `json:"tier"`
 	// Risk is Tier raised to the highest criticality floor that applied.
-	Risk     policy.Risk
-	Factors  []Factor
-	Floors   []FloorHit
-	Excluded []string
-	Notes    []string
+	Risk     policy.Risk `json:"risk"`
+	Factors  []Factor    `json:"factors"`
+	Floors   []FloorHit  `json:"floors"`
+	Excluded []string    `json:"excluded"`
+	Notes    []string    `json:"notes"`
 }
 
 // Factor is one scoring factor: its raw value, the band it fell in, and the
 // points that band is worth. Unmeasured factors score nothing and say why.
 type Factor struct {
-	Name     string
-	Measured bool
-	Value    int
-	Points   int
-	Band     string
-	Detail   string
+	Name     string `json:"name"`
+	Measured bool   `json:"measured"`
+	Value    int    `json:"value"`
+	Points   int    `json:"points"`
+	Band     string `json:"band,omitempty"`
+	Detail   string `json:"detail"`
 }
 
 // FloorHit is a criticality floor that applied, and the files that matched it.
 type FloorHit struct {
-	Description string
-	Risk        policy.Risk
-	Paths       []string
+	Description string      `json:"description"`
+	Risk        policy.Risk `json:"risk"`
+	Paths       []string    `json:"paths"`
 }
 
 // Score computes the additive risk score for cs under p. Files matching

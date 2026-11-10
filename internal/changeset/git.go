@@ -203,9 +203,11 @@ func parseRaw(raw []byte) ([]File, error) {
 		fields = fields[:last]
 	}
 	var files []File
-	for i := 0; i < len(fields); {
-		meta := string(fields[i])
-		i++
+	// Entries are consumed by reslicing rather than an index, so a mutated
+	// step can't revisit fields and grow files until memory runs out.
+	for len(fields) > 0 {
+		meta := string(fields[0])
+		fields = fields[1:]
 		// :<old mode> <new mode> <old oid> <new oid> <status><score>
 		parts := strings.Fields(strings.TrimPrefix(meta, ":"))
 		if !strings.HasPrefix(meta, ":") || len(parts) != 5 || parts[4] == "" {
@@ -230,16 +232,16 @@ func parseRaw(raw []byte) ([]File, error) {
 		default:
 			return nil, fmt.Errorf("unsupported status %q", parts[4])
 		}
-		if i+paths > len(fields) {
+		if paths > len(fields) {
 			return nil, fmt.Errorf("missing path for %q", meta)
 		}
 		if paths == 2 {
-			f.OldPath = string(fields[i])
-			f.Path = string(fields[i+1])
+			f.OldPath = string(fields[0])
+			f.Path = string(fields[1])
 		} else {
-			f.Path = string(fields[i])
+			f.Path = string(fields[0])
 		}
-		i += paths
+		fields = fields[paths:]
 		if isZeroMode(f.OldMode) {
 			f.OldMode, f.OldOID = "", ""
 		}

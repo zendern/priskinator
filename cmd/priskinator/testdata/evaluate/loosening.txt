@@ -1,0 +1,16 @@
+risk: high
+human review: required
+evaluation: ok
+triggers: G2.gate-governance, policy-loosening
+required reviewers: platform
+
+score: 0 points, low tier, low risk after floors
+  size             +0 (2, band 0-50)  1 added and 1 removed lines in 1 file
+  files            +0 (1, band 0-10)  1 file changed
+  diffusion        +0 (1, band 0-2)  1 directory; change entropy 0.00
+  complexity_delta -  not measured: complexity analysis is not available yet
+  test_signal      +0 (0, band 0-20)  no source lines changed
+
+reasons:
+  G2.gate-governance: .priskinator/policy.yaml: matches ".priskinator/**"
+  policy-loosening: /limits/max_changed_lines: cannot raise 5000 to 9000
